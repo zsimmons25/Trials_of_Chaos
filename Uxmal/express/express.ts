@@ -1,27 +1,22 @@
 import { config } from 'dotenv';
 config({ path: 'express/.env' });
 import express from 'express';
-import { TypedRouter, ParseRoutes } from 'express-typed';
 import cors from 'cors';
+import modifiersRouter from './routes/modifiers.ts';
+import affixesRouter from './routes/affixes.ts';
 
 const app = express();
 
-const PORT = `${process.env.port_}`
+const PORT = `${process.env.port_}`;
 
-const typedRouter = new TypedRouter({
-"/": {
-    get: (req, res) => {
-    return res.send("Hello World!").status(200);
-    },
-    post: (req, res) => {
-    return res.send(req.body).status(200);
-    },
-},
-});
+const corsOptions = {
+  origin: process.env.CORS_ORIGIN
+};
+app.use(cors(corsOptions));
 
-app.use(cors());
-app.use(typedRouter.router);
+app.use(modifiersRouter.router);
+app.use(affixesRouter.router);
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
-  });
+});

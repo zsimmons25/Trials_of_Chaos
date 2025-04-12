@@ -1,8 +1,8 @@
 import { TypedRouter, ParseRoutes, TypedResponse, TypedRequest } from 'express-typed';
 import { getModifiers } from '../handlers/modifiers.ts';
 
-const modifiersRouter = new TypedRouter({
-    "/modifiers": {
+const affixesRouter = new TypedRouter({
+    "/affixes": {
         get: (req: TypedRequest, res: TypedResponse) => {
         return getModifiers(req, res);
         },
@@ -12,4 +12,4 @@ const modifiersRouter = new TypedRouter({
     },
     });
 
-export default modifiersRouter;
+export default affixesRouter;

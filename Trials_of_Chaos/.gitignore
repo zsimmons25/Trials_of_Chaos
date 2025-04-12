@@ -29,3 +29,6 @@ dist
 *.njsproj
 *.sln
 *.sw?
+*.local
+src/vite-env.d.ts
+src/vite-env.d.ts

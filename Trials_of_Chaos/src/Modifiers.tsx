@@ -41,35 +41,37 @@ function Modifiers() {
   return (
     <div className='h-screen w-screen bg-neutral-900 text-center text-neutral-300'>
       <div className='relative flex w-full flex-wrap items-center justify-center'>
-        {modifiers.map((modifier) => (
-          <div
-            key={modifier.id}
-            className={`mx-2 my-4 flex h-60 w-60 flex-col items-center justify-center rounded-lg`}
-          >
-            <div className='flex flex-col items-center justify-center'>
-              <img src={modifier.imgurl} />
+        {modifiers
+          .filter((modifier) => modifier.active)
+          .map((modifier) => (
+            <div
+              key={modifier.id}
+              className={`mx-2 my-4 flex h-60 w-60 flex-col items-center justify-center rounded-lg`}
+            >
+              <div className='flex flex-col items-center justify-center'>
+                <img src={modifier.imgurl} />
+              </div>
+              <div className='bg-blood h- flex w-60 items-center justify-center border-x border-black'>
+                <img
+                  className='ml-1'
+                  src={modifiers_header_left}
+                  alt='Modifier Header Left'
+                />
+                <img src={modifiers_header} alt='Modifier Header' />
+                <h1 className='text-gold absolute text-center'>
+                  {modifier.name}
+                </h1>
+                <img
+                  className='mr-1'
+                  src={modifiers_header_right}
+                  alt='Modifier Header Right'
+                />
+              </div>
+              <div className='flex h-20 w-60 flex-col items-center justify-center bg-black bg-opacity-75'>
+                <p>{modifier.description1}</p>
+              </div>
             </div>
-            <div className='bg-blood h- flex w-60 items-center justify-center border-x border-black'>
-              <img
-                className='ml-1'
-                src={modifiers_header_left}
-                alt='Modifier Header Left'
-              />
-              <img src={modifiers_header} alt='Modifier Header' />
-              <h1 className='text-gold absolute text-center'>
-                {modifier.name}
-              </h1>
-              <img
-                className='mr-1'
-                src={modifiers_header_right}
-                alt='Modifier Header Right'
-              />
-            </div>
-            <div className='flex h-20 w-60 flex-col items-center justify-center bg-black bg-opacity-75'>
-              <p>{modifier.description1}</p>
-            </div>
-          </div>
-        ))}
+          ))}
       </div>
     </div>
   );

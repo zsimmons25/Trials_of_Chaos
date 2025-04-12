@@ -70,7 +70,7 @@
      '', 
      TRUE, 
      'https://www.poe2wiki.net/images/b/b1/Entangling_Monsters_Ultimatum.png'),
-    (10, 'Escalating Damage Taken', 1, TRUE, False, False, 
+    (10, 'Escalating Damage', 1, TRUE, False, False, 
      'In each encounter room, damage taken will slowly increase by 1% per second, up to 50%', 
      '', 
      '', 

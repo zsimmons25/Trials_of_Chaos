@@ -1,5 +1,6 @@
 {
 	"name": "uxmal",
+	"private": true,
 	"version": "1.0.0",
 	"description": "Express backend for Trials of Chaos website.",
 	"main": "express/express.ts",
@@ -19,6 +20,7 @@
 		"typescript": "^5.8.3"
 	},
 	"dependencies": {
+		"@sinclair/typebox": "^0.34.33",
 		"cors": "^2.8.5",
 		"dotenv": "^16.4.7",
 		"express": "^5.1.0",

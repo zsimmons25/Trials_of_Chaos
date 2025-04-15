@@ -1,7 +1,9 @@
 import { config } from 'dotenv';
 config({ path: 'express/.env' });
-import { TypedRequest, TypedResponse } from "express-typed";
 import mysql from 'mysql2';
+import { Value } from '@sinclair/typebox/value';
+import { TypedRequest, TypedResponse } from "express-typed";
+import { ModifiersData } from '../types/modifier.ts';
 
 export function getModifiers(req: TypedRequest, res: TypedResponse) {   
     const connection = mysql.createConnection({
@@ -26,6 +28,11 @@ export function getModifiers(req: TypedRequest, res: TypedResponse) {
             return res.status(500).send('Query execution error');
         }
         console.log('Query results:', results);
+        if (!Value.Check(ModifiersData, results)) {
+            console.error('Validation error:', Value.Errors(ModifiersData, results));
+            return res.status(500).send('Validation error');
+        }
+        console.log('Validation successful!');
         res.json(results);
     });
     connection.end((err) => {

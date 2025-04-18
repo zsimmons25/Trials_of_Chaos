@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  frontend:
+    build: 
+      context: ./Trials_of_Chaos
+      args:
+        - VITE_UXMAL=/api
+    image: trials-of-chaos-frontend
+    ports:
+      - "80:80"
+    networks:
+      - app-network
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./Uxmal
+    image: trials-of-chaos-backend
+    ports:
+      - "3500:3500"
+    networks:
+      - app-network
+    depends_on:
+      - mysql
+    restart: unless-stopped
+    environment:
+      - MYSQL_HOST=mysql
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=rootpassword
+      - MYSQL_PORT=3306
+      - port_=3500
+      - CORS_ORIGIN=http://localhost
+
+  mysql:
+    image: mysql:8
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./Uxmal/schemas/modifiers.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - app-network
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_DATABASE=modifiers
+    ports:
+      - "3307:3306"
+
+volumes:
+  mysql-data:
+
+networks:
+  app-network:
+    driver: bridge

@@ -1,0 +1,11 @@
+FROM node:20-slim
+RUN npm install -g pnpm
+WORKDIR /Uxmal
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install
+COPY . .
+RUN pnpm build
+ENV NODE_ENV=production
+ENV port_=3500
+EXPOSE 3500
+CMD ["pnpm", "run", "docker:start"]

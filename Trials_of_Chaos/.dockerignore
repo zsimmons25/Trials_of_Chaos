@@ -1,0 +1,14 @@
+node_modules
+dist
+tests
+.git
+.gitignore
+.github
+.gitattributes
+.eslintrc*
+.prettierignore
+prettier.config.js
+*.env
+*.log
+*.DS_Store
+*.vscode

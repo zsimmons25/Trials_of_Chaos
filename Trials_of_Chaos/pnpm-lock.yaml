@@ -26,9 +26,6 @@ importers:
       '@tanstack/react-virtual':
         specifier: ^3.13.6
         version: 3.13.6(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
-      '@tanstack/router-devtools':
-        specifier: ^1.20.4
-        version: 1.20.4(csstype@3.1.3)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       react:
         specifier: ^18.2.0
         version: 18.2.0
@@ -39,6 +36,9 @@ importers:
         specifier: ^2.0.1
         version: 2.0.1
     devDependencies:
+      '@tanstack/react-router-devtools':
+        specifier: ^1.116.0
+        version: 1.116.0(@tanstack/react-router@1.17.4(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(@tanstack/router-core@1.115.3)(csstype@3.1.3)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(tiny-invariant@1.3.3)
       '@tanstack/router-vite-plugin':
         specifier: ^1.20.2
         version: 1.20.2
@@ -198,10 +198,6 @@ packages:
     engines: {node: '>=6.9.0'}
     peerDependencies:
       '@babel/core': ^7.0.0-0
-
-  '@babel/runtime@7.24.1':
-    resolution: {integrity: sha512-+BIznRzyqBf+2wCTxcKE3wDjfGeCoVE61KSHGpkzqrLi8qxqFwBeUFyId2cxkTmm55fzDGnm0+yCxaxygrLUnQ==}
-    engines: {node: '>=6.9.0'}
 
   '@babel/template@7.22.15':
     resolution: {integrity: sha512-QPErUVm4uyJa60rkI73qneDacvdvzxshT3kksGqlGWYdOTIUOwJ7RDUL8sGqslY1uXWSL6xMFKEXDS3ox2uF0w==}
@@ -529,6 +525,10 @@ packages:
   '@tanstack/form-core@1.3.2':
     resolution: {integrity: sha512-hqRLw9EJ8bLJ5zvorGgTI4INcKh1hAtjPRTslwdB529soP8LpguzqWhn7yVV5/c2GcMSlqmpy5NZarkF5Mf54A==}
 
+  '@tanstack/history@1.115.0':
+    resolution: {integrity: sha512-K7JJNrRVvyjAVnbXOH2XLRhFXDkeP54Kt2P4FR1Kl2KDGlIbkua5VqZQD2rot3qaDrpufyUa63nuLai1kOLTsQ==}
+    engines: {node: '>=12'}
+
   '@tanstack/history@1.15.13':
     resolution: {integrity: sha512-ToaeMtK5S4YaxCywAlYexc7KPFN0esjyTZ4vXzJhXEWAkro9iHgh7m/4ozPJb7oTo65WkHWX0W9GjcZbInSD8w==}
     engines: {node: '>=12'}
@@ -562,15 +562,16 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
 
-  '@tanstack/react-router@1.17.4':
-    resolution: {integrity: sha512-iW/TgJN/qZ+Ly73jDU3D2AuC3IlAHGx3ybXTvVuZ1hihsud7arEg7g83hsuU+xbkPcVWfly9ndTb1XKxrovw9w==}
+  '@tanstack/react-router-devtools@1.116.0':
+    resolution: {integrity: sha512-PsJZWPjcmwZGe71kUvH4bI1ozkv1FgBuBEE0hTYlTCSJ3uG+qv3ndGEI+AiFyuF5OStrbfg0otW1OxeNq5vdGQ==}
     engines: {node: '>=12'}
     peerDependencies:
-      react: '>=16'
-      react-dom: '>=16'
+      '@tanstack/react-router': ^1.116.0
+      react: '>=18.0.0 || >=19.0.0'
+      react-dom: '>=18.0.0 || >=19.0.0'
 
-  '@tanstack/react-router@1.20.4':
-    resolution: {integrity: sha512-sZ50qlSheTTa69jZMSzqrf1hvpbXi37jeCHLuj1+5WwJYmZaJynk9U7bB7vXTm4bkpQKC/L4eTx/DdIQ9yfIgQ==}
+  '@tanstack/react-router@1.17.4':
+    resolution: {integrity: sha512-iW/TgJN/qZ+Ly73jDU3D2AuC3IlAHGx3ybXTvVuZ1hihsud7arEg7g83hsuU+xbkPcVWfly9ndTb1XKxrovw9w==}
     engines: {node: '>=12'}
     peerDependencies:
       react: '>=16'
@@ -594,12 +595,21 @@ packages:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
-  '@tanstack/router-devtools@1.20.4':
-    resolution: {integrity: sha512-K2GFvAnr/4pM0s37Wds2/MP6bM8Fr1YY2cK2xMZdxgXhjIdKGNfi1fbddIhIriBUaeFHqr2DuqM8+vTtbJt/dw==}
+  '@tanstack/router-core@1.115.3':
+    resolution: {integrity: sha512-gynHs72LHVg05fuJTwZZYhDL4VNEAK0sXz7IqiBv7a3qsYeEmIZsGaFr9sVjTkuF1kbrFBdJd5JYutzBh9Uuhw==}
+    engines: {node: '>=12'}
+
+  '@tanstack/router-devtools-core@1.115.3':
+    resolution: {integrity: sha512-VBdgw1qxeOD/6FlZ9gitrWPUKGW83CuAW31gf32E0dxL7sIXP+yEFyPlNsVlENan1oSaEuV8tjKkuq5s4MfaPw==}
     engines: {node: '>=12'}
     peerDependencies:
-      react: '>=16'
-      react-dom: '>=16'
+      '@tanstack/router-core': ^1.115.3
+      csstype: ^3.0.10
+      solid-js: '>=1.9.5'
+      tiny-invariant: ^1.3.3
+    peerDependenciesMeta:
+      csstype:
+        optional: true
 
   '@tanstack/router-generator@1.20.0':
     resolution: {integrity: sha512-YkxVMi6q3K3V99Xo13dbP4fQDHxGUZi8Z5B7t4XZvwouAj7RDF8Tm8UcJVix8VLWaH4pt1idSXy185GWLTAiTw==}
@@ -855,8 +865,8 @@ packages:
     resolution: {integrity: sha512-7VT13fmjotKpGipCW9JEQAusEPE+Ei8nl6/g4FBAmIm0GOOLMua9NDDo/DWp0ZAxCr3cPq5ZpBqmPAQgDda2Pw==}
     engines: {node: '>= 8.10.0'}
 
-  clsx@2.1.0:
-    resolution: {integrity: sha512-m3iNNWpd9rl3jvvcBnu70ylMdrXt8Vlq4HYadnU5fwcOtvkSQWPmj7amUcDT2qYI7risszBjI5AUIUox9D16pg==}
+  clsx@2.1.1:
+    resolution: {integrity: sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==}
     engines: {node: '>=6'}
 
   color-convert@1.9.3:
@@ -905,10 +915,6 @@ packages:
   data-uri-to-buffer@3.0.1:
     resolution: {integrity: sha512-WboRycPNsVw3B3TL559F7kuBUM4d8CgMEvk6xEJlOp7OBPjt6G7z8WMWlD2rOFZLk6OYfFIUGsCOWzcQH9K2og==}
     engines: {node: '>= 6'}
-
-  date-fns@2.30.0:
-    resolution: {integrity: sha512-fnULvOpxnC5/Vg3NCiWelDsLiUc9bRwAPs/+LfTLNvetFCtCTN+yQz15C/fs4AwX1R9K5GLtLfn8QW+dWisaAw==}
-    engines: {node: '>=0.11'}
 
   debug@4.3.4:
     resolution: {integrity: sha512-PRWFHuSU3eDtQJPvnNY7Jcket1j0t5OuOsFzPPzsekD52Zl8qUfFIPEiswXqIvHWGVHOgX+7G/vCNNhehwxfkQ==}
@@ -1144,8 +1150,8 @@ packages:
     resolution: {integrity: sha512-jhIXaOzy1sb8IyocaruWSn1TjmnBVs8Ayhcy83rmxNJ8q2uWKCAj3CnJY+KpGSXCueAPc0i05kVvVKtP1t9S3g==}
     engines: {node: '>=10'}
 
-  goober@2.1.14:
-    resolution: {integrity: sha512-4UpC0NdGyAFqLNPnhCT2iHpza2q+RAY3GV85a/mRPdzyPQMsj0KmMMuetdIkzWRbJ+Hgau1EZztq8ImmiMGhsg==}
+  goober@2.1.16:
+    resolution: {integrity: sha512-erjk19y1U33+XAMe1VTvIONHYoSqE4iS7BYUZfHaqeohLmnC0FdxEh7rQU+6MZ4OajItzjZFSRtVANrQwNq6/g==}
     peerDependencies:
       csstype: ^3.0.10
 
@@ -1572,9 +1578,6 @@ packages:
     resolution: {integrity: sha512-hOS089on8RduqdbhvQ5Z37A0ESjsqz6qnRcffsMU3495FuTdqSm+7bhJ29JvIOsBDEEnan5DPu9t3To9VRlMzA==}
     engines: {node: '>=8.10.0'}
 
-  regenerator-runtime@0.14.1:
-    resolution: {integrity: sha512-dYnhHh0nJoMfnkZs6GmmhFknAGRrLznOu5nc9ML+EJxGvrx6H7teuevqVqCuPcPK//3eDrrjQhehXVx9cnkGdw==}
-
   resolve-from@4.0.0:
     resolution: {integrity: sha512-pb/MYmXstAkysRFx8piNI1tGFNQIFA3vkE3Gq4EuA1dF6gHp/+vgZqsCGJapvy8N3Q+4o7FwvquPJcnZ7RYy4g==}
     engines: {node: '>=4'}
@@ -1615,6 +1618,16 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
+  seroval-plugins@1.2.1:
+    resolution: {integrity: sha512-H5vs53+39+x4Udwp4J5rNZfgFuA+Lt+uU+09w1gYBVWomtAl98B+E9w7yC05Xc81/HgLvJdlyqJbU0fJCKCmdw==}
+    engines: {node: '>=10'}
+    peerDependencies:
+      seroval: ^1.0
+
+  seroval@1.2.1:
+    resolution: {integrity: sha512-yBxFFs3zmkvKNmR0pFSU//rIsYjuX418TnlDmc2weaq5XFDqDIV/NOMPBoLrbxjLH42p4UzRuXHryXh9dYcKcw==}
+    engines: {node: '>=10'}
+
   set-cookie-parser@2.7.1:
     resolution: {integrity: sha512-IOc8uWeOZgnb3ptbCURJWNjWUPcO3ZnTTdzsurqERrP6nPyv+paC55vJM0LpOlT2ne+Ix+9+CRG1MNLlyZ4GjQ==}
 
@@ -1637,6 +1650,9 @@ packages:
   slash@3.0.0:
     resolution: {integrity: sha512-g9Q1haeby36OSStwb4ntCGGGaKsaVSjQ68fBxoQcutl5fS1vuY18H3wSt3jFyFtrkx+Kz0V1G85A4MyAdDMi2Q==}
     engines: {node: '>=8'}
+
+  solid-js@1.9.5:
+    resolution: {integrity: sha512-ogI3DaFcyn6UhYhrgcyRAMbu/buBJitYQASZz5WzfQVPP10RD2AbCoRZ517psnezrasyCbWzIxZ6kVqet768xw==}
 
   source-map-js@1.0.2:
     resolution: {integrity: sha512-R0XvVJ9WusLiqTCEiGCmICCMplcCkIwwR11mOSD9CR5u+IXYdiseeEuXCVAjS54zqwkLcPNnmU4OeJ6tUrWhDw==}
@@ -1975,10 +1991,6 @@ snapshots:
       '@babel/core': 7.23.7
       '@babel/helper-plugin-utils': 7.22.5
 
-  '@babel/runtime@7.24.1':
-    dependencies:
-      regenerator-runtime: 0.14.1
-
   '@babel/template@7.22.15':
     dependencies:
       '@babel/code-frame': 7.23.5
@@ -2250,6 +2262,8 @@ snapshots:
     dependencies:
       '@tanstack/store': 0.7.0
 
+  '@tanstack/history@1.115.0': {}
+
   '@tanstack/history@1.15.13': {}
 
   '@tanstack/query-core@5.72.2': {}
@@ -2277,16 +2291,19 @@ snapshots:
       '@tanstack/ranger': 0.0.3
       react: 18.2.0
 
-  '@tanstack/react-router@1.17.4(react-dom@18.2.0(react@18.2.0))(react@18.2.0)':
+  '@tanstack/react-router-devtools@1.116.0(@tanstack/react-router@1.17.4(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(@tanstack/router-core@1.115.3)(csstype@3.1.3)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(tiny-invariant@1.3.3)':
     dependencies:
-      '@tanstack/history': 1.15.13
-      '@tanstack/react-store': 0.2.1(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+      '@tanstack/react-router': 1.17.4(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+      '@tanstack/router-devtools-core': 1.115.3(@tanstack/router-core@1.115.3)(csstype@3.1.3)(solid-js@1.9.5)(tiny-invariant@1.3.3)
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
-      tiny-invariant: 1.3.3
-      tiny-warning: 1.0.3
+      solid-js: 1.9.5
+    transitivePeerDependencies:
+      - '@tanstack/router-core'
+      - csstype
+      - tiny-invariant
 
-  '@tanstack/react-router@1.20.4(react-dom@18.2.0(react@18.2.0))(react@18.2.0)':
+  '@tanstack/react-router@1.17.4(react-dom@18.2.0(react@18.2.0))(react@18.2.0)':
     dependencies:
       '@tanstack/history': 1.15.13
       '@tanstack/react-store': 0.2.1(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
@@ -2315,16 +2332,21 @@ snapshots:
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
 
-  '@tanstack/router-devtools@1.20.4(csstype@3.1.3)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)':
+  '@tanstack/router-core@1.115.3':
     dependencies:
-      '@tanstack/react-router': 1.20.4(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
-      clsx: 2.1.0
-      date-fns: 2.30.0
-      goober: 2.1.14(csstype@3.1.3)
-      react: 18.2.0
-      react-dom: 18.2.0(react@18.2.0)
-    transitivePeerDependencies:
-      - csstype
+      '@tanstack/history': 1.115.0
+      '@tanstack/store': 0.7.0
+      tiny-invariant: 1.3.3
+
+  '@tanstack/router-devtools-core@1.115.3(@tanstack/router-core@1.115.3)(csstype@3.1.3)(solid-js@1.9.5)(tiny-invariant@1.3.3)':
+    dependencies:
+      '@tanstack/router-core': 1.115.3
+      clsx: 2.1.1
+      goober: 2.1.16(csstype@3.1.3)
+      solid-js: 1.9.5
+      tiny-invariant: 1.3.3
+    optionalDependencies:
+      csstype: 3.1.3
 
   '@tanstack/router-generator@1.20.0':
     dependencies:
@@ -2622,7 +2644,7 @@ snapshots:
     optionalDependencies:
       fsevents: 2.3.3
 
-  clsx@2.1.0: {}
+  clsx@2.1.1: {}
 
   color-convert@1.9.3:
     dependencies:
@@ -2657,10 +2679,6 @@ snapshots:
   csstype@3.1.3: {}
 
   data-uri-to-buffer@3.0.1: {}
-
-  date-fns@2.30.0:
-    dependencies:
-      '@babel/runtime': 7.24.1
 
   debug@4.3.4:
     dependencies:
@@ -2943,7 +2961,7 @@ snapshots:
       merge2: 1.4.1
       slash: 3.0.0
 
-  goober@2.1.14(csstype@3.1.3):
+  goober@2.1.16(csstype@3.1.3):
     dependencies:
       csstype: 3.1.3
 
@@ -3257,8 +3275,6 @@ snapshots:
     dependencies:
       picomatch: 2.3.1
 
-  regenerator-runtime@0.14.1: {}
-
   resolve-from@4.0.0: {}
 
   resolve@1.22.8:
@@ -3312,6 +3328,12 @@ snapshots:
     dependencies:
       lru-cache: 6.0.0
 
+  seroval-plugins@1.2.1(seroval@1.2.1):
+    dependencies:
+      seroval: 1.2.1
+
+  seroval@1.2.1: {}
+
   set-cookie-parser@2.7.1: {}
 
   set-function-length@1.2.2:
@@ -3332,6 +3354,12 @@ snapshots:
   signal-exit@4.1.0: {}
 
   slash@3.0.0: {}
+
+  solid-js@1.9.5:
+    dependencies:
+      csstype: 3.1.3
+      seroval: 1.2.1
+      seroval-plugins: 1.2.1(seroval@1.2.1)
 
   source-map-js@1.0.2: {}
 

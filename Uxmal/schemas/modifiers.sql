@@ -82,7 +82,7 @@
      '',
      TRUE, 
      'https://www.poe2wiki.net/images/e/e6/Heart_Tethers_Ultimatum.png'),
-    (12, 'Impending Doom', 2, TRUE, False, False, 
+    (12, 'Impending Doom', 2, TRUE, TRUE, False, 
      'Rings of Doom appear on the ground which grow over time, exploding for Physical damage once they reach a maximum area', 
      'Rings and circles of Doom appear on the ground which grow over time, exploding for Physical damage once they reach a maximum area', 
      '',

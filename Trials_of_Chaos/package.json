@@ -6,10 +6,12 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "start": "vite --mode production",
+    "dev": "vite --mode development",
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "docker:start": "pnpm run build && pnpm run start"
   },
   "dependencies": {
     "@sinclair/typebox": "^0.34.33",
@@ -18,12 +20,12 @@
     "@tanstack/react-ranger": "^0.0.4",
     "@tanstack/react-router": "^1.17.4",
     "@tanstack/react-virtual": "^3.13.6",
-    "@tanstack/router-devtools": "^1.20.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "vite-plugin-env-compatible": "^2.0.1"
   },
   "devDependencies": {
+    "@tanstack/react-router-devtools": "^1.116.0",
     "@tanstack/router-vite-plugin": "^1.20.2",
     "@types/node": "^22.14.1",
     "@types/react": "^18.2.43",

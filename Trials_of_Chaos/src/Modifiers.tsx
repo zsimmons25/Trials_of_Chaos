@@ -56,9 +56,10 @@ function Modifiers() {
   if (isError) {
     return <div>Error loading modifiers.</div>;
   }
+  const marker = <img className='h-8 w-4' src={red_marker} alt='rm' />;
   return (
     <div className='h-screen w-screen bg-neutral-900 text-center text-neutral-300'>
-      <div className='relative mt-8 flex w-full flex-wrap items-center justify-center'>
+      <div className='relative mt-8 flex w-screen flex-wrap items-center justify-center'>
         {modifiers
           .filter((modifier) => modifier.active)
           .map((modifier) => (
@@ -70,20 +71,12 @@ function Modifiers() {
                 <img src={modifier.imgurl} />
               </div>
               <div className='flex h-16 w-60 items-center justify-center border-x border-black bg-blood'>
-                <img
-                  className='ml-1'
-                  src={modifiers_header_left}
-                  alt='Modifier Header Left'
-                />
-                <img src={modifiers_header} alt='Modifier Header' />
+                <img className='ml-1' src={modifiers_header_left} alt='mhl' />
+                <img src={modifiers_header} alt='mh' />
                 <h1 className='absolute text-center text-gold'>
                   {modifier.name}
                 </h1>
-                <img
-                  className='mr-1'
-                  src={modifiers_header_right}
-                  alt='Modifier Header Right'
-                />
+                <img className='mr-1' src={modifiers_header_right} alt='mhr' />
               </div>
               <div className='flex h-32 w-60 flex-col items-center justify-center bg-black bg-opacity-75'>
                 <p className='flex h-32 items-center'>
@@ -97,47 +90,23 @@ function Modifiers() {
                       className='hover:bg-gold/80 flex h-10 w-full items-center justify-center rounded-lg bg-opacity-90'
                       onClick={() => handleStageSelect(modifier.id, 1)}
                     >
-                      <img
-                        className='h-8 w-4'
-                        src={red_marker}
-                        alt='red_marker'
-                      />
+                      {marker}
                     </button>
                     <button
                       className='hover:bg-gold/80 flex h-10 w-full items-center justify-center rounded-lg bg-opacity-90'
                       onClick={() => handleStageSelect(modifier.id, 2)}
                     >
-                      <img
-                        className='h-8 w-4'
-                        src={red_marker}
-                        alt='red_marker'
-                      />
-                      <img
-                        className='h-8 w-4'
-                        src={red_marker}
-                        alt='red_marker'
-                      />
+                      {marker}
+                      {marker}
                     </button>
                     {modifier.stages > 2 && modifier.stage3 != false && (
                       <button
                         className='hover:bg-gold/80 flex h-10 w-full items-center justify-center rounded-lg bg-opacity-90'
                         onClick={() => handleStageSelect(modifier.id, 3)}
                       >
-                        <img
-                          className='h-8 w-4'
-                          src={red_marker}
-                          alt='red_marker'
-                        />
-                        <img
-                          className='h-8 w-4'
-                          src={red_marker}
-                          alt='red_marker'
-                        />
-                        <img
-                          className='h-8 w-4'
-                          src={red_marker}
-                          alt='red_marker'
-                        />
+                        {marker}
+                        {marker}
+                        {marker}
                       </button>
                     )}
                   </div>

@@ -3,7 +3,7 @@ config({ path: 'express/.env' });
 import mysql from 'mysql2';
 import { Value } from '@sinclair/typebox/value';
 import { TypedRequest, TypedResponse } from "express-typed";
-import { ModifiersData } from '../types/modifier.ts';
+import { ModifiersData } from '../types/modifier.js';
 
 export function getModifiers(req: TypedRequest, res: TypedResponse) {   
     const connection = mysql.createConnection({
@@ -14,7 +14,6 @@ export function getModifiers(req: TypedRequest, res: TypedResponse) {
         port: Number(process.env.MYSQL_PORT),
         multipleStatements: true,
     });
-
     connection.connect((err) => {
         if (err) {
             console.error('Error connecting to the database:', err);

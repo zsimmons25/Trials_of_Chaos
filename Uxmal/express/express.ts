@@ -2,8 +2,8 @@ import { config } from 'dotenv';
 config({ path: 'express/.env' });
 import express from 'express';
 import cors from 'cors';
-import modifiersRouter from './routes/modifiers.ts';
-import affixesRouter from './routes/affixes.ts';
+import modifiersRouter from './routes/modifiers.js';
+import affixesRouter from './routes/affixes.js';
 
 const app = express();
 

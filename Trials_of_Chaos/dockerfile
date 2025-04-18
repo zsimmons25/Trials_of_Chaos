@@ -1,0 +1,14 @@
+FROM node:20-slim AS builder
+RUN npm install -g pnpm
+WORKDIR /Trials_of_Chaos
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install
+COPY . .
+ARG VITE_UXMAL=/api
+ENV VITE_UXMAL=${VITE_UXMAL}
+RUN pnpm build
+FROM nginx:alpine-otel
+COPY --from=builder /Trials_of_Chaos/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

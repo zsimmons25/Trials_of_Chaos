@@ -1,5 +1,5 @@
 import { TypedRouter, ParseRoutes, TypedResponse, TypedRequest } from 'express-typed';
-import { getModifiers } from '../handlers/modifiers.ts';
+import { getModifiers } from '../handlers/modifiers.js';
 
 const affixesRouter = new TypedRouter({
     "/affixes": {

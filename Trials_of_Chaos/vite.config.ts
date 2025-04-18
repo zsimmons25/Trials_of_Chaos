@@ -6,10 +6,13 @@ import { TanStackRouterVite } from '@tanstack/router-vite-plugin';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  plugins: [react(), mode === 'development' ? TanStackRouterVite() : null,].filter(Boolean),
+  plugins: [
+    react(),
+    mode === 'development' ? TanStackRouterVite() : null,
+  ].filter(Boolean),
   define: { 'process.env': process.env },
   server: {
-    host: '0.0.0.0',
+    host: 'localhost',
     port: 5173,
     watch: {
       usePolling: true,

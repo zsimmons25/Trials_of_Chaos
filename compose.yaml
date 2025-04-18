@@ -28,11 +28,11 @@ services:
     restart: unless-stopped
     environment:
       - MYSQL_HOST=mysql
-      - MYSQL_USER=root
-      - MYSQL_PASSWORD=rootpassword
-      - MYSQL_PORT=3306
+      - MYSQL_USER=
+      - MYSQL_PASSWORD=
+      - MYSQL_PORT=
       - port_=3500
-      - CORS_ORIGIN=http://localhost
+      - CORS_ORIGIN=http://frontend
 
   mysql:
     image: mysql:8
@@ -43,7 +43,7 @@ services:
       - app-network
     restart: unless-stopped
     environment:
-      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_ROOT_PASSWORD=
       - MYSQL_DATABASE=modifiers
     ports:
       - "3307:3306"

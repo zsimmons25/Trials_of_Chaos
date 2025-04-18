@@ -8,9 +8,7 @@ version: '3.8'
 services:
   backend:
     environment:
-      - MYSQL_USER=
       - MYSQL_PASSWORD=
-      - MYSQL_PORT=
 
   mysql:
     environment:

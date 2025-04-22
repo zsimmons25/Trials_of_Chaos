@@ -41,7 +41,7 @@ services:
       - MYSQL_HOST=mysql
       - MYSQL_PORT=3306
       - port_=3500
-      - CORS_ORIGIN=http://localhost:5173,http://localhost:5174,http://127.0.0.1:5173
+      - CORS_ORIGIN=http://localhost:5173,http://localhost:5174,http://127.0.0.1:5173,http://localhost
 
   mysql:
     image: mysql:8

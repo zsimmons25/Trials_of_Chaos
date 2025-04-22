@@ -17,6 +17,7 @@ package-lock.json
 dist
 .vscode
 .DS_Store
+.pnpm-store*
 
 
 # Editor directories and files

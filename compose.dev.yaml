@@ -5,17 +5,22 @@ services:
     build: 
       context: ./Trials_of_Chaos
       dockerfile: dockerfile
-      args:
-        - VITE_UXMAL=/api
-      target: production
+      target: dev
     ports:
-      - "80:80"
-    image: trials-of-chaos-frontend
+      - "127.0.0.1:5173:5173"
+    volumes:
+      - ./:/workspace:cached
+      - ./Trials_of_Chaos/node_modules:/workspace/Trials_of_Chaos/node_modules
+      - ./Trials_of_Chaos:/Trials_of_Chaos:cached
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    tty: true
+    stdin_open: true
+    image: trials-of-chaos-frontend-dev
     networks:
       - chaos-network
     depends_on:
       - backend
-    restart: unless-stopped
 
   backend:
     build:
@@ -23,17 +28,21 @@ services:
     image: trials-of-chaos-backend
     ports:
       - "3500:3500"
+    volumes:
+      - ./Uxmal:/workspace/Uxmal:cached
+      - /workspace/Uxmal/node_modules
     networks:
       - chaos-network
     depends_on:
       - mysql
-    restart: unless-stopped
     environment:
       - MYSQL_USER=root
+      - MYSQL_PASSWORD=rootpassword
       - MYSQL_HOST=mysql
       - MYSQL_PORT=3306
       - port_=3500
-      - CORS_ORIGIN=http://frontend
+      - CORS_ORIGIN=http://localhost:5173,http://localhost:5174,http://127.0.0.1:5173
+
 
   mysql:
     image: mysql:8
@@ -42,9 +51,9 @@ services:
       - ./Uxmal/schemas/modifiers.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - chaos-network
-    restart: unless-stopped
     environment:
       - MYSQL_DATABASE=modifiers
+      - MYSQL_ROOT_PASSWORD=rootpassword
     ports:
       - "3307:3306"
 

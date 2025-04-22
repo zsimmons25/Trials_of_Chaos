@@ -10,7 +10,7 @@ const app = express();
 const PORT = `${process.env.port_}`;
 
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN
+  origin: process.env.CORS_ORIGIN?.split(',') || []
 };
 app.use(cors(corsOptions));
 

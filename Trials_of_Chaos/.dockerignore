@@ -7,8 +7,8 @@ tests
 .gitattributes
 .eslintrc*
 .prettierignore
-prettier.config.js
 *.env
 *.log
 *.DS_Store
+.pnpm-store*
 *.vscode

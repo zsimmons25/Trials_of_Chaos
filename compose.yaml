@@ -7,14 +7,15 @@ services:
       dockerfile: dockerfile
       args:
         - VITE_UXMAL=/api
-      target: production
+      target: nginx
     ports:
       - "80:80"
     image: trials-of-chaos-frontend
     networks:
       - chaos-network
     depends_on:
-      - backend
+      backend:
+        condition: service_started
     restart: unless-stopped
 
   backend:

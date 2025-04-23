@@ -25,7 +25,7 @@ docker compose build
 docker compose up
 ```
 
-Alternatively run the modifiers.sql schema with your mysql service then open 2 terminals for frontend and backend, enter each directory and run:
+Alternatively run the modifiers.sql schema with your mysql service, install nginx, then open 2 terminals for frontend and backend, enter each directory and run:
 
 ```
 pnpm install && pnpm docker:start

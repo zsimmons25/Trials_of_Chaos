@@ -23,6 +23,7 @@
     "@tanstack/react-virtual": "^3.13.6",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-error-boundary": "^5.0.0",
     "vite-plugin-env-compatible": "^2.0.1"
   },
   "devDependencies": {

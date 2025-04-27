@@ -2,31 +2,18 @@ import modifiers_header_left from '/modifier_header_left.png';
 import modifiers_header from '/modifier_header.png';
 import modifiers_header_right from '/modifier_header_right.png';
 import red_marker from '/marker_red_.png';
-import { Modifier, ModifiersData } from './types/modifier';
-import { Value } from '@sinclair/typebox/value';
-import { useQuery } from '@tanstack/react-query';
+import { Modifier } from './types/modifier';
+import { modifierqfn } from './handlers/modifiersquery';
+import { useSuspenseQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
 function Modifiers() {
-  const {
-    data: modifiers = [],
-    isLoading,
-    isError,
-  } = useQuery<Modifier[]>({
+  const { data: modifiers = [], isError } = useSuspenseQuery<Modifier[]>({
     queryKey: ['modifiers'],
-    queryFn: async () => {
-      const response = await fetch(import.meta.env.VITE_UXMAL + '/modifiers');
-      const res = await response.json();
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      } else if (!Value.Check(ModifiersData, res)) {
-        console.log('Response:', res);
-        console.error('Validation error:', Value.Errors(ModifiersData, res));
-        throw new Error('Validation error');
-      }
-      console.log('Validation successful!');
-      return res;
-    },
+    queryFn: modifierqfn,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   });
   const [selectedStages, setSelectedStages] = useState<Record<string, number>>(
     {}
@@ -50,9 +37,6 @@ function Modifiers() {
         return modifier.description1;
     }
   };
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
   if (isError) {
     return <div>Error loading modifiers.</div>;
   }

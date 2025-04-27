@@ -1,12 +1,16 @@
-import { createFileRoute } from '@tanstack/react-router';
 import Modifiers from '../Modifiers';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-const modifierClient = new QueryClient();
+import { modifierqfn } from '../handlers/modifiersquery';
+import { createFileRoute } from '@tanstack/react-router';
+import { queryClient } from '..//main';
+
+const loader = async () => {
+  await queryClient.ensureQueryData({
+    queryKey: ['modifiers'],
+    queryFn: modifierqfn,
+  });
+};
 
 export const Route = createFileRoute('/modifiers')({
-  component: () => (
-    <QueryClientProvider client={modifierClient}>
-      <Modifiers />
-    </QueryClientProvider>
-  ),
+  component: Modifiers,
+  loader,
 });

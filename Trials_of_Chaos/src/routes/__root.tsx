@@ -1,23 +1,39 @@
 import { createRootRoute, Link, Outlet } from '@tanstack/react-router';
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
 
-export const Route = createRootRoute({
-  component: () => (
+function RootComponent() {
+  return (
     <>
       <div className='flex gap-2 bg-neutral-800 p-2 text-slate-300'>
         <Link to='/' className='[&.active]:font-bold'>
           Home
         </Link>
-        <Link to='/modifiers' className='[&.active]:font-bold'>
+        <Link
+          to='/modifiers'
+          preload='intent'
+          className='hover:text-gold [&.active]:font-bold'
+        >
           Modifers
         </Link>
-        <Link to='/monsters' className='[&.active]:font-bold'>
+        <Link
+          to='/monsters'
+          preload='intent'
+          className='hover:text-gold [&.active]:font-bold'
+        >
           Monsters
         </Link>
-        <Link to='/rooms' className='[&.active]:font-bold'>
+        <Link
+          to='/rooms'
+          preload='intent'
+          className='hover:text-gold [&.active]:font-bold'
+        >
           Rooms
         </Link>
-        <Link to='/rewards' className='[&.active]:font-bold'>
+        <Link
+          to='/rewards'
+          preload='intent'
+          className='hover:text-gold [&.active]:font-bold'
+        >
           Rewards
         </Link>
       </div>
@@ -25,5 +41,9 @@ export const Route = createRootRoute({
       <Outlet />
       {import.meta.env.MODE != 'production' && <TanStackRouterDevtools />}
     </>
-  ),
+  );
+}
+
+export const Route = createRootRoute({
+  component: RootComponent,
 });

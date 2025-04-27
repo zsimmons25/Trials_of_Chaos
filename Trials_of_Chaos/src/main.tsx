@@ -1,28 +1,37 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
+import { Suspense } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
 import { RouterProvider, createRouter } from '@tanstack/react-router';
-
-// Import the generated route tree
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { routeTree } from './routeTree.gen.ts';
 
-// Create a new router instance
-const router = createRouter({ routeTree });
+export const queryClient = new QueryClient();
+const router = createRouter({
+  routeTree,
+  context: { queryClient },
+  defaultPreloadDelay: 250,
+});
 
-// Register the router instance for type safety
 declare module '@tanstack/react-router' {
   interface Register {
     router: typeof router;
   }
 }
 
-// Render the app
 const rootElement = document.getElementById('root')!;
 if (!rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement);
   root.render(
     <React.StrictMode>
-      <RouterProvider router={router} />
+      <ErrorBoundary fallback={<div>Error encountered</div>}>
+        <QueryClientProvider client={queryClient}>
+          <Suspense fallback={<div>Loading...</div>}>
+            <RouterProvider router={router} />
+          </Suspense>
+        </QueryClientProvider>
+      </ErrorBoundary>
     </React.StrictMode>
   );
 }

@@ -5,7 +5,7 @@ function RootComponent() {
   return (
     <>
       <div className='flex gap-2 bg-neutral-800 p-2 text-slate-300'>
-        <Link to='/' className='[&.active]:font-bold'>
+        <Link to='/' className='hover:text-gold [&.active]:font-bold'>
           Home
         </Link>
         <Link

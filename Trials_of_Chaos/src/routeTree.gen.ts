@@ -17,6 +17,7 @@ import { Route as RoomsImport } from './routes/rooms'
 import { Route as RewardsImport } from './routes/rewards'
 import { Route as MonstersImport } from './routes/monsters'
 import { Route as ModifiersImport } from './routes/modifiers'
+import { Route as ModifiersGameImport } from './routes/modifiers.game'
 
 // Create Virtual Routes
 
@@ -49,6 +50,11 @@ const IndexLazyRoute = IndexLazyImport.update({
   getParentRoute: () => rootRoute,
 } as any).lazy(() => import('./routes/index.lazy').then((d) => d.Route))
 
+const ModifiersGameRoute = ModifiersGameImport.update({
+  path: '/game',
+  getParentRoute: () => ModifiersRoute,
+} as any)
+
 // Populate the FileRoutesByPath interface
 
 declare module '@tanstack/react-router' {
@@ -73,6 +79,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RoomsImport
       parentRoute: typeof rootRoute
     }
+    '/modifiers/game': {
+      preLoaderRoute: typeof ModifiersGameImport
+      parentRoute: typeof ModifiersImport
+    }
   }
 }
 
@@ -80,7 +90,7 @@ declare module '@tanstack/react-router' {
 
 export const routeTree = rootRoute.addChildren([
   IndexLazyRoute,
-  ModifiersRoute,
+  ModifiersRoute.addChildren([ModifiersGameRoute]),
   MonstersRoute,
   RewardsRoute,
   RoomsRoute,

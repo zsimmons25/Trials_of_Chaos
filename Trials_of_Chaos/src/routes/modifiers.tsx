@@ -25,9 +25,9 @@ function ModifiersLayout() {
           <div className='pt-4 text-center'>
             <Link
               to='/modifiers/game'
-              className='hover:bg-gold/80 rounded-lg bg-gold px-6 py-3 text-xl text-black transition-colors'
+              className='rounded-lg bg-red-700 px-6 py-3 text-xl text-black transition-colors hover:bg-red-500/80'
             >
-              Start Trial
+              Begin Trial
             </Link>
           </div>
           <Modifiers />

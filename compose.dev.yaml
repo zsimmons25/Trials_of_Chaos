@@ -47,11 +47,11 @@ services:
     image: mysql:8
     volumes:
       - mysql-data:/var/lib/mysql
-      - ./Uxmal/schemas/modifiers.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./Uxmal/schemas/modifiers.sql:/docker-entrypoint-initdb.d/01-init-modifiers.sql
+      - ./Uxmal/schemas/monsters.sql:/docker-entrypoint-initdb.d/02-init-monsters.sql
     networks:
       - chaos-network
     environment:
-      - MYSQL_DATABASE=modifiers
       - MYSQL_ROOT_PASSWORD=rootpassword
     ports:
       - "3307:3306"

@@ -42,20 +42,21 @@ export const DEFAULT_SETTINGS: Record<number, number> = {
   15: 9, // Monster Speed
   16: 10, // Occasional Impotence
   17: 10, // Petrification Statues
-  18: 10, // Random Projectiles
-  19: 6, // Reduced Recovery
-  20: 9, // Reduced Resistances
-  21: 5, // Resistant Monsters
-  22: 3, // Shielding Monsters
-  23: 2, // Shocking Turrets
-  24: 1, // Stalking Shade
-  25: 4, // Stormcaller Runes
-  26: 10, // Temple Traps
-  27: 5, // Time Paradox
-  28: 6, // Toxic Monsters
-  29: 6, // Unstoppable Monsters
-  30: 9, // Vaal Omnitect
-  31: 10, // Volatile Fiends
+  18: 8, // Pyramid Beams
+  19: 10, // Random Projectiles
+  20: 6, // Reduced Recovery
+  21: 9, // Reduced Resistances
+  22: 5, // Resistant Monsters
+  23: 3, // Shielding Monsters
+  24: 2, // Shocking Turrets
+  25: 1, // Stalking Shade
+  26: 4, // Stormcaller Runes
+  27: 10, // Temple Traps
+  28: 5, // Time Paradox
+  29: 6, // Toxic Monsters
+  30: 6, // Unstoppable Monsters
+  31: 9, // Vaal Omnitect
+  32: 10, // Volatile Fiends
 };
 
 interface SettingsProps {

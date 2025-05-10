@@ -43,13 +43,13 @@ function Modifiers() {
   const marker = <img className='h-8 w-4' src={red_marker} alt='rm' />;
   return (
     <div className='h-screen w-screen bg-neutral-900 text-center text-neutral-300'>
-      <div className='relative mt-8 flex w-screen flex-wrap items-center justify-center'>
+      <div className='@container/modifiers relative mt-8 flex w-screen flex-wrap items-center justify-center'>
         {modifiers
           .filter((modifier) => modifier.active)
           .map((modifier) => (
             <div
               key={modifier.id}
-              className={`mx-2 my-8 flex h-64 w-60 flex-col items-center justify-center rounded-lg`}
+              className={`@[512px]/modifiers:h-64 mx-2 my-8 flex h-60 w-60 flex-col items-center justify-center rounded-lg`}
             >
               <div className='flex flex-col items-center justify-center'>
                 <img src={modifier.imgurl} />
@@ -71,13 +71,13 @@ function Modifiers() {
                 {modifier.stages > 1 && modifier.stage2 != false && (
                   <div className='flex h-10 w-full items-center justify-between'>
                     <button
-                      className='hover:bg-gold/80 flex h-10 w-full items-center justify-center rounded-lg bg-opacity-90'
+                      className='flex h-10 w-full items-center justify-center rounded-lg bg-opacity-90'
                       onClick={() => handleStageSelect(modifier.id, 1)}
                     >
                       {marker}
                     </button>
                     <button
-                      className='hover:bg-gold/80 flex h-10 w-full items-center justify-center rounded-lg bg-opacity-90'
+                      className='flex h-10 w-full items-center justify-center rounded-lg bg-opacity-90'
                       onClick={() => handleStageSelect(modifier.id, 2)}
                     >
                       {marker}
@@ -85,7 +85,7 @@ function Modifiers() {
                     </button>
                     {modifier.stages > 2 && modifier.stage3 != false && (
                       <button
-                        className='hover:bg-gold/80 flex h-10 w-full items-center justify-center rounded-lg bg-opacity-90'
+                        className='flex h-10 w-full items-center justify-center rounded-lg bg-opacity-90'
                         onClick={() => handleStageSelect(modifier.id, 3)}
                       >
                         {marker}

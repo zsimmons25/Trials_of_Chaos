@@ -1,4 +1,5 @@
 .devcontainer
 .vscode*
 .pnpm*
+.DS_Store
 compose.override.yaml

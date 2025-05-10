@@ -1,3 +1,5 @@
+import containerQueries from '@tailwindcss/container-queries'
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
@@ -12,6 +14,5 @@ export default {
       },
     },
   },
-  plugins: [
-  ],
+  plugins: [containerQueries],
 }

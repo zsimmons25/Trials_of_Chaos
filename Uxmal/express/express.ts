@@ -3,7 +3,7 @@ config({ path: 'express/.env' });
 import express from 'express';
 import cors from 'cors';
 import modifiersRouter from './routes/modifiers.js';
-import affixesRouter from './routes/affixes.js';
+import monstersRouter from './routes/monsters.js';
 
 const app = express();
 
@@ -15,7 +15,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 app.use(modifiersRouter.router);
-app.use(affixesRouter.router);
+app.use(monstersRouter.router);
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

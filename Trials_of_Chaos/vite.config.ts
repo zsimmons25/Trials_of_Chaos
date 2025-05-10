@@ -25,13 +25,13 @@ export default defineConfig(({ mode }) => ({
   },
   optimizeDeps: {
     include: [
-      'react', 
-      'react-dom', 
-      '@tanstack/react-query', 
-      '@sinclair/typebox/value'
+      'react',
+      'react-dom',
+      '@tanstack/react-query',
+      '@sinclair/typebox/value',
     ],
   },
   build: {
     sourcemap: mode === 'development',
-  }
+  },
 }));

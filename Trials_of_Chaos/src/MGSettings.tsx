@@ -261,7 +261,7 @@ function MGSettings({
                       >
                         {orderMatters && (
                           <span className='absolute -right-1 -top-1 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-gold text-xs font-bold text-black'>
-                            {index}
+                            {index + 1}
                           </span>
                         )}
                         <div className='flex h-8 w-full items-center justify-center border-b border-neutral-700 bg-blood'>

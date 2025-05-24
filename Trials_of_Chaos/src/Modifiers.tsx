@@ -43,13 +43,13 @@ function Modifiers() {
   const marker = <img className='h-8 w-4' src={red_marker} alt='rm' />;
   return (
     <div className='h-screen w-screen bg-neutral-900 text-center text-neutral-300'>
-      <div className='@container/modifiers relative mt-8 flex w-screen flex-wrap items-center justify-center'>
+      <div className='relative mt-8 flex w-screen flex-wrap items-center justify-center @container/modifiers'>
         {modifiers
           .filter((modifier) => modifier.active)
           .map((modifier) => (
             <div
               key={modifier.id}
-              className={`@[512px]/modifiers:h-64 mx-2 my-8 flex h-60 w-60 flex-col items-center justify-center rounded-lg`}
+              className={`mx-2 my-8 flex h-60 w-60 flex-col items-center justify-center rounded-lg @[512px]/modifiers:h-64`}
             >
               <div className='flex flex-col items-center justify-center'>
                 <img src={modifier.imgurl} />

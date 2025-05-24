@@ -13,10 +13,14 @@ import { createFileRoute } from '@tanstack/react-router'
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as SanityImport } from './routes/sanity'
 import { Route as RoomsImport } from './routes/rooms'
 import { Route as RewardsImport } from './routes/rewards'
 import { Route as MonstersImport } from './routes/monsters'
 import { Route as ModifiersImport } from './routes/modifiers'
+import { Route as CraftingImport } from './routes/crafting'
+import { Route as CorruptionImport } from './routes/corruption'
+import { Route as ChronicleImport } from './routes/chronicle'
 import { Route as ModifiersGameImport } from './routes/modifiers.game'
 
 // Create Virtual Routes
@@ -24,6 +28,11 @@ import { Route as ModifiersGameImport } from './routes/modifiers.game'
 const IndexLazyImport = createFileRoute('/')()
 
 // Create/Update Routes
+
+const SanityRoute = SanityImport.update({
+  path: '/sanity',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const RoomsRoute = RoomsImport.update({
   path: '/rooms',
@@ -45,6 +54,21 @@ const ModifiersRoute = ModifiersImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
+const CraftingRoute = CraftingImport.update({
+  path: '/crafting',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const CorruptionRoute = CorruptionImport.update({
+  path: '/corruption',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const ChronicleRoute = ChronicleImport.update({
+  path: '/chronicle',
+  getParentRoute: () => rootRoute,
+} as any)
+
 const IndexLazyRoute = IndexLazyImport.update({
   path: '/',
   getParentRoute: () => rootRoute,
@@ -63,6 +87,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexLazyImport
       parentRoute: typeof rootRoute
     }
+    '/chronicle': {
+      preLoaderRoute: typeof ChronicleImport
+      parentRoute: typeof rootRoute
+    }
+    '/corruption': {
+      preLoaderRoute: typeof CorruptionImport
+      parentRoute: typeof rootRoute
+    }
+    '/crafting': {
+      preLoaderRoute: typeof CraftingImport
+      parentRoute: typeof rootRoute
+    }
     '/modifiers': {
       preLoaderRoute: typeof ModifiersImport
       parentRoute: typeof rootRoute
@@ -79,6 +115,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RoomsImport
       parentRoute: typeof rootRoute
     }
+    '/sanity': {
+      preLoaderRoute: typeof SanityImport
+      parentRoute: typeof rootRoute
+    }
     '/modifiers/game': {
       preLoaderRoute: typeof ModifiersGameImport
       parentRoute: typeof ModifiersImport
@@ -90,10 +130,14 @@ declare module '@tanstack/react-router' {
 
 export const routeTree = rootRoute.addChildren([
   IndexLazyRoute,
+  ChronicleRoute,
+  CorruptionRoute,
+  CraftingRoute,
   ModifiersRoute.addChildren([ModifiersGameRoute]),
   MonstersRoute,
   RewardsRoute,
   RoomsRoute,
+  SanityRoute,
 ])
 
 /* prettier-ignore-end */

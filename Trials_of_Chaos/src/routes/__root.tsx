@@ -6,7 +6,7 @@ function RootComponent() {
     <>
       <div className='flex gap-2 bg-neutral-800 p-2 text-slate-300'>
         <Link to='/' className='hover:text-gold [&.active]:font-bold'>
-          Home
+          Intro
         </Link>
         <Link
           to='/modifiers'
@@ -35,6 +35,34 @@ function RootComponent() {
           className='hover:text-gold [&.active]:font-bold'
         >
           Rewards
+        </Link>
+        <Link
+          to='/corruption'
+          preload='intent'
+          className='hover:text-gold [&.active]:font-bold'
+        >
+          Corruption
+        </Link>
+        <Link
+          to='/crafting'
+          preload='intent'
+          className='hover:text-gold [&.active]:font-bold'
+        >
+          Crafting
+        </Link>
+        <Link
+          to='/chronicle'
+          preload='intent'
+          className='hover:text-gold [&.active]:font-bold'
+        >
+          Chronicle
+        </Link>
+        <Link
+          to='/sanity'
+          preload='intent'
+          className='hover:text-gold [&.active]:font-bold'
+        >
+          Sanity
         </Link>
       </div>
       <hr />

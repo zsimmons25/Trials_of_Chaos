@@ -259,7 +259,7 @@ function ModifierGame(): JSX.Element {
       <div className='flex h-screen w-screen flex-col items-center justify-center bg-neutral-900 text-neutral-300'>
         <div className='rounded-lg bg-black bg-opacity-75 p-8 text-center'>
           <h1 className='mb-6 text-4xl font-bold text-gold'>
-            Your trial has concluded!
+            Your trial has ended!
           </h1>
           <p className='mb-4 text-2xl'>Your final score: {score} out of 10</p>
           <p className='mb-8 text-xl'>

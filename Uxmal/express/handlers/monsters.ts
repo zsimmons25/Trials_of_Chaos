@@ -52,8 +52,8 @@ export async function getMonsters(
     if (connection) {
       try {
         await connection.end();
-      } catch (e) {
-        console.error('Error disconnecting:', e);
+      } catch (err) {
+        console.error('Error disconnecting:', err);
       }
     }
   }

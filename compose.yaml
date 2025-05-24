@@ -42,6 +42,8 @@ services:
       - mysql-data:/var/lib/mysql
       - ./Uxmal/schemas/modifiers.sql:/docker-entrypoint-initdb.d/01-init-modifiers.sql
       - ./Uxmal/schemas/monsters.sql:/docker-entrypoint-initdb.d/02-init-monsters.sql
+      - ./Uxmal/schemas/affixes.sql:/docker-entrypoint-initdb.d/03-init-affixes.sql
+      - ./Uxmal/schemas/items.sql:/docker-entrypoint-initdb.d/04-init-items.sql
     networks:
       - chaos-network
     restart: unless-stopped

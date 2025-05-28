@@ -258,7 +258,7 @@ function Rewards() {
                 src='https://www.poe2wiki.net/images/thumb/5/5b/The_Adorned_inventory_icon.png/78px-The_Adorned_inventory_icon.png'
                 alt='The Adorned'
               />
-              <div className='font-Insmallcaps pointer-events-none absolute left-1/2 top-full z-10 w-96 -translate-x-1/2 transform border border-amber-700 bg-black text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
+              <div className='pointer-events-none absolute left-1/2 top-full z-10 w-96 -translate-x-1/2 transform border border-amber-700 bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
                 <div className='relative mb-1 flex h-16 w-full items-center justify-center'>
                   {uhl}
                   {uhm}
@@ -300,7 +300,7 @@ function Rewards() {
                 src='https://www.poe2wiki.net/images/thumb/4/47/Mahuxotl%27s_Machination_inventory_icon.png/156px-Mahuxotl%27s_Machination_inventory_icon.png'
                 alt='Mahuxotls Machination'
               />
-              <div className='font-Insmallcaps pointer-events-none absolute left-1/2 top-full z-10 w-96 -translate-x-1/2 transform border border-amber-700 bg-black text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
+              <div className='pointer-events-none absolute left-1/2 top-full z-10 w-96 -translate-x-1/2 transform border border-amber-700 bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
                 <div className='relative mb-1 flex h-16 w-full items-center justify-center'>
                   {uhl}
                   {uhm}
@@ -358,7 +358,7 @@ function Rewards() {
                 src='https://www.poe2wiki.net/images/thumb/0/0a/Glimpse_of_Chaos_inventory_icon.png/156px-Glimpse_of_Chaos_inventory_icon.png'
                 alt='Glimpse of Chaos'
               />
-              <div className='font-Insmallcaps pointer-events-none absolute left-1/2 top-full z-10 w-96 -translate-x-1/2 transform border border-amber-700 bg-black text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
+              <div className='pointer-events-none absolute left-1/2 top-full z-10 w-96 -translate-x-1/2 transform border border-amber-700 bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
                 <div className='relative mb-1 flex h-16 w-full items-center justify-center'>
                   {uhl}
                   {uhm}
@@ -411,7 +411,7 @@ function Rewards() {
                 src='https://www.poe2wiki.net/images/thumb/e/e0/Hateforge_inventory_icon.png/156px-Hateforge_inventory_icon.png'
                 alt='Hateforge'
               />
-              <div className='font-Insmallcaps pointer-events-none absolute left-1/2 top-full z-10 w-96 -translate-x-1/2 transform border border-amber-700 bg-black text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
+              <div className='pointer-events-none absolute left-1/2 top-full z-10 w-96 -translate-x-1/2 transform border border-amber-700 bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
                 <div className='relative mb-1 flex h-16 w-full items-center justify-center'>
                   {uhl}
                   {uhm}
@@ -455,7 +455,7 @@ function Rewards() {
                 src='https://www.poe2wiki.net/images/thumb/1/14/Zerphi%27s_Genesis_inventory_icon.png/154px-Zerphi%27s_Genesis_inventory_icon.png'
                 alt='Zerphis Genesis'
               />
-              <div className='font-Insmallcaps pointer-events-none absolute left-1/2 top-full z-10 w-96 -translate-x-1/2 transform border border-amber-700 bg-black text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
+              <div className='pointer-events-none absolute left-1/2 top-full z-10 w-96 -translate-x-1/2 transform border border-amber-700 bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
                 <div className='relative mb-1 flex h-16 w-full items-center justify-center'>
                   {uhl}
                   {uhm}
@@ -510,7 +510,7 @@ function Rewards() {
                 src='https://www.poe2wiki.net/images/thumb/e/e2/Deadly_Fate_inventory_icon.png/78px-Deadly_Fate_inventory_icon.png'
                 alt='Deadly Fate'
               />
-              <div className='font-Insmallcaps pointer-events-none absolute bottom-full left-1/2 z-10 h-36 w-72 -translate-x-1/2 transform border border-neutral-400 bg-black text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
+              <div className='pointer-events-none absolute bottom-full left-1/2 z-10 h-36 w-72 -translate-x-1/2 transform border border-neutral-400 bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
                 <div className='relative mb-1 flex h-10 w-full items-center justify-center'>
                   {nhl}
                   {nhm}
@@ -519,7 +519,7 @@ function Rewards() {
                     Deadly Fate
                   </span>
                 </div>
-                <p className='my-2 text-center italic text-orange-400'>
+                <p className='my-2 text-center text-orange-400'>
                   Fight enough battles, and it <br /> becomes all but
                   inevitable.
                 </p>
@@ -535,7 +535,7 @@ function Rewards() {
                 src='https://www.poe2wiki.net/images/thumb/7/7e/Cowardly_Fate_inventory_icon.png/78px-Cowardly_Fate_inventory_icon.png'
                 alt='Cowardly Fate'
               />
-              <div className='font-Insmallcaps pointer-events-none absolute bottom-full left-1/2 z-10 h-36 w-72 -translate-x-1/2 transform border border-neutral-400 bg-black text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
+              <div className='pointer-events-none absolute bottom-full left-1/2 z-10 h-36 w-72 -translate-x-1/2 transform border border-neutral-400 bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
                 <div className='relative mb-1 flex h-10 w-full items-center justify-center'>
                   {nhl}
                   {nhm}
@@ -544,7 +544,7 @@ function Rewards() {
                     Cowardly Fate
                   </span>
                 </div>
-                <p className='mb-4 mt-5 text-center italic text-orange-400'>
+                <p className='mb-4 mt-5 text-center text-orange-400'>
                   The ignoblest of choices.
                 </p>
                 {nsep}
@@ -559,7 +559,7 @@ function Rewards() {
                 src='https://www.poe2wiki.net/images/thumb/e/e6/Victorious_Fate_inventory_icon.png/78px-Victorious_Fate_inventory_icon.png'
                 alt='Victorious Fate'
               />
-              <div className='font-Insmallcaps pointer-events-none absolute bottom-full left-1/2 z-10 h-36 w-72 -translate-x-1/2 transform border border-neutral-400 bg-black text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
+              <div className='pointer-events-none absolute bottom-full left-1/2 z-10 h-36 w-72 -translate-x-1/2 transform border border-neutral-400 bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
                 <div className='relative mb-1 flex h-10 w-full items-center justify-center'>
                   {nhl}
                   {nhm}
@@ -598,12 +598,12 @@ function Rewards() {
                   src={`SC_${core.Name}.png`}
                   alt={core.Name}
                 />
-                <div className='font-Insmallcaps pointer-events-none absolute bottom-full left-1/2 z-10 w-96 -translate-x-1/2 transform border border-neutral-400 bg-black text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
+                <div className='pointer-events-none absolute bottom-full left-1/2 z-10 w-96 -translate-x-1/2 transform border border-curr bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
                   <div className='relative mb-1 flex h-10 w-full items-center justify-center'>
-                    {nhl}
-                    {nhm}
-                    {nhr}
-                    <span className='absolute inset-0 flex items-center justify-center text-lg font-bold text-white'>
+                    {chl}
+                    {chm}
+                    {chr}
+                    <span className='absolute inset-0 flex items-center justify-center text-lg font-bold text-curr'>
                       Soul Core of {core.Name}
                     </span>
                   </div>
@@ -648,12 +648,12 @@ function Rewards() {
                 <span className='absolute left-0 top-0 text-xs text-white'>
                   {orb.StackSize}
                 </span>
-                <div className='font-Insmallcaps pointer-events-none absolute bottom-full left-1/2 z-10 w-96 -translate-x-1/2 transform border border-yellow-200 bg-black text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
+                <div className='pointer-events-none absolute bottom-full left-1/2 z-10 w-96 -translate-x-1/2 transform border border-curr bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
                   <div className='relative mb-1 flex h-10 w-full items-center justify-center'>
                     {chl}
                     {chm}
                     {chr}
-                    <span className='absolute inset-0 flex items-center justify-center text-lg font-bold text-gold'>
+                    <span className='absolute inset-0 flex items-center justify-center text-lg font-bold text-curr'>
                       {orb.Name}
                     </span>
                   </div>
@@ -672,45 +672,181 @@ function Rewards() {
           </div>
           <p className='mb-3'>
             Upon defeating the <strong>Trialmaster</strong> you may also be
-            rewarded with Inscribed Ultimatums that allow you to wager your
-            currency to double the amount.
+            rewarded with Magic Inscribed Ultimatums with dangerous effects that
+            allow you to wager your currency to double the amount.
           </p>
-          <div className='group relative inline-block'>
-            <img
-              className='h-16 w-16'
-              src='https://www.poe2wiki.net/images/2/2d/Inscribed_Ultimatum_inventory_icon.png'
-              alt='Inscribed Ultimatum'
-            />
-            <div className='font-Insmallcaps pointer-events-none absolute left-1/2 top-full z-10 w-72 -translate-x-1/2 transform border border-neutral-400 bg-black text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
-              <div className='relative mb-1 flex h-10 w-full items-center justify-center'>
-                {mhl}
-                {mhm}
-                {mhr}
-                <span className='absolute inset-0 flex items-center justify-center text-lg font-bold text-blue-500'>
-                  Inscribed Ultimatum of
-                </span>
+          <div className='flex flex-row justify-center gap-4'>
+            <div className='group relative inline-block'>
+              <img
+                className='h-16 w-16'
+                src='https://www.poe2wiki.net/images/2/2d/Inscribed_Ultimatum_inventory_icon.png'
+                alt='Inscribed Ultimatum'
+              />
+              <div className='pointer-events-none absolute left-1/2 top-full z-10 w-96 -translate-x-1/2 transform border border-neutral-400 bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
+                <div className='relative mb-1 flex h-10 w-full items-center justify-center'>
+                  {mhl}
+                  {mhm}
+                  {mhr}
+                  <span className='absolute inset-0 flex items-center justify-center text-lg font-bold text-blue-500'>
+                    Vaal Inscribed Ultimatum of Exposure
+                  </span>
+                </div>
+                <p className='my-2 text-center text-neutral-400'>
+                  Area Level: <span className='text-white'>80</span>
+                  <br />
+                  Number of Trials: <span className='text-white'>10</span>
+                </p>
+                {msep}
+                <p className='mx-px my-2 text-center text-blue-500'>
+                  Sacrifice up to 10 Vaal Orbs to receive double on Trial
+                  completion.
+                  <br />
+                  -29% maximum Player Resistances
+                </p>
+                {msep}
+                <p className='mb-3 text-red-600'> Corrupted</p>
+                {msep}
+                <p className='my-2 text-center italic text-orange-400'>
+                  Mortals spend their lives wondering which fate shall be
+                  theirs. Chaos takes amusement in knowing the answer: all of
+                  them.
+                </p>
+                {msep}
+                <p className='mx-px text-center text-xs italic text-neutral-400'>
+                  Take this item to The Temple of Chaos to participate in a
+                  Trial of Chaos.
+                </p>
               </div>
-              <p className='my-2 text-center text-neutral-400'>
-                Area Level: <span className='text-white'>80</span>
-                <br />
-                Number of Trials: <span className='text-white'>10</span>
-                <br />
-                Wager: <span className='text-white'>3</span> Divine Orbs
-              </p>
-              {msep}
-              <p className='mx-px my-2 text-center text-blue-500'>
-                Monsters gain 70% of damage as extra chaos damage.
-              </p>
-              {msep}
-              <p className='my-2 text-center italic text-orange-400'>
-                Mortals spend their lives wondering which fate shall be theirs.
-                Chaos takes amusement in knowing the answer: all of them.
-              </p>
-              {msep}
-              <p className='mx-px text-center text-xs italic text-neutral-400'>
-                Take this item to The Temple of Chaos to participate in a Trial
-                of Chaos.
-              </p>
+            </div>
+            <div className='group relative inline-block'>
+              <img
+                className='h-16 w-16'
+                src='https://www.poe2wiki.net/images/2/2d/Inscribed_Ultimatum_inventory_icon.png'
+                alt='Inscribed Ultimatum'
+              />
+              <div className='pointer-events-none absolute left-1/2 top-full z-10 w-96 -translate-x-1/2 transform border border-neutral-400 bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
+                <div className='relative mb-1 flex h-10 w-full items-center justify-center'>
+                  {mhl}
+                  {mhm}
+                  {mhr}
+                  <span className='absolute inset-0 flex items-center justify-center text-lg font-bold text-blue-500'>
+                    Chaotic Inscribed Ultimatum of Wasting
+                  </span>
+                </div>
+                <p className='my-2 text-center text-neutral-400'>
+                  Area Level: <span className='text-white'>80</span>
+                  <br />
+                  Number of Trials: <span className='text-white'>10</span>
+                </p>
+                {msep}
+                <p className='mx-px my-2 text-center text-blue-500'>
+                  Sacrifice up to 10 Chaos Orbs to receive double on Trial
+                  completion.
+                  <br />
+                  Players have 33% less maximum Life and Energy Shield
+                </p>
+                {msep}
+                <p className='mb-3 text-red-600'> Corrupted</p>
+                {msep}
+                <p className='my-2 text-center italic text-orange-400'>
+                  Mortals spend their lives wondering which fate shall be
+                  theirs. Chaos takes amusement in knowing the answer: all of
+                  them.
+                </p>
+                {msep}
+                <p className='mx-px text-center text-xs italic text-neutral-400'>
+                  Take this item to The Temple of Chaos to participate in a
+                  Trial of Chaos.
+                </p>
+              </div>
+            </div>
+            <div className='group relative inline-block'>
+              <img
+                className='h-16 w-16'
+                src='https://www.poe2wiki.net/images/2/2d/Inscribed_Ultimatum_inventory_icon.png'
+                alt='Inscribed Ultimatum'
+              />
+              <div className='pointer-events-none absolute left-1/2 top-full z-10 w-96 -translate-x-1/2 transform border border-neutral-400 bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
+                <div className='relative mb-1 flex h-10 w-full items-center justify-center'>
+                  {mhl}
+                  {mhm}
+                  {mhr}
+                  <span className='absolute inset-0 flex items-center justify-center text-lg font-bold text-blue-500'>
+                    Exalted Inscribed Ultimatum of Hexing
+                  </span>
+                </div>
+                <p className='my-2 text-center text-neutral-400'>
+                  Area Level: <span className='text-white'>80</span>
+                  <br />
+                  Number of Trials: <span className='text-white'>10</span>
+                </p>
+                {msep}
+                <p className='mx-px my-2 text-center text-blue-500'>
+                  Sacrifice up to 20 Exalted Orbs to receive double on Trial
+                  completion.
+                  <br />
+                  Players are Cursed with Enfeeble
+                  <br />
+                  Players are Cursed with Temporal Chains
+                  <br />
+                  Players are Cursed with Elemental Weakness
+                </p>
+                {msep}
+                <p className='mb-3 text-red-600'> Corrupted</p>
+                {msep}
+                <p className='my-2 text-center italic text-orange-400'>
+                  Mortals spend their lives wondering which fate shall be
+                  theirs. Chaos takes amusement in knowing the answer: all of
+                  them.
+                </p>
+                {msep}
+                <p className='mx-px text-center text-xs italic text-neutral-400'>
+                  Take this item to The Temple of Chaos to participate in a
+                  Trial of Chaos.
+                </p>
+              </div>
+            </div>
+            <div className='group relative inline-block'>
+              <img
+                className='h-16 w-16'
+                src='https://www.poe2wiki.net/images/2/2d/Inscribed_Ultimatum_inventory_icon.png'
+                alt='Inscribed Ultimatum'
+              />
+              <div className='pointer-events-none absolute left-1/2 top-full z-10 w-96 -translate-x-1/2 transform border border-neutral-400 bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
+                <div className='relative mb-1 flex h-10 w-full items-center justify-center'>
+                  {mhl}
+                  {mhm}
+                  {mhr}
+                  <span className='absolute inset-0 flex items-center justify-center text-lg font-bold text-blue-500'>
+                    Divine Inscribed Ultimatum of Chaos
+                  </span>
+                </div>
+                <p className='my-2 text-center text-neutral-400'>
+                  Area Level: <span className='text-white'>80</span>
+                  <br />
+                  Number of Trials: <span className='text-white'>10</span>
+                </p>
+                {msep}
+                <p className='mx-px my-2 text-center text-blue-500'>
+                  Sacrifice up to 3 Divine Orbs to receive double on Trial
+                  completion.
+                  <br />
+                  Monsters deal 73% of damage as Extra Chaos
+                </p>
+                {msep}
+                <p className='mb-3 text-red-600'> Corrupted</p>
+                {msep}
+                <p className='my-2 text-center italic text-orange-400'>
+                  Mortals spend their lives wondering which fate shall be
+                  theirs. Chaos takes amusement in knowing the answer: all of
+                  them.
+                </p>
+                {msep}
+                <p className='mx-px text-center text-xs italic text-neutral-400'>
+                  Take this item to The Temple of Chaos to participate in a
+                  Trial of Chaos.
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -727,7 +863,7 @@ function Rewards() {
                 src='https://www.poe2wiki.net/images/2/24/Dream_Fragments_inventory_icon.png'
                 alt='Dream Fragments'
               />
-              <div className='font-Insmallcaps pointer-events-none absolute bottom-full left-1/2 z-10 w-96 -translate-x-1/2 transform border border-amber-700 bg-black text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
+              <div className='pointer-events-none absolute bottom-full left-1/2 z-10 w-96 -translate-x-1/2 transform border border-amber-700 bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
                 <div className='relative mb-1 flex h-16 w-full items-center justify-center'>
                   {uhl}
                   {uhm}
@@ -769,7 +905,7 @@ function Rewards() {
                 src='https://www.poe2wiki.net/images/e/e9/Cloak_of_Flame_inventory_icon.png'
                 alt='Cloak of Flame'
               />
-              <div className='font-Insmallcaps pointer-events-none absolute bottom-full left-1/2 z-10 w-96 -translate-x-1/2 transform border border-amber-700 bg-black text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
+              <div className='pointer-events-none absolute bottom-full left-1/2 z-10 w-96 -translate-x-1/2 transform border border-amber-700 bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
                 <div className='relative mb-1 flex h-16 w-full items-center justify-center'>
                   {uhl}
                   {uhm}
@@ -818,7 +954,7 @@ function Rewards() {
                 src='https://www.poe2wiki.net/images/8/8f/Sculpted_Suffering_inventory_icon.png'
                 alt='Sculpted Suffering'
               />
-              <div className='font-Insmallcaps pointer-events-none absolute bottom-full left-1/2 z-10 w-96 -translate-x-1/2 transform border border-amber-700 bg-black text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
+              <div className='pointer-events-none absolute bottom-full left-1/2 z-10 w-96 -translate-x-1/2 transform border border-amber-700 bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
                 <div className='relative mb-1 flex h-16 w-full items-center justify-center'>
                   {uhl}
                   {uhm}
@@ -877,7 +1013,7 @@ function Rewards() {
           </div>
         </div>
 
-        <div className='my-4 flex flex-col items-center justify-center rounded-lg bg-zinc-800 p-6 shadow-md'>
+        <div className='my-4 flex h-auto flex-col items-center justify-center rounded-lg bg-zinc-800 p-6 shadow-md'>
           <h2 className='mb-4 text-2xl font-semibold'>Corrupted Rares</h2>
           <p className='mb-3'>
             Most rooms will reward you with a Corrupted Rare item.

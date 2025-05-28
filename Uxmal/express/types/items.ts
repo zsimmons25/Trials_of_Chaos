@@ -2,19 +2,22 @@ import { Type, Static } from '@sinclair/typebox';
 
 export const BaseData = Type.Object({
   id: Type.Number(),
+  item_class: Type.String(),
   base_name: Type.String(),
-  lvl_req: Type.Optional(Type.Number()),
-  str_req: Type.Optional(Type.Number()),
-  int_req: Type.Optional(Type.Number()),
-  dex_req: Type.Optional(Type.Number()),
-  armour: Type.Optional(Type.Number()),
-  evasion: Type.Optional(Type.Number()),
-  energy_shield: Type.Optional(Type.Number()),
-  block_chance: Type.Optional(Type.Number()),
-  physical_dmg: Type.Optional(Type.String()),
-  crit_chance: Type.Optional(Type.String()),
-  aps: Type.Optional(Type.String()),
-  weapon_range: Type.Optional(Type.String())
+  lvl_req: Type.Union([Type.Number(), Type.Null()]),
+  str_req: Type.Union([Type.Number(), Type.Null()]),
+  int_req: Type.Union([Type.Number(), Type.Null()]),
+  dex_req: Type.Union([Type.Number(), Type.Null()]),
+  armour: Type.Union([Type.Number(), Type.Null()]),
+  evasion: Type.Union([Type.Number(), Type.Null()]),
+  energy_shield: Type.Union([Type.Number(), Type.Null()]),
+  block_chance: Type.Union([Type.Number(), Type.Null()]),
+  physical_dmg: Type.Union([Type.String(), Type.Null()]),
+  crit_chance: Type.Union([Type.String(), Type.Null()]),
+  aps: Type.Union([Type.String(), Type.Null()]),
+  weapon_range: Type.Union([Type.String(), Type.Null()]),
+  implicit: Type.Union([Type.String(), Type.Null()]),
+  item_tags: Type.String()
 });
 export type Base = Static<typeof BaseData>;
 
@@ -22,32 +25,31 @@ export const BasesData = Type.Array(BaseData);
 export type Bases = Static<typeof BasesData>;
 
 export const ItemData = Type.Object({
-    id: Type.Number(),
-    item_name: Type.String(),
-    item_class: Type.String(),
-    base_type: Type.String(),
-    ilvl: Type.Number(),
-    enchant: Type.Optional(Type.Union([Type.String(), Type.Null()])),
-    sockets: Type.Optional(Type.Number()),
-    implicit: Type.Optional(Type.String()),
-    prefix1: Type.Optional(Type.String()),
-    p1v1: Type.Optional(Type.Number()),
-    p1v2: Type.Optional(Type.Number()),
-    prefix2: Type.Optional(Type.String()),
-    p2v1: Type.Optional(Type.Number()),
-    p2v2: Type.Optional(Type.Number()),
-    prefix3: Type.Optional(Type.String()),
-    p3v1: Type.Optional(Type.Number()),
-    p3v2: Type.Optional(Type.Number()),
-    suffix1: Type.Optional(Type.String()),
-    s1v: Type.Optional(Type.Number()),
-    suffix2: Type.Optional(Type.String()),
-    s2v: Type.Optional(Type.Number()),
-    suffix3: Type.Optional(Type.String()),
-    s3v: Type.Optional(Type.Number()),
-    corrupted: Type.Optional(Type.Union([Type.Literal(0), Type.Literal(1)])),
-    mirrored: Type.Optional(Type.Union([Type.Literal(0), Type.Literal(1)]))
-  });
+  id: Type.Number(),
+  item_name: Type.String(),
+  base_type: Type.String(),
+  ilvl: Type.Number(),
+  enchant: Type.Union([Type.String(), Type.Null()]),
+  sockets: Type.Union([Type.Number(), Type.Null()]),
+  implicit: Type.Number(),
+  prefix1: Type.Union([Type.String(), Type.Null()]),
+  p1v1: Type.Union([Type.Number(), Type.Null()]),
+  p1v2: Type.Union([Type.Number(), Type.Null()]),
+  prefix2: Type.Union([Type.String(), Type.Null()]),
+  p2v1: Type.Union([Type.Number(), Type.Null()]),
+  p2v2: Type.Union([Type.Number(), Type.Null()]),
+  prefix3: Type.Union([Type.String(), Type.Null()]),
+  p3v1: Type.Union([Type.Number(), Type.Null()]),
+  p3v2: Type.Union([Type.Number(), Type.Null()]),
+  suffix1: Type.Union([Type.String(), Type.Null()]),
+  s1v: Type.Union([Type.Number(), Type.Null()]),
+  suffix2: Type.Union([Type.String(), Type.Null()]),
+  s2v: Type.Union([Type.Number(), Type.Null()]),
+  suffix3: Type.Union([Type.String(), Type.Null()]),
+  s3v: Type.Union([Type.Number(), Type.Null()]),
+  corrupted: Type.Optional(Type.Union([Type.Literal(0), Type.Literal(1)])),
+  mirrored: Type.Optional(Type.Union([Type.Literal(0), Type.Literal(1)])),
+});
 export type Item = Static<typeof ItemData>;
 
 export const ItemsData = Type.Array(ItemData);

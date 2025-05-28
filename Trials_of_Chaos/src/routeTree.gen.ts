@@ -18,6 +18,7 @@ import { Route as RoomsImport } from './routes/rooms'
 import { Route as RewardsImport } from './routes/rewards'
 import { Route as MonstersImport } from './routes/monsters'
 import { Route as ModifiersImport } from './routes/modifiers'
+import { Route as EntryImport } from './routes/entry'
 import { Route as CraftingImport } from './routes/crafting'
 import { Route as CorruptionImport } from './routes/corruption'
 import { Route as ChronicleImport } from './routes/chronicle'
@@ -51,6 +52,11 @@ const MonstersRoute = MonstersImport.update({
 
 const ModifiersRoute = ModifiersImport.update({
   path: '/modifiers',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const EntryRoute = EntryImport.update({
+  path: '/entry',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -99,6 +105,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CraftingImport
       parentRoute: typeof rootRoute
     }
+    '/entry': {
+      preLoaderRoute: typeof EntryImport
+      parentRoute: typeof rootRoute
+    }
     '/modifiers': {
       preLoaderRoute: typeof ModifiersImport
       parentRoute: typeof rootRoute
@@ -133,6 +143,7 @@ export const routeTree = rootRoute.addChildren([
   ChronicleRoute,
   CorruptionRoute,
   CraftingRoute,
+  EntryRoute,
   ModifiersRoute.addChildren([ModifiersGameRoute]),
   MonstersRoute,
   RewardsRoute,

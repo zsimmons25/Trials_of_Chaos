@@ -112,77 +112,85 @@ function Rewards() {
     },
     {
       id: 4,
-      Name: 'Citaqualotl',
-      'Martial Weapon Effect': '30% increased Elemental Damage with Attacks',
-      'Armour Effect': '+5% to all Elemental Resistances',
-    },
-    {
-      id: 5,
       Name: 'Jiquani',
       'Martial Weapon Effect': 'Recover 2% of maximum Life on Kill',
       'Armour Effect': '2% increased maximum Life',
     },
     {
-      id: 6,
+      id: 5,
       Name: 'Opiloti',
       'Martial Weapon Effect': '15% chance to cause Bleeding on Hit',
       'Armour Effect': '10% increased Charm Charges gained',
     },
     {
-      id: 7,
+      id: 6,
       Name: 'Puhuarte',
       'Martial Weapon Effect': '30% increased chance to Ignite',
       'Armour Effect': '+1% to Maximum Fire Resistance',
     },
     {
-      id: 8,
+      id: 7,
       Name: 'Quipolatl',
       'Martial Weapon Effect': '5% increased Attack Speed',
       'Armour Effect': '10% reduced Slowing Potency of Debuffs on You',
     },
     {
-      id: 9,
+      id: 8,
       Name: 'Tacati',
       'Martial Weapon Effect': '15% chance to Poison on Hit with this weapon',
       'Armour Effect': '+7% to Chaos Resistance',
     },
     {
-      id: 10,
+      id: 9,
       Name: 'Ticaba',
       'Martial Weapon Effect': '+12% to Critical Damage Bonus',
       'Armour Effect':
         'Hits against you have 10% reduced Critical Damage Bonus',
     },
     {
-      id: 11,
+      id: 10,
       Name: 'Topotante',
       'Martial Weapon Effect':
         'Attacks with this Weapon Penetrate 15% Elemental Resistances',
       'Armour Effect': '15% increased Elemental Ailment Threshold',
     },
     {
-      id: 12,
+      id: 11,
       Name: 'Tzamoto',
       'Martial Weapon Effect': '20% increased Freeze Buildup',
       'Armour Effect': '+1% to Maximum Cold Resistance',
     },
     {
-      id: 13,
+      id: 12,
       Name: 'Xopec',
       'Martial Weapon Effect': '30% increased chance to Shock',
       'Armour Effect': '+1% to Maximum Lightning Resistance',
     },
     {
-      id: 14,
+      id: 13,
       Name: 'Zalatl',
       'Martial Weapon Effect': 'Recover 2% of maximum Mana on Kill',
       'Armour Effect': '2% increased maximum Mana',
     },
     {
-      id: 15,
+      id: 14,
       Name: 'Zantipi',
       'Martial Weapon Effect': 'Convert 20% of Requirements to Intelligence',
       'Armour Effect': 'Convert 20% of Requirements to Intelligence',
+    },
+    {
+      id: 15,
+      Name: 'Citaqualotl',
+      'Martial Weapon Effect': '30% increased Elemental Damage with Attacks',
+      'Armour Effect': '+5% to all Elemental Resistances',
+    },
+  ];
+  const new_cores = [
+    {
+      id: 1,
+      Name: "Tacati's Soul Core of Affliction",
+      item_type: 'Helmets',
+      effect: 'Enemies you Curse have -8% to Chaos Resistance',
     },
   ];
   const chl = (
@@ -510,8 +518,8 @@ function Rewards() {
                 src='https://www.poe2wiki.net/images/thumb/e/e2/Deadly_Fate_inventory_icon.png/78px-Deadly_Fate_inventory_icon.png'
                 alt='Deadly Fate'
               />
-              <div className='pointer-events-none absolute bottom-full left-1/2 z-10 h-36 w-72 -translate-x-1/2 transform border border-neutral-400 bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
-                <div className='relative mb-1 flex h-10 w-full items-center justify-center'>
+              <div className='pointer-events-none absolute bottom-full left-1/2 z-10 h-32 w-72 -translate-x-1/2 transform border border-neutral-400 bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
+                <div className='relative flex h-10 w-full items-center justify-center'>
                   {nhl}
                   {nhm}
                   {nhr}
@@ -519,7 +527,7 @@ function Rewards() {
                     Deadly Fate
                   </span>
                 </div>
-                <p className='my-2 text-center text-orange-400'>
+                <p className='text-center italic text-orange-400'>
                   Fight enough battles, and it <br /> becomes all but
                   inevitable.
                 </p>
@@ -535,8 +543,8 @@ function Rewards() {
                 src='https://www.poe2wiki.net/images/thumb/7/7e/Cowardly_Fate_inventory_icon.png/78px-Cowardly_Fate_inventory_icon.png'
                 alt='Cowardly Fate'
               />
-              <div className='pointer-events-none absolute bottom-full left-1/2 z-10 h-36 w-72 -translate-x-1/2 transform border border-neutral-400 bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
-                <div className='relative mb-1 flex h-10 w-full items-center justify-center'>
+              <div className='pointer-events-none absolute bottom-full left-1/2 z-10 h-32 w-72 -translate-x-1/2 transform border border-neutral-400 bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
+                <div className='relative flex h-10 w-full items-center justify-center'>
                   {nhl}
                   {nhm}
                   {nhr}
@@ -544,7 +552,7 @@ function Rewards() {
                     Cowardly Fate
                   </span>
                 </div>
-                <p className='mb-4 mt-5 text-center text-orange-400'>
+                <p className='mb-3 mt-3 text-center italic text-orange-400'>
                   The ignoblest of choices.
                 </p>
                 {nsep}
@@ -559,8 +567,8 @@ function Rewards() {
                 src='https://www.poe2wiki.net/images/thumb/e/e6/Victorious_Fate_inventory_icon.png/78px-Victorious_Fate_inventory_icon.png'
                 alt='Victorious Fate'
               />
-              <div className='pointer-events-none absolute bottom-full left-1/2 z-10 h-36 w-72 -translate-x-1/2 transform border border-neutral-400 bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
-                <div className='relative mb-1 flex h-10 w-full items-center justify-center'>
+              <div className='pointer-events-none absolute bottom-full left-1/2 z-10 h-32 w-72 -translate-x-1/2 transform border border-neutral-400 bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
+                <div className='relative flex h-10 w-full items-center justify-center'>
                   {nhl}
                   {nhm}
                   {nhr}
@@ -568,7 +576,7 @@ function Rewards() {
                     Victorious Fate
                   </span>
                 </div>
-                <p className='my-2 text-center text-orange-400'>
+                <p className='text-center italic text-orange-400'>
                   There is always a chance, however small, <br /> that you might
                   actually succeed.
                 </p>
@@ -621,7 +629,44 @@ function Rewards() {
                   <p className='my-2 text-center italic text-neutral-400'>
                     Place into an empty Rune Socket in a Weapon or Armour to
                     apply its effect to that item. Once socketed it cannot be
-                    removed.
+                    retrieved but can be replaced by other socketable items.
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className='flex flex-row justify-center gap-4'>
+            {new_cores.map((core) => (
+              <div
+                key={core.Name}
+                className='group relative inline-block h-16 w-16'
+              >
+                <img
+                  className='h-16 w-16'
+                  src={`SC_Tacati.png`}
+                  alt={core.Name}
+                />
+                <div className='pointer-events-none absolute bottom-full left-1/2 z-10 w-96 -translate-x-1/2 transform border border-curr bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
+                  <div className='relative mb-1 flex h-10 w-full items-center justify-center'>
+                    {chl}
+                    {chm}
+                    {chr}
+                    <span className='absolute inset-0 flex items-center justify-center text-lg font-bold text-curr'>
+                      {core.Name}
+                    </span>
+                  </div>
+                  <p className='my-2 text-center text-neutral-400'>
+                    Stack Size: <span className='text-white'>10</span>
+                  </p>
+                  {nsep}
+                  <p className='mx-1 my-2 text-center text-indigo-400'>
+                    {core['item_type']}: {core['effect']}
+                  </p>
+                  {nsep}
+                  <p className='my-2 text-center italic text-neutral-400'>
+                    Place into an empty Rune Socket in a Weapon or Armour to
+                    apply its effect to that item. Once socketed it cannot be
+                    retrieved but can be replaced by other socketable items.
                   </p>
                 </div>
               </div>
@@ -882,6 +927,10 @@ function Rewards() {
                 {usep}
                 <p className='mx-px my-2 text-center text-cyan-100'>
                   30% increased Mana Regeneration Rate
+                </p>
+                {usep}
+                <p className='mx-px my-2 text-center text-indigo-400'>
+                  +30% to Cold Resistance
                 </p>
                 {usep}
                 <p className='mx-px my-2 text-center text-indigo-400'>

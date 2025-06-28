@@ -1,10 +1,13 @@
 import React from 'react';
 import { Affix } from './types/affixes';
+import { Base, Item } from './types/items';
 
 interface ItemDisplayProps {
-  item: any;
-  bases: any[];
+  item: Item;
+  bases: Base[];
   affixes: Affix[];
+  rarity: 'normal' | 'magic' | 'rare';
+  fracturedAffixId?: string | null;
 }
 
 interface ActiveAffixWithValue {
@@ -32,6 +35,8 @@ const PLUS_RANGE_PATTERN_GLOBAL = /\+\((\d+)[–\-−](\d+)\)/g;
 const ADDS_TO_PATTERN = /Adds \((\d+)[–\-−](\d+)\) to \((\d+)[–\-−](\d+)\)/;
 // Matches "X to (A-B)"
 const X_TO_RANGE_PATTERN = /(\d+) to \((\d+)[–\-−](\d+)\)/;
+// Matches floats ranges like (1.53-2.54)
+const FLOAT_PATTERN = /\((\d+(?:\.\d+)?)[–\-−](\d+(?:\.\d+)?)\)/g;
 // Matches a single number
 const SINGLE_NUMBER_PATTERN = /(\d+)/;
 
@@ -39,19 +44,30 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
   item,
   bases,
   affixes,
+  rarity,
+  fracturedAffixId,
 }) => {
   const currentBase = bases.find((b) => b.base_name === item.base_type)!;
 
+  // Update the look function to handle both IDs and names
   const look = (
-    affixNameToFind?: string,
+    affixIdentifier?: string,
     itemClass?: string
   ): Affix | undefined => {
-    if (!affixNameToFind || !affixes) {
+    if (!affixIdentifier || !affixes) {
       return undefined;
     }
-    const candidates = affixes.filter((a) => a.affix_name === affixNameToFind);
+
+    const byId = affixes.find((a) => a.id === affixIdentifier);
+    if (byId) {
+      return byId;
+    }
+
+    // Fallback to finding by name (for backward compatibility)
+    const candidates = affixes.filter((a) => a.affix_name === affixIdentifier);
     if (candidates.length === 0) return undefined;
     if (candidates.length === 1) return candidates[0];
+
     if (itemClass) {
       const isItemTwoHanded = TWO_HANDED_ITEM_CLASSES.has(itemClass);
       if (isItemTwoHanded) {
@@ -124,11 +140,21 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
     actualValue: number | null
   ) => {
     if (!implicitText) return null;
-    // Matches a range like (1-10)
+
+    // If the text doesn't contain any ranges
+    const hasRange = /\((\d+(?:\.\d+)?)[–\-−](\d+(?:\.\d+)?)\)/.test(
+      implicitText
+    );
+    if (!hasRange) {
+      return implicitText;
+    }
+
+    // Matches a range like (1-10) or (1.5-2.5)
     const rangeMatch = implicitText.match(RANGE_PATTERN);
     if (rangeMatch && actualValue !== null) {
       return implicitText.replace(RANGE_PATTERN, actualValue.toString());
     }
+
     // Matches a single number
     const singleMatch = implicitText.match(SINGLE_NUMBER_PATTERN);
     if (singleMatch && actualValue !== null) {
@@ -137,6 +163,7 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
         actualValue.toString()
       );
     }
+
     return implicitText;
   };
 
@@ -147,6 +174,7 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
     const ranges = extractMultipleRangesFromEffect(definition.effect);
     let effectString = definition.effect;
     const valsToSub = [...values];
+
     // Matches "Adds (X-Y) to (A-B)"
     if (ADDS_TO_PATTERN.test(effectString)) {
       const val1 = valsToSub.shift();
@@ -156,8 +184,9 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
         () =>
           `Adds ${val1 !== undefined ? val1 : '(?)'} to ${val2 !== undefined ? val2 : '(?)'}`
       );
-      // Matches "X to (A-B)"
-    } else if (X_TO_RANGE_PATTERN.test(effectString)) {
+    }
+    // Matches "X to (A-B)"
+    else if (X_TO_RANGE_PATTERN.test(effectString)) {
       const val1 = valsToSub.shift();
       const val2 = valsToSub.shift();
       effectString = effectString.replace(X_TO_RANGE_PATTERN, () => {
@@ -165,13 +194,67 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
         const maxVal = val2 !== undefined ? val2 : ranges.range2?.max ?? '(?)';
         return `${minVal} to ${maxVal}`;
       });
-    } else {
-      // Matches multiple ranges like (1-10)
-      effectString = effectString.replace(RANGE_PATTERN_GLOBAL, () => {
-        const val = valsToSub.shift();
-        return val !== undefined ? String(val) : '(?)';
-      });
     }
+    // Handle multi-line effects
+    else if (effectString.includes('\n')) {
+      const lines = effectString.split('\n');
+      const processedLines = lines.map((line) => {
+        let processedLine = line;
+
+        // Handle percentage patterns like "(75-79)%" first
+        const percentPattern = /\((\d+(?:\.\d+)?)[–\-−](\d+(?:\.\d+)?)\)%/;
+        if (percentPattern.test(processedLine)) {
+          const val = valsToSub.shift();
+          processedLine = processedLine.replace(percentPattern, () => {
+            return val !== undefined ? `${val}%` : '(?)%';
+          });
+        }
+
+        // Handle plus patterns like "+(175-200)"
+        const plusFlatPattern = /\+\((\d+(?:\.\d+)?)[–\-−](\d+(?:\.\d+)?)\)/;
+        if (plusFlatPattern.test(processedLine)) {
+          const val = valsToSub.shift();
+          processedLine = processedLine.replace(plusFlatPattern, () => {
+            return val !== undefined ? `+${val}` : '+(?)';
+          });
+        }
+
+        // Handle regular patterns like "(1-10)"
+        const rangePattern = /\((\d+(?:\.\d+)?)[–\-−](\d+(?:\.\d+)?)\)/;
+        if (rangePattern.test(processedLine)) {
+          const val = valsToSub.shift();
+          processedLine = processedLine.replace(rangePattern, () => {
+            return val !== undefined ? String(val) : '(?)';
+          });
+        }
+
+        return processedLine;
+      });
+
+      effectString = processedLines.join('\n');
+    }
+    // Handle single-line patterns with + prefix like "+(4.41-5)% to Critical Hit Chance"
+    else {
+      const plusRangePattern = /\+\((\d+(?:\.\d+)?)[–\-−](\d+(?:\.\d+)?)\)/;
+      if (plusRangePattern.test(effectString)) {
+        effectString = effectString.replace(plusRangePattern, () => {
+          const val = valsToSub.shift();
+          return val !== undefined ? `+${val}` : '+(?)';
+        });
+      } else {
+        // Fallback to general range replacement
+        effectString = effectString.replace(RANGE_PATTERN_GLOBAL, () => {
+          const val = valsToSub.shift();
+          return val !== undefined ? String(val) : '(?)';
+        });
+      }
+    }
+    // Replace all float ranges
+    effectString = effectString.replace(FLOAT_PATTERN, () => {
+      const val = valsToSub.shift();
+      return val !== undefined ? String(val) : '(?)';
+    });
+
     return effectString;
   };
 
@@ -199,7 +282,7 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
 
   const dmgParts = (currentBase.physical_dmg || '0')
     .split('-')
-    .map((n: Number) => +n);
+    .map((n: string) => +n);
   const bMin = dmgParts[0];
   const bMax = dmgParts.length > 1 ? dmgParts[1] : bMin;
 
@@ -222,6 +305,7 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
     totalIncreasedESPercent = 0,
     totalIncreasedEvasionPercent = 0;
   let totalFlatLife = 0;
+  let totalFlatCritChance = 0;
 
   for (const activeAffix of resolvedAffixes) {
     const { definition, values } = activeAffix;
@@ -232,37 +316,134 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
         totalFlatPdMin += v1 || 0;
         totalFlatPdMax += v2 || 0;
         break;
+      case 'PhysicalPercent':
+        totalIncreasedPdPercent += v1 || 0;
+        break;
       case 'PhysicalPercentAccuracy':
         totalIncreasedPdPercent += v1 || 0;
+        break;
+      case 'FireDamage':
+        totalFlatFdMin += v1 || 0;
+        totalFlatFdMax += v2 || 0;
+        break;
+      case 'ColdDamage':
+        totalFlatCdMin += v1 || 0;
+        totalFlatCdMax += v2 || 0;
         break;
       case 'LightningDamage':
         totalFlatLdMin += v1 || 0;
         totalFlatLdMax += v2 || 0;
         break;
+      case 'ChaosDamage':
+        totalFlatCHdMin += v1 || 0;
+        totalFlatCHdMax += v2 || 0;
+        break;
       case 'IncreasedAttackSpeed':
         totalIncreasedAttackSpeedPercent += v1 || 0;
         break;
-      case 'BaseDefences':
-        if (definition.effect.includes('Energy Shield')) totalFlatES += v1 || 0;
+      case 'CriticalStrikeChance':
+        totalFlatCritChance += v1 || 0;
         break;
-      case 'DefencesPercent':
-        if (definition.effect.includes('Energy Shield'))
-          totalIncreasedESPercent += v1 || 0;
+      case 'Armour':
+        totalFlatArmour += v1 || 0;
         break;
-      case 'DefencesAndLife':
-        if (definition.effect.includes('Energy Shield'))
-          totalIncreasedESPercent += v1 || 0;
-        if (definition.effect.includes('Life')) totalFlatLife += v2 || 0;
+      case 'Evasion':
+        totalFlatEvasion += v1 || 0;
         break;
+      case 'EnergyShield':
+        totalFlatES += v1 || 0;
+        break;
+      case 'ArmourPercent':
+        totalIncreasedArmourPercent += v1 || 0;
+        break;
+      case 'EvasionPercent':
+        totalIncreasedEvasionPercent += v1 || 0;
+        break;
+      case 'EnergyShieldPercent':
+        totalIncreasedESPercent += v1 || 0;
+        break;
+      case 'ArmourLifeHybrid':
+        totalIncreasedArmourPercent += v1 || 0;
+        totalFlatLife += v2 || 0;
+        break;
+      case 'EvasionLifeHybrid':
+        totalIncreasedEvasionPercent += v1 || 0;
+        totalFlatLife += v2 || 0;
+        break;
+      case 'EnergyShieldLifeHybrid':
+        totalIncreasedESPercent += v1 || 0;
+        totalFlatLife += v2 || 0;
+        break;
+      case 'ArmourHybrid':
+        totalFlatArmour += v1 || 0;
+        totalIncreasedArmourPercent += v2 || 0;
+        break;
+      case 'EvasionHybrid':
+        totalFlatEvasion += v1 || 0;
+        totalIncreasedEvasionPercent += v2 || 0;
+        break;
+      case 'EnergyShieldHybrid':
+        totalFlatES += v1 || 0;
+        totalIncreasedESPercent += v2 || 0;
+        break;
+      case 'ArmourEvasion':
+        totalFlatArmour += v1 || 0;
+        totalFlatEvasion += v2 || 0;
+        break;
+      case 'ArmourEnergyShield':
+        totalFlatArmour += v1 || 0;
+        totalFlatES += v2 || 0;
+        break;
+      case 'EvasionEnergyShield':
+        totalFlatEvasion += v1 || 0;
+        totalFlatES += v2 || 0;
+        break;
+      case 'ArmourEvasionPercent':
+        totalIncreasedArmourPercent += v1 || 0;
+        totalIncreasedEvasionPercent += v1 || 0;
+        break;
+      case 'ArmourEnergyShieldPercent':
+        totalIncreasedArmourPercent += v1 || 0;
+        totalIncreasedESPercent += v1 || 0;
+        break;
+      case 'EvasionEnergyShieldPercent':
+        totalIncreasedEvasionPercent += v1 || 0;
+        totalIncreasedESPercent += v1 || 0;
+        break;
+      case 'ArmourEvasionLifeHybrid':
+        totalIncreasedArmourPercent += v1 || 0;
+        totalIncreasedEvasionPercent += v1 || 0;
+        totalFlatLife += v2 || 0;
+        break;
+      case 'ArmourEnergyShieldLifeHybrid':
+        totalIncreasedArmourPercent += v1 || 0;
+        totalIncreasedESPercent += v1 || 0;
+        totalFlatLife += v2 || 0;
+        break;
+      case 'EvasionEnergyShieldLifeHybrid':
+        totalIncreasedEvasionPercent += v1 || 0;
+        totalIncreasedESPercent += v1 || 0;
+        totalFlatLife += v2 || 0;
+        break;
+      case 'Life':
+        totalFlatLife += v1 || 0;
+        break;
+
       // Need to add additional cases later
     }
   }
 
+  const qualityMultiplier = item.quality ? 1 + item.quality / 100 : 1;
+
   const pdMin = Math.round(
-    (bMin + totalFlatPdMin) * (1 + totalIncreasedPdPercent / 100)
+    (bMin + totalFlatPdMin) *
+      (1 + totalIncreasedPdPercent / 100) *
+      qualityMultiplier
   );
   const pdMax = Math.floor(
-    (bMax + totalFlatPdMax) * (1 + totalIncreasedPdPercent / 100)
+    (bMax + totalFlatPdMax) *
+      (1 + totalIncreasedPdPercent / 100) *
+      qualityMultiplier
   );
   const fdMin = totalFlatFdMin,
     fdMax = totalFlatFdMax;
@@ -273,7 +454,8 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
   const chdMin = totalFlatCHdMin,
     chdMax = totalFlatCHdMax;
   const baseCrit = parseFloat(currentBase.crit_chance || '0');
-  const crit = baseCrit > 0 ? `${baseCrit.toFixed(2)}%` : '';
+  const finalCrit = baseCrit + totalFlatCritChance;
+  const crit = finalCrit > 0 ? `${finalCrit.toFixed(2)}%` : '';
   const baseAps = parseFloat(currentBase.aps || '0');
   const aps =
     baseAps > 0
@@ -284,16 +466,19 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
         ).toFixed(2)
       : '';
   const baseArmour = currentBase.armour || 0;
-  const finalArmour = Math.round(
-    (baseArmour + totalFlatArmour) * (1 + totalIncreasedArmourPercent / 100)
-  );
   const baseES = currentBase.energy_shield || 0;
-  const finalES = Math.round(
-    (baseES + totalFlatES) * (1 + totalIncreasedESPercent / 100)
-  );
   const baseEvasion = currentBase.evasion || 0;
+  const finalArmour = Math.round(
+    (baseArmour + totalFlatArmour) *
+      (1 + (totalIncreasedArmourPercent + (item.quality || 0)) / 100)
+  );
+  const finalES = Math.round(
+    (baseES + totalFlatES) *
+      (1 + (totalIncreasedESPercent + (item.quality || 0)) / 100)
+  );
   const finalEvasion = Math.round(
-    (baseEvasion + totalFlatEvasion) * (1 + totalIncreasedEvasionPercent / 100)
+    (baseEvasion + totalFlatEvasion) *
+      (1 + (totalIncreasedEvasionPercent + (item.quality || 0)) / 100)
   );
   const baseLvlReq = currentBase.lvl_req || 0;
   const highestAffixClvl = resolvedAffixes.reduce(
@@ -326,13 +511,25 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
   }
 
   let itemSpecificStatsDisplay;
-  if (['weapon', 'bow'].some((tag) => currentBase.item_tags.includes(tag))) {
+  if (['weapon'].some((tag) => currentBase.item_tags.includes(tag))) {
     itemSpecificStatsDisplay = (
       <>
+        {item.quality > 0 && (
+          <>
+            Quality: <span className='text-indigo-400'>{item.quality}%</span>
+            <br />
+          </>
+        )}
         {pdMin > 0 && pdMax > 0 && (
           <>
             Physical Damage:{' '}
-            <span className='text-indigo-400'>
+            <span
+              className={
+                pdMin === bMin && pdMax === bMax
+                  ? 'text-white'
+                  : 'text-indigo-400'
+              }
+            >
               {pdMin}-{pdMax}
             </span>
             <br />
@@ -376,13 +573,27 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
         )}
         {crit && (
           <>
-            Critical Strike Chance: <span className='text-white'>{crit}</span>
+            Critical Strike Chance:{' '}
+            <span
+              className={
+                finalCrit === baseCrit ? 'text-white' : 'text-indigo-400'
+              }
+            >
+              {crit}
+            </span>
             <br />
           </>
         )}
         {aps && (
           <>
-            Attacks per Second: <span className='text-indigo-400'>{aps}</span>
+            Attacks per Second:{' '}
+            <span
+              className={
+                parseFloat(aps) === baseAps ? 'text-white' : 'text-indigo-400'
+              }
+            >
+              {aps}
+            </span>
             <br />
           </>
         )}
@@ -395,21 +606,46 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
   ) {
     itemSpecificStatsDisplay = (
       <>
+        {item.quality > 0 && (
+          <>
+            Quality: <span className='text-indigo-400'>{item.quality}%</span>
+            <br />
+          </>
+        )}
         {finalArmour > 0 && (
           <>
-            Armour: <span className='text-indigo-400'>{finalArmour}</span>
+            Armour:{' '}
+            <span
+              className={
+                finalArmour === baseArmour ? 'text-white' : 'text-indigo-400'
+              }
+            >
+              {finalArmour}
+            </span>
             <br />
           </>
         )}
         {finalES > 0 && (
           <>
-            Energy Shield: <span className='text-indigo-400'>{finalES}</span>
+            Energy Shield:{' '}
+            <span
+              className={finalES === baseES ? 'text-white' : 'text-indigo-400'}
+            >
+              {finalES}
+            </span>
             <br />
           </>
         )}
         {finalEvasion > 0 && (
           <>
-            Evasion: <span className='text-indigo-400'>{finalEvasion}</span>
+            Evasion:{' '}
+            <span
+              className={
+                finalEvasion === baseEvasion ? 'text-white' : 'text-indigo-400'
+              }
+            >
+              {finalEvasion}
+            </span>
             <br />
           </>
         )}
@@ -428,6 +664,66 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
     ? processImplicitDisplay(currentBase.implicit, item.implicit)
     : null;
 
+  const nhl = (
+    <img
+      src='https://www.poe2wiki.net/w/images/3/3a/Item_UI_header_normal_left.png'
+      alt='header left'
+      className='h-full'
+    />
+  );
+  const nhm = (
+    <div
+      className='h-full flex-grow bg-repeat-x'
+      style={{
+        backgroundImage: `url('https://www.poe2wiki.net/w/images/8/8e/Item_UI_header_normal_middle.png')`,
+        backgroundSize: 'auto 100%',
+      }}
+    />
+  );
+  const nhr = (
+    <img
+      src='https://www.poe2wiki.net/w/images/5/54/Item_UI_header_normal_right.png'
+      alt='header right'
+      className='h-full'
+    />
+  );
+  const nsep = (
+    <img
+      className='mx-auto my-1'
+      src='https://www.poe2wiki.net/w/images/b/bd/Item_UI_separator_normal.png'
+      alt='normal separator'
+    />
+  );
+  const mhl = (
+    <img
+      src='https://web.poecdn.com/protected/image/item/popup2/header-magic-left.png?v=1739989653377&key=o3_dFKQzRKG62y6uHCs7jQ'
+      alt='header left'
+      className='h-full'
+    />
+  );
+  const mhm = (
+    <div
+      className='h-full flex-grow bg-repeat-x'
+      style={{
+        backgroundImage: `url('https://web.poecdn.com/protected/image/item/popup2/header-magic-middle.png?v=1739989653377&key=23gaDOOaTXEb7bKEt0GMfA')`,
+        backgroundSize: 'auto 100%',
+      }}
+    />
+  );
+  const mhr = (
+    <img
+      src='https://web.poecdn.com/protected/image/item/popup2/header-magic-right.png?v=1739989653377&key=Z4fOOCC3bnyTIZvSCJZSqw'
+      alt='header right'
+      className='h-full'
+    />
+  );
+  const msep = (
+    <img
+      className='mx-auto my-1'
+      src='https://web.poecdn.com/protected/image/item/popup/separator-magic.png?v=1739989653457&key=WHdxxKesPGQwo-o2yd6V8Q'
+      alt='normal separator'
+    />
+  );
   const rhl = (
     <img
       src='https://web.poecdn.com/protected/image/item/popup2/header-double-rare-left.png?v=1739989653373&key=GlFK9dDlo33Cw3Ak7P5MnA'
@@ -455,19 +751,57 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
     <img
       className='mx-auto my-1'
       src='https://web.poecdn.com/protected/image/item/popup/separator-rare.png?v=1739989653457&key=CSxkkdAMEQ9oW5h6DEQewQ'
-      alt='rare seperator'
+      alt='rare separator'
     />
   );
 
+  // Header and separator selection based on rarity
+  let headerLeft, headerMid, headerRight, separator;
+  if (rarity === 'normal') {
+    headerLeft = nhl;
+    headerMid = nhm;
+    headerRight = nhr;
+    separator = nsep;
+  } else if (rarity === 'magic') {
+    headerLeft = mhl;
+    headerMid = mhm;
+    headerRight = mhr;
+    separator = msep;
+  } else {
+    headerLeft = rhl;
+    headerMid = rhm;
+    headerRight = rhr;
+    separator = rsep;
+  }
+
+  // Color classes based on rarity
+  const rarityTextColor =
+    rarity === 'normal'
+      ? 'text-white'
+      : rarity === 'magic'
+        ? 'text-blue-300'
+        : 'text-gold';
+
+  const rarityBorderColor =
+    rarity === 'normal'
+      ? 'border-zinc-400'
+      : rarity === 'magic'
+        ? 'border-blue-400'
+        : 'border-yellow-400';
+
   return (
-    <div className='mx-4 mb-4 flex items-center'>
-      <div className='w-80 border border-yellow-400 bg-black font-Insmallcaps text-sm text-white'>
+    <div className={`mx-4 mb-4 flex items-center`}>
+      <div
+        className={`w-80 ${rarityBorderColor} border bg-black font-Insmallcaps text-sm text-white`}
+      >
         {/* Item Header */}
         <div className='relative mb-1 flex h-16 w-full items-center justify-center'>
-          {rhl}
-          {rhm}
-          {rhr}
-          <span className='absolute inset-0 flex flex-col items-center justify-center text-center text-lg font-semibold text-gold'>
+          {headerLeft}
+          {headerMid}
+          {headerRight}
+          <span
+            className={`absolute inset-0 flex flex-col items-center justify-center text-center text-lg font-semibold ${rarityTextColor}`}
+          >
             <span>{item.item_name}</span>
             <span>{item.base_type}</span>
           </span>
@@ -479,56 +813,64 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
           <br />
           {itemSpecificStatsDisplay}
         </p>
-        {rsep}
+        {separator}
 
         {/* Lvl Req Block */}
-        <p className='my-2 text-center text-gray-400'>
-          Requires: Level{' '}
-          <span
-            className={
-              highestAffixClvl > baseLvlReq ? 'text-indigo-400' : 'text-white'
-            }
-          >
-            {displayLvlReq}
-          </span>
-          {displayStrReq > 0 || displayDexReq > 0 || displayIntReq > 0
-            ? ', '
-            : ''}
-          {/* Str Req Block */}
-          {displayStrReq > 0 && (
-            <>
+        {displayLvlReq > 0 && (
+          <>
+            <p className='my-2 text-center text-gray-400'>
+              Requires: Level{' '}
               <span
-                className={strReqReduced ? 'text-indigo-400' : 'text-white'}
+                className={
+                  highestAffixClvl > baseLvlReq
+                    ? 'text-indigo-400'
+                    : 'text-white'
+                }
               >
-                {displayStrReq}
-              </span>{' '}
-              Str{displayDexReq > 0 || displayIntReq > 0 ? ', ' : ''}
-            </>
-          )}
-          {/* Dex Req Block */}
-          {displayDexReq > 0 && (
-            <>
-              <span
-                className={dexReqReduced ? 'text-indigo-400' : 'text-white'}
-              >
-                {displayDexReq}
-              </span>{' '}
-              Dex{displayIntReq > 0 ? ', ' : ''}
-            </>
-          )}
-          {/* Int Req Block */}
-          {displayIntReq > 0 && (
-            <>
-              <span
-                className={intReqReduced ? 'text-indigo-400' : 'text-white'}
-              >
-                {displayIntReq}
-              </span>{' '}
-              Int
-            </>
-          )}
-        </p>
-        {rsep}
+                {displayLvlReq}
+              </span>
+              {displayStrReq > 0 || displayDexReq > 0 || displayIntReq > 0
+                ? ', '
+                : ''}
+              {/* Str Req Block */}
+              {displayStrReq > 0 && (
+                <>
+                  <span
+                    className={strReqReduced ? 'text-indigo-400' : 'text-white'}
+                  >
+                    {displayStrReq}
+                  </span>{' '}
+                  Str{displayDexReq > 0 || displayIntReq > 0 ? ', ' : ''}
+                </>
+              )}
+              {/* Dex Req Block */}
+              {displayDexReq > 0 && (
+                <>
+                  <span
+                    className={dexReqReduced ? 'text-indigo-400' : 'text-white'}
+                  >
+                    {displayDexReq}
+                  </span>{' '}
+                  Dex{displayIntReq > 0 ? ', ' : ''}
+                </>
+              )}
+              {/* Int Req Block */}
+              {displayIntReq > 0 && (
+                <>
+                  <span
+                    className={intReqReduced ? 'text-indigo-400' : 'text-white'}
+                  >
+                    {displayIntReq}
+                  </span>{' '}
+                  Int
+                </>
+              )}
+            </p>
+            {(rarity !== 'normal' || implicitDisplay) &&
+              resolvedAffixes.length > 0 &&
+              separator}
+          </>
+        )}
 
         {/* Enchant Block */}
         {item.enchant && (
@@ -536,7 +878,7 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
             <p className='mx-px my-2 text-center text-cyan-100'>
               {item.enchant}
             </p>
-            {rsep}
+            {separator}
           </>
         )}
 
@@ -546,21 +888,28 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
             <p className='mx-px my-2 text-center text-indigo-400'>
               {implicitDisplay}
             </p>
-            {rsep}
+            {(rarity !== 'normal' || implicitDisplay) &&
+              resolvedAffixes.length > 0 &&
+              separator}
           </>
         )}
 
         {/* Explicits Block */}
-        <div className='mx-px my-2 text-center text-indigo-400'>
+        <div className='mx-px my-2 text-center'>
           {resolvedAffixes.flatMap((activeAffix, affixIndex) => {
             const { definition, values } = activeAffix;
             const effectString = processAffixEffect(definition, values);
+            const isFractured =
+              fracturedAffixId &&
+              activeAffix.definition.id === fracturedAffixId;
             return effectString.split('\n').map((linePart, linePartIndex) => (
               <div
                 key={`affix-${affixIndex}-line-${linePartIndex}`}
                 className='relative py-px'
               >
-                <span>{linePart}</span>
+                <span className={isFractured ? 'text-frac' : 'text-indigo-400'}>
+                  {linePart}
+                </span>
                 <div className='group absolute right-0 top-1/2 mr-1 inline-block -translate-y-1/2 transform'>
                   <span className='-inset-0 text-xs text-gray-600'>
                     T{definition.id.match(/\d+/)?.[0]}
@@ -573,41 +922,87 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
             ));
           })}
         </div>
-        {rsep}
-
-        {/* Corrupted Block */}
-        <p className='mb-3 text-red-600'>Corrupted</p>
+        {item.corrupted && (
+          <>
+            {separator}
+            <p className='mb-3 text-center text-red-600'>Corrupted</p>
+          </>
+        )}
       </div>
 
       {/* Item Image */}
-      <div className='relative mx-4 flex h-60 w-32 items-center justify-center border border-yellow-400 bg-black bg-opacity-90'>
+      <div
+        className={`relative mx-4 flex h-60 w-32 items-center justify-center ${rarityBorderColor} border bg-black bg-opacity-90`}
+      >
         <img
           className='h-auto max-h-56 w-auto max-w-32'
           src={`${item.base_type.toLowerCase().replace(/\s+/g, '_')}.webp`}
-          alt={`${item.base_type} item art`}
+          alt={item.base_type}
+          draggable={false}
         />
 
         {/* Sockets Block */}
-        {item.sockets !== null && item.sockets >= 1 && (
+        {item.sockets === 1 && (
           <img
-            className='absolute left-5 top-24 h-10 w-10'
+            className='absolute left-1/2 top-1/2 h-10 w-10 -translate-x-1/2 -translate-y-1/2'
             src='socket.png'
             alt='socket 1'
+            draggable={false}
           />
         )}
-        {item.sockets !== null && item.sockets >= 2 && (
-          <img
-            className='absolute left-[68px] top-24 h-10 w-10'
-            src='socket.png'
-            alt='socket 2'
-          />
-        )}
-        {item.sockets !== null && item.sockets >= 3 && (
-          <img
-            className='absolute left-[68px] top-36 h-10 w-10'
-            src='socket.png'
-            alt='socket 3'
-          />
+        {item.sockets === 2 &&
+          (['Spear', 'Staff'].includes(currentBase.item_class) ? (
+            <>
+              <img
+                className='absolute left-1/2 top-[70px] h-10 w-10 -translate-x-1/2'
+                src='socket.png'
+                alt='socket 1'
+                draggable={false}
+              />
+              <img
+                className='absolute left-1/2 top-[120px] h-10 w-10 -translate-x-1/2'
+                src='socket.png'
+                alt='socket 2'
+                draggable={false}
+              />
+            </>
+          ) : (
+            <>
+              <img
+                className='absolute left-5 top-24 h-10 w-10'
+                src='socket.png'
+                alt='socket 1'
+                draggable={false}
+              />
+              <img
+                className='absolute left-[68px] top-24 h-10 w-10'
+                src='socket.png'
+                alt='socket 2'
+                draggable={false}
+              />
+            </>
+          ))}
+        {item.sockets === 3 && (
+          <>
+            <img
+              className='absolute left-5 top-24 h-10 w-10'
+              src='socket.png'
+              alt='socket 1'
+              draggable={false}
+            />
+            <img
+              className='absolute left-[68px] top-24 h-10 w-10'
+              src='socket.png'
+              alt='socket 2'
+              draggable={false}
+            />
+            <img
+              className='absolute left-[68px] top-36 h-10 w-10'
+              src='socket.png'
+              alt='socket 3'
+              draggable={false}
+            />
+          </>
         )}
       </div>
     </div>

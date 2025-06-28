@@ -853,7 +853,7 @@ function Entry() {
                       : 'Select Base Type'}
                   </option>
                   {getFilteredBases().map((base) => (
-                    <option key={base.id} value={base.base_name}>
+                    <option key={base.base_name} value={base.base_name}>
                       {base.base_name}
                     </option>
                   ))}

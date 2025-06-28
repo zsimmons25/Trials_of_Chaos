@@ -82,7 +82,7 @@ INSERT INTO enchants (id, effect, item_slots, item_tags, scope, active) VALUES
 ('ManaGainOnKill', 'Gain (10-15) Mana per Enemy Killed', 'weapon, offhand', 'quiver, stave, wand', 'global', TRUE),
 ('IncreasedProjectilePierceChance', '(20-30)% chance to Pierce an Enemy', 'offhand', 'quiver', 'global', TRUE),
 ('RicochetChance', 'Projectiles have (10-20)% chance to Chain an additional time from terrain', 'offhand', 'quiver', 'global', TRUE),
-('IncreasedCriticalDamageBonus', '(15-20)% increased Critical Damage Bonus', 'offhand, ring', 'quiver, ring', 'global', TRUE),
+('IncreasedCriticalDamageBonus', '(15-20)% increased Critical Damage Bonus', 'offhand, ring', 'quiver', 'global', TRUE),
 ('GlobalIncreasedDamage', '(20-30)% increased Damage', 'offhand, ring', 'quiver', 'global', TRUE),
 ('IncreasedSkillSpeed', '(4-6)% Increased Skill Speed', 'offhand, ring', 'quiver', 'global', TRUE),
 
@@ -181,6 +181,9 @@ INSERT INTO enchants (id, effect, item_slots, item_tags, scope, active) VALUES
 ('FlatStrengthJewel', '+(4-6) to Strength', 'jewel', '', 'global', TRUE),
 ('FlatDexterityJewel', '+(4-6) to Dexterity', 'jewel', '', 'global', TRUE),
 ('FlatIntelligenceJewel', '+(4-6) to Intelligence', 'jewel', '', 'global', TRUE),
+('FlatStrengthJewelLeg', '+(5-10) to Strength', 'jewel', '', 'global', FALSE),
+('FlatDexterityJewelLeg', '+(5-10) to Dexterity', 'jewel', '', 'global', FALSE),
+('FlatIntelligenceJewelLeg', '+(5-10) to Intelligence', 'jewel', '', 'global', FALSE),
 ('FireResJewel', '+(5-10)% to Fire Resistance', 'jewel', '', 'global', TRUE),
 ('ColdResJewel', '+(5-10)% to Cold Resistance', 'jewel', '', 'global', TRUE),
 ('LightningResJewel', '+(5-10)% to Lightning Resistance', 'jewel', '', 'global', TRUE),

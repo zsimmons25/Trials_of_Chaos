@@ -3,6 +3,7 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { enchantsqfn } from './handlers/enchantsquery';
 
 function Corruption() {
+  const [showLegacyEnchants, setShowLegacyEnchants] = useState<boolean>(false);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [selectedSubtype, setSelectedSubtype] = useState<string | null>(null);
   const [selectedShieldType, setSelectedShieldType] = useState<string | null>(
@@ -143,6 +144,10 @@ function Corruption() {
       }
     }
 
+    if (['ring', 'belt', 'amulet', 'jewel'].includes(slotLower)) {
+      return [slotLower];
+    }
+
     return [];
   };
 
@@ -226,6 +231,8 @@ function Corruption() {
     return activeSelection && activeSelection.slot === slotName;
   };
 
+  const inactive = enchants.filter((enchant) => !enchant.active);
+
   const getFilteredEnchants = () => {
     if (!lastEnchantSelection) return [];
 
@@ -304,14 +311,6 @@ function Corruption() {
       if (aHasReducedAttr && !bHasReducedAttr) return -1;
       if (!aHasReducedAttr && bHasReducedAttr) return 1;
 
-      const aHasLeech = aEffect.includes('leech');
-      const bHasLeech = bEffect.includes('leech');
-      const aHasChargeGain = aEffect.includes('charges per second');
-      const bHasChargeGain = bEffect.includes('charges per second');
-
-      if (aHasLeech && bHasChargeGain) return -1;
-      if (aHasChargeGain && bHasLeech) return 1;
-
       // Type priority: Physical > Fire > Cold > Lightning > Chaos
       const getTypePriority = (effect: string) => {
         if (effect.includes('physical')) return 0;
@@ -360,7 +359,7 @@ function Corruption() {
           const randomJewel =
             jewelTypes[Math.floor(Math.random() * jewelTypes.length)];
           return {
-            src: `${randomJewel}.png`,
+            src: `${randomJewel}Socket.png`,
             alt: randomJewel,
             className:
               'absolute left-1/2 top-1/2 block h-[90%] w-[90%] -translate-x-1/2 -translate-y-1/2 object-contain',
@@ -600,6 +599,41 @@ function Corruption() {
             </div>
           )}
         </div>
+
+        {inactive.length > 0 && (
+          <div className='border-t border-zinc-700 pt-4'>
+            <div
+              className='mb-3 flex cursor-pointer items-center justify-center gap-2'
+              onClick={() => setShowLegacyEnchants(!showLegacyEnchants)}
+            >
+              <h3 className='text-lg font-semibold text-neutral-300'>
+                Legacy Enchants
+              </h3>
+              <span className='text-sm text-neutral-400'>
+                {showLegacyEnchants ? '▼' : '▶'} ({inactive.length})
+              </span>
+            </div>
+            {showLegacyEnchants && (
+              <div className='space-y-2'>
+                {inactive.map((enchant) => (
+                  <div
+                    key={enchant.id}
+                    className='flex items-center justify-between rounded bg-zinc-900 p-3 text-left opacity-60'
+                  >
+                    <div className='flex-1'>
+                      <div className='font-medium text-neutral-400'>
+                        {enchant.effect}
+                      </div>
+                      <div className='text-xs text-neutral-500'>
+                        Items: {enchant.item_slots}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Modal for subtype selection */}

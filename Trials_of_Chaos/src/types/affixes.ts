@@ -16,3 +16,9 @@ export type Affix = Static<typeof AffixData>;
 
 export const AffixesData = Type.Array(AffixData);
 export type Affixes = Static<typeof AffixesData>;
+
+export interface AffixFamilyGroup {
+  family: string;
+  affixes: Affix[];
+  representative: Affix;
+}

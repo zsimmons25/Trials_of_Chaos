@@ -1,6 +1,7 @@
 import React from 'react';
 import { Affix } from './types/affixes';
 import { Base, Item } from './types/items';
+import { Socketable } from './types/socketables';
 
 interface ItemDisplayProps {
   item: Item;
@@ -8,6 +9,11 @@ interface ItemDisplayProps {
   affixes: Affix[];
   rarity: 'normal' | 'magic' | 'rare';
   fracturedAffixId?: string | null;
+  whittlingOmen?: number;
+  sinistralErasureOmen?: number;
+  dextralErasureOmen?: number;
+  activeSocketable?: Socketable | null;
+  onSocketClick?: (socketIndex: number) => void;
 }
 
 interface ActiveAffixWithValue {
@@ -46,10 +52,83 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
   affixes,
   rarity,
   fracturedAffixId,
+  whittlingOmen,
+  sinistralErasureOmen,
+  dextralErasureOmen,
+  activeSocketable,
+  onSocketClick,
 }) => {
   const currentBase = bases.find((b) => b.base_name === item.base_type)!;
+  const baseClass = currentBase.item_class.toLowerCase();
 
-  // Update the look function to handle both IDs and names
+  const isAffixCompatibleWithBase = (
+    affixTags: string[],
+    baseTags: string[]
+  ): boolean => {
+    if (affixTags.some((tag) => baseTags.includes(tag))) return true;
+    if (
+      affixTags.includes('body_armour') &&
+      baseTags.some((tag) => tag.endsWith('_armour'))
+    )
+      return true;
+    if (
+      affixTags.includes('shield') &&
+      baseTags.some((tag) => tag.endsWith('_shield'))
+    )
+      return true;
+    for (const affixTag of affixTags) {
+      if (affixTag.endsWith('_shield')) {
+        const armourType = affixTag.replace('_shield', '_armour');
+        if (baseTags.includes(armourType)) return true;
+      }
+    }
+    if (
+      (baseTags.includes('one_hand_weapon') ||
+        baseTags.includes('two_hand_weapon')) &&
+      affixTags.includes('weapon')
+    ) {
+      return true;
+    }
+    return false;
+  };
+
+  const getDisplayTier = (definition: Affix): string => {
+    const itemTags = currentBase.item_tags
+      .split(',')
+      .map((tag) => tag.trim().toLowerCase());
+
+    const familyAffixes = affixes.filter((affix) => {
+      if (affix.family !== definition.family) return false;
+      const affixTags = affix.item_tags
+        .split(',')
+        .map((tag) => tag.trim().toLowerCase());
+
+      // For specific base classes, require exact matching
+      if (
+        ['helmet', 'gloves', 'boots', 'belt', 'amulet', 'ring'].includes(
+          baseClass
+        )
+      ) {
+        return affixTags.includes(baseClass);
+      }
+
+      // For other items, use the compatibility function
+      return isAffixCompatibleWithBase(affixTags, itemTags);
+    });
+
+    const sortedAffixes = [...familyAffixes].sort((a, b) => {
+      const tierA = parseInt(a.id.match(/(\d+)$/)?.[0] || '0');
+      const tierB = parseInt(b.id.match(/(\d+)$/)?.[0] || '0');
+      return tierA - tierB;
+    });
+
+    const index = sortedAffixes.findIndex(
+      (affix) => affix.id === definition.id
+    );
+    if (index === -1) return 'T1';
+    return `T${index + 1}`;
+  };
+
   const look = (
     affixIdentifier?: string,
     itemClass?: string
@@ -259,9 +338,9 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
   };
 
   const affixSlotsConfig = [
-    { name: item.prefix1, values: [item.p1v1, item.p1v2] },
-    { name: item.prefix2, values: [item.p2v1, item.p2v2] },
-    { name: item.prefix3, values: [item.p3v1, item.p3v2] },
+    { name: item.prefix1, values: [item.p1v1, item.p1v2, item.p1v3] },
+    { name: item.prefix2, values: [item.p2v1, item.p2v2, item.p2v3] },
+    { name: item.prefix3, values: [item.p3v1, item.p3v2, item.p3v3] },
     { name: item.suffix1, values: [item.s1v] },
     { name: item.suffix2, values: [item.s2v] },
     { name: item.suffix3, values: [item.s3v] },
@@ -309,6 +388,7 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
 
   for (const activeAffix of resolvedAffixes) {
     const { definition, values } = activeAffix;
+    ``;
     const v1 = values[0];
     const v2 = values[1];
     switch (definition.family) {
@@ -365,6 +445,10 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
       case 'ArmourLifeHybrid':
         totalIncreasedArmourPercent += v1 || 0;
         totalFlatLife += v2 || 0;
+        break;
+      case 'ArmourManaHybrid':
+        totalIncreasedArmourPercent += v1 || 0;
+        //totalFlatMana += v2 || 0;
         break;
       case 'EvasionLifeHybrid':
         totalIncreasedEvasionPercent += v1 || 0;
@@ -495,9 +579,11 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
     intReqReduced = false;
 
   for (const activeAffix of resolvedAffixes) {
-    const { definition, values } = activeAffix;
-    if (definition.affix_name === 'Apt' && values[0] !== undefined) {
-      const reductionPercent = values[0];
+    const { definition } = activeAffix;
+    if (definition.family === 'AttributeRequirements') {
+      const reductionPercent = parseInt(
+        definition.effect.match(/(\d+)%/)?.[1] || '0'
+      );
       const originalStrReq = displayStrReq,
         originalDexReq = displayDexReq,
         originalIntReq = displayIntReq;
@@ -665,68 +751,52 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
     : null;
 
   const nhl = (
-    <img
-      src='https://www.poe2wiki.net/w/images/3/3a/Item_UI_header_normal_left.png'
-      alt='header left'
-      className='h-full'
-    />
+    <img src='header_normal_left.png' alt='header left' className='h-full' />
   );
   const nhm = (
     <div
       className='h-full flex-grow bg-repeat-x'
       style={{
-        backgroundImage: `url('https://www.poe2wiki.net/w/images/8/8e/Item_UI_header_normal_middle.png')`,
+        backgroundImage: `url('header_normal_middle.png')`,
         backgroundSize: 'auto 100%',
       }}
     />
   );
   const nhr = (
-    <img
-      src='https://www.poe2wiki.net/w/images/5/54/Item_UI_header_normal_right.png'
-      alt='header right'
-      className='h-full'
-    />
+    <img src='header_normal_right.png' alt='header right' className='h-full' />
   );
   const nsep = (
     <img
       className='mx-auto my-1'
-      src='https://www.poe2wiki.net/w/images/b/bd/Item_UI_separator_normal.png'
+      src='separator_normal.png'
       alt='normal separator'
     />
   );
   const mhl = (
-    <img
-      src='https://web.poecdn.com/protected/image/item/popup2/header-magic-left.png?v=1739989653377&key=o3_dFKQzRKG62y6uHCs7jQ'
-      alt='header left'
-      className='h-full'
-    />
+    <img src='header_magic_left.png' alt='header left' className='h-full' />
   );
   const mhm = (
     <div
       className='h-full flex-grow bg-repeat-x'
       style={{
-        backgroundImage: `url('https://web.poecdn.com/protected/image/item/popup2/header-magic-middle.png?v=1739989653377&key=23gaDOOaTXEb7bKEt0GMfA')`,
+        backgroundImage: `url('header_magic_middle.png')`,
         backgroundSize: 'auto 100%',
       }}
     />
   );
   const mhr = (
-    <img
-      src='https://web.poecdn.com/protected/image/item/popup2/header-magic-right.png?v=1739989653377&key=Z4fOOCC3bnyTIZvSCJZSqw'
-      alt='header right'
-      className='h-full'
-    />
+    <img src='header_magic_right.png' alt='header right' className='h-full' />
   );
   const msep = (
     <img
       className='mx-auto my-1'
-      src='https://web.poecdn.com/protected/image/item/popup/separator-magic.png?v=1739989653457&key=WHdxxKesPGQwo-o2yd6V8Q'
+      src='separator_magic.png'
       alt='normal separator'
     />
   );
   const rhl = (
     <img
-      src='https://web.poecdn.com/protected/image/item/popup2/header-double-rare-left.png?v=1739989653373&key=GlFK9dDlo33Cw3Ak7P5MnA'
+      src='header_double_rare_left.png'
       alt='header left rare'
       className='h-full'
     />
@@ -735,14 +805,14 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
     <div
       className='h-full flex-grow bg-repeat-x'
       style={{
-        backgroundImage: `url('https://web.poecdn.com/protected/image/item/popup2/header-double-rare-middle.png?v=1739989653373&key=yJGcA667EzDzrPzd1_9-vg')`,
+        backgroundImage: `url(header_double_rare_middle.png)`,
         backgroundSize: 'auto 100%',
       }}
     />
   );
   const rhr = (
     <img
-      src='https://web.poecdn.com/protected/image/item/popup2/header-double-rare-right.png?v=1739989653373&key=rXqdxbUkuIkWyVJPJVY9cQ'
+      src='header_double_rare_right.png'
       alt='header right rare'
       className='h-full'
     />
@@ -750,7 +820,7 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
   const rsep = (
     <img
       className='mx-auto my-1'
-      src='https://web.poecdn.com/protected/image/item/popup/separator-rare.png?v=1739989653457&key=CSxkkdAMEQ9oW5h6DEQewQ'
+      src='separator_rare.png'
       alt='rare separator'
     />
   );
@@ -789,6 +859,94 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
         ? 'border-blue-400'
         : 'border-yellow-400';
 
+  const getLowestIlvl = (affixes: ActiveAffixWithValue[]): number | null => {
+    return affixes.length > 0
+      ? Math.min(...affixes.map((affix) => affix.definition.ilvl))
+      : null;
+  };
+
+  // Filter out fractured affixes
+  const nonFractured = resolvedAffixes.filter(
+    (affix) => !(fracturedAffixId && affix.definition.id === fracturedAffixId)
+  );
+
+  // Calculate lowest ilvl values
+  const lowestNonFracturedIlvl = getLowestIlvl(nonFractured);
+  const lowestNonFracturedPrefixIlvl = getLowestIlvl(
+    nonFractured.filter(
+      (affix) => affix.definition.affix_type.toLowerCase() === 'prefix'
+    )
+  );
+  const lowestNonFracturedSuffixIlvl = getLowestIlvl(
+    nonFractured.filter(
+      (affix) => affix.definition.affix_type.toLowerCase() === 'suffix'
+    )
+  );
+
+  const whittlingTarget = (
+    isFractured: boolean,
+    definition: Affix
+  ): boolean => {
+    if (isFractured || !whittlingOmen || item.corrupted) return false;
+
+    const isPrefix = definition.affix_type.toLowerCase() === 'prefix';
+    const isSuffix = definition.affix_type.toLowerCase() === 'suffix';
+
+    // Only Whittling Omen active
+    if (!sinistralErasureOmen && !dextralErasureOmen) {
+      return (
+        lowestNonFracturedIlvl !== null &&
+        definition.ilvl === lowestNonFracturedIlvl
+      );
+    }
+
+    // Whittling + Sinistral (prefix targeting)
+    if (sinistralErasureOmen && isPrefix) {
+      return (
+        lowestNonFracturedPrefixIlvl !== null &&
+        definition.ilvl === lowestNonFracturedPrefixIlvl
+      );
+    }
+
+    // Whittling + Dextral (suffix targeting)
+    if (dextralErasureOmen && isSuffix) {
+      return (
+        lowestNonFracturedSuffixIlvl !== null &&
+        definition.ilvl === lowestNonFracturedSuffixIlvl
+      );
+    }
+
+    return false;
+  };
+
+  const getSocketableEffectValue = (
+    effect: string | null
+  ): { prefix: string; base: string } => {
+    if (!effect) return { prefix: '', base: '' };
+    const complexMatch = effect.match(/^(.*?)(\d+(?:\.\d+)?)(%.*?)$/);
+    if (complexMatch) {
+      const prefix = complexMatch[1] || '';
+      const suffix = complexMatch[3] || '';
+      return {
+        prefix,
+        base: suffix,
+      };
+    }
+    const match = effect.match(/^(\+)?\d+(?:\.\d+)?(%?)(.*)$/);
+    if (match) {
+      const prefix = match[1] || '';
+      const percent = match[2] || '';
+      const rest = match[3] ? match[3].trim() : '';
+      return {
+        prefix,
+        base: percent + (rest ? ' ' + rest : ''),
+      };
+    }
+
+    // fallback
+    return { prefix: '', base: effect.replace(/\d+(?:\.\d+)?/, '').trim() };
+  };
+
   return (
     <div className={`mx-4 mb-4 flex items-center`}>
       <div
@@ -816,61 +974,72 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
         {separator}
 
         {/* Lvl Req Block */}
-        {displayLvlReq > 0 && (
-          <>
-            <p className='my-2 text-center text-gray-400'>
-              Requires: Level{' '}
-              <span
-                className={
-                  highestAffixClvl > baseLvlReq
-                    ? 'text-indigo-400'
-                    : 'text-white'
-                }
-              >
-                {displayLvlReq}
-              </span>
-              {displayStrReq > 0 || displayDexReq > 0 || displayIntReq > 0
-                ? ', '
-                : ''}
-              {/* Str Req Block */}
-              {displayStrReq > 0 && (
-                <>
-                  <span
-                    className={strReqReduced ? 'text-indigo-400' : 'text-white'}
-                  >
-                    {displayStrReq}
-                  </span>{' '}
-                  Str{displayDexReq > 0 || displayIntReq > 0 ? ', ' : ''}
-                </>
-              )}
-              {/* Dex Req Block */}
-              {displayDexReq > 0 && (
-                <>
-                  <span
-                    className={dexReqReduced ? 'text-indigo-400' : 'text-white'}
-                  >
-                    {displayDexReq}
-                  </span>{' '}
-                  Dex{displayIntReq > 0 ? ', ' : ''}
-                </>
-              )}
-              {/* Int Req Block */}
-              {displayIntReq > 0 && (
-                <>
-                  <span
-                    className={intReqReduced ? 'text-indigo-400' : 'text-white'}
-                  >
-                    {displayIntReq}
-                  </span>{' '}
-                  Int
-                </>
-              )}
-            </p>
-            {(rarity !== 'normal' || implicitDisplay) &&
-              resolvedAffixes.length > 0 &&
-              separator}
-          </>
-        )}
+        {displayLvlReq > 0 &&
+          !['ruby', 'emerald', 'sapphire', 'diamond'].some((jewel) =>
+            item.base_type?.toLowerCase().includes(jewel.toLowerCase())
+          ) && (
+            <>
+              <p className='my-2 text-center text-gray-400'>
+                Requires: Level{' '}
+                <span
+                  className={
+                    highestAffixClvl > baseLvlReq
+                      ? 'text-indigo-400'
+                      : 'text-white'
+                  }
+                >
+                  {displayLvlReq}
+                </span>
+                {displayStrReq > 0 || displayDexReq > 0 || displayIntReq > 0
+                  ? ', '
+                  : ''}
+                {/* Str Req Block */}
+                {displayStrReq > 0 && (
+                  <>
+                    <span
+                      className={
+                        strReqReduced ? 'text-indigo-400' : 'text-white'
+                      }
+                    >
+                      {displayStrReq}
+                    </span>{' '}
+                    Str{displayDexReq > 0 || displayIntReq > 0 ? ', ' : ''}
+                  </>
+                )}
+                {/* Dex Req Block */}
+                {displayDexReq > 0 && (
+                  <>
+                    <span
+                      className={
+                        dexReqReduced ? 'text-indigo-400' : 'text-white'
+                      }
+                    >
+                      {displayDexReq}
+                    </span>{' '}
+                    Dex{displayIntReq > 0 ? ', ' : ''}
+                  </>
+                )}
+                {/* Int Req Block */}
+                {displayIntReq > 0 && (
+                  <>
+                    <span
+                      className={
+                        intReqReduced ? 'text-indigo-400' : 'text-white'
+                      }
+                    >
+                      {displayIntReq}
+                    </span>{' '}
+                    Int
+                  </>
+                )}
+              </p>
+              {((rarity !== 'normal' || implicitDisplay) &&
+                resolvedAffixes.length > 0 &&
+                separator) ||
+                (implicitDisplay && separator) ||
+                (resolvedAffixes.length > 0 && separator)}
+            </>
+          )}
 
         {/* Enchant Block */}
         {item.enchant && (
@@ -878,6 +1047,156 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
             <p className='mx-px my-2 text-center text-cyan-100'>
               {item.enchant}
             </p>
+            {separator}
+          </>
+        )}
+
+        {/* Socket Effects Block */}
+        {(item.socket1effect || item.socket2effect || item.socket3effect) && (
+          <>
+            {(() => {
+              const socket1 = item.socket1effect;
+              const socket2 = item.socket2effect;
+              const socket3 = item.socket3effect;
+
+              // Helper function to extract numeric value from effect string
+              const extractValue = (effect: string | null): number => {
+                if (!effect) return 0;
+                const match = effect.match(/(\d+(?:\.\d+)?)/);
+                return match ? parseFloat(match[1]) : 0;
+              };
+
+              // Helper function to get base effect text without the number
+              const getBaseEffect = (effect: string | null): string => {
+                if (!effect) return '';
+                return effect.replace(/\d+(?:\.\d+)?/, '').trim();
+              };
+
+              // Check if all three effects are the same
+              if (
+                socket1 &&
+                socket2 &&
+                socket3 &&
+                getBaseEffect(socket1) === getBaseEffect(socket2) &&
+                getBaseEffect(socket2) === getBaseEffect(socket3)
+              ) {
+                const totalValue =
+                  extractValue(socket1) +
+                  extractValue(socket2) +
+                  extractValue(socket3);
+                const { prefix, base } = getSocketableEffectValue(socket1);
+                const combinedEffect = base
+                  ? `${prefix}${totalValue}${base}`
+                  : `${prefix}${totalValue}`;
+
+                return (
+                  <p className='mx-px my-2 text-center text-cyan-100'>
+                    {combinedEffect}
+                  </p>
+                );
+              }
+              // socket1 and socket2 are the same
+              else if (
+                socket1 &&
+                socket2 &&
+                getBaseEffect(socket1) === getBaseEffect(socket2)
+              ) {
+                const totalValue =
+                  extractValue(socket1) + extractValue(socket2);
+                const { prefix, base } = getSocketableEffectValue(socket1);
+
+                const combinedEffect = base
+                  ? `${prefix}${totalValue}${base}`
+                  : `${prefix}${totalValue}`;
+
+                return (
+                  <>
+                    <p className='mx-px my-2 text-center text-cyan-100'>
+                      {combinedEffect}
+                    </p>
+                    {socket3 && (
+                      <p className='mx-px my-2 text-center text-cyan-100'>
+                        {socket3}
+                      </p>
+                    )}
+                  </>
+                );
+              }
+              // socket2 and socket3 are the same
+              else if (
+                socket2 &&
+                socket3 &&
+                getBaseEffect(socket2) === getBaseEffect(socket3)
+              ) {
+                const totalValue =
+                  extractValue(socket2) + extractValue(socket3);
+                const { prefix, base } = getSocketableEffectValue(socket2);
+
+                const combinedEffect = base
+                  ? `${prefix}${totalValue}${base}`
+                  : `${prefix}${totalValue}`;
+
+                return (
+                  <>
+                    {socket1 && (
+                      <p className='mx-px my-2 text-center text-cyan-100'>
+                        {socket1}
+                      </p>
+                    )}
+                    <p className='mx-px my-2 text-center text-cyan-100'>
+                      {combinedEffect}
+                    </p>
+                  </>
+                );
+              } else if (
+                socket1 &&
+                socket3 &&
+                getBaseEffect(socket1) === getBaseEffect(socket3)
+              ) {
+                const totalValue =
+                  extractValue(socket1) + extractValue(socket3);
+                const { prefix, base } = getSocketableEffectValue(socket1);
+
+                const combinedEffect = base
+                  ? `${prefix}${totalValue}${base}`
+                  : `${prefix}${totalValue}`;
+
+                return (
+                  <>
+                    <p className='mx-px my-2 text-center text-cyan-100'>
+                      {combinedEffect}
+                    </p>
+                    {socket2 && (
+                      <p className='mx-px my-2 text-center text-cyan-100'>
+                        {socket2}
+                      </p>
+                    )}
+                  </>
+                );
+              }
+              // Display all effects separately
+              else {
+                return (
+                  <>
+                    {socket1 && (
+                      <p className='mx-px my-2 text-center text-cyan-100'>
+                        {socket1}
+                      </p>
+                    )}
+                    {socket2 && (
+                      <p className='mx-px my-2 text-center text-cyan-100'>
+                        {socket2}
+                      </p>
+                    )}
+                    {socket3 && (
+                      <p className='mx-px my-2 text-center text-cyan-100'>
+                        {socket3}
+                      </p>
+                    )}
+                  </>
+                );
+              }
+            })()}
             {separator}
           </>
         )}
@@ -900,21 +1219,31 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
             const { definition, values } = activeAffix;
             const effectString = processAffixEffect(definition, values);
             const isFractured =
-              fracturedAffixId &&
+              !!fracturedAffixId &&
               activeAffix.definition.id === fracturedAffixId;
+            const showOrange = whittlingTarget(isFractured, definition);
+
             return effectString.split('\n').map((linePart, linePartIndex) => (
               <div
                 key={`affix-${affixIndex}-line-${linePartIndex}`}
                 className='relative py-px'
               >
-                <span className={isFractured ? 'text-frac' : 'text-indigo-400'}>
+                <span
+                  className={
+                    isFractured
+                      ? 'text-frac'
+                      : showOrange
+                        ? 'text-orange-400'
+                        : 'text-indigo-400'
+                  }
+                >
                   {linePart}
                 </span>
-                <div className='group absolute right-0 top-1/2 mr-1 inline-block -translate-y-1/2 transform'>
+                <div className='group absolute right-0 top-1/2 z-50 mr-1 inline-block -translate-y-1/2 transform'>
                   <span className='-inset-0 text-xs text-gray-600'>
-                    T{definition.id.match(/\d+/)?.[0]}
+                    {getDisplayTier(definition)}
                   </span>
-                  <div className='pointer-events-none absolute bottom-full left-1/2 z-10 mb-1 -translate-x-1/2 transform whitespace-nowrap rounded bg-black px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
+                  <div className='pointer-events-none absolute bottom-full left-1/2 mb-1 -translate-x-1/2 transform whitespace-nowrap rounded bg-black px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
                     {definition.affix_name}
                   </div>
                 </div>
@@ -943,67 +1272,311 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
 
         {/* Sockets Block */}
         {item.sockets === 1 && (
-          <img
-            className='absolute left-1/2 top-1/2 h-10 w-10 -translate-x-1/2 -translate-y-1/2'
-            src='socket.png'
-            alt='socket 1'
-            draggable={false}
-          />
-        )}
-        {item.sockets === 2 &&
-          (['Spear', 'Staff'].includes(currentBase.item_class) ? (
-            <>
-              <img
-                className='absolute left-1/2 top-[70px] h-10 w-10 -translate-x-1/2'
-                src='socket.png'
-                alt='socket 1'
-                draggable={false}
-              />
-              <img
-                className='absolute left-1/2 top-[120px] h-10 w-10 -translate-x-1/2'
-                src='socket.png'
-                alt='socket 2'
-                draggable={false}
-              />
-            </>
-          ) : (
-            <>
-              <img
-                className='absolute left-5 top-24 h-10 w-10'
-                src='socket.png'
-                alt='socket 1'
-                draggable={false}
-              />
-              <img
-                className='absolute left-[68px] top-24 h-10 w-10'
-                src='socket.png'
-                alt='socket 2'
-                draggable={false}
-              />
-            </>
-          ))}
-        {item.sockets === 3 && (
-          <>
+          <div className='absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2'>
             <img
-              className='absolute left-5 top-24 h-10 w-10'
+              className={`h-10 w-10 ${
+                activeSocketable ? 'cursor-pointer hover:opacity-80' : ''
+              }`}
               src='socket.png'
               alt='socket 1'
               draggable={false}
+              onClick={
+                activeSocketable
+                  ? (e) => {
+                      e.stopPropagation();
+                      onSocketClick?.(1);
+                    }
+                  : undefined
+              }
             />
-            <img
-              className='absolute left-[68px] top-24 h-10 w-10'
-              src='socket.png'
-              alt='socket 2'
-              draggable={false}
-            />
-            <img
-              className='absolute left-[68px] top-36 h-10 w-10'
-              src='socket.png'
-              alt='socket 3'
-              draggable={false}
-            />
-          </>
+            {item.socket1effect && item.socket1type && (
+              <img
+                className='pointer-events-none absolute inset-0 h-10 w-10'
+                src={`${item.socket1type}.png`}
+                alt={`${item.socket1type} in socket 1`}
+                draggable={false}
+              />
+            )}
+          </div>
         )}
+
+        {item.sockets === 2 &&
+          (['Spear', 'Staff'].includes(currentBase.item_class) ? (
+            <>
+              <div className='absolute left-1/2 top-[70px] -translate-x-1/2'>
+                <img
+                  className={`h-10 w-10 ${
+                    activeSocketable ? 'cursor-pointer hover:opacity-80' : ''
+                  }`}
+                  src='socket.png'
+                  alt='socket 1'
+                  draggable={false}
+                  onClick={
+                    activeSocketable
+                      ? (e) => {
+                          e.stopPropagation();
+                          onSocketClick?.(1);
+                        }
+                      : undefined
+                  }
+                />
+                {item.socket1effect && item.socket1type && (
+                  <img
+                    className='pointer-events-none absolute inset-0 h-10 w-10'
+                    src={`${item.socket1type}.png`}
+                    alt={`${item.socket1type} in socket 1`}
+                    draggable={false}
+                  />
+                )}
+              </div>
+              <div className='absolute left-1/2 top-[120px] -translate-x-1/2'>
+                <img
+                  className={`h-10 w-10 ${
+                    activeSocketable ? 'cursor-pointer hover:opacity-80' : ''
+                  }`}
+                  src='socket.png'
+                  alt='socket 2'
+                  draggable={false}
+                  onClick={
+                    activeSocketable
+                      ? (e) => {
+                          e.stopPropagation();
+                          onSocketClick?.(2);
+                        }
+                      : undefined
+                  }
+                />
+                {item.socket2effect && item.socket2type && (
+                  <img
+                    className='pointer-events-none absolute inset-0 h-10 w-10'
+                    src={`${item.socket2type}.png`}
+                    alt={`${item.socket2type} in socket 2`}
+                    draggable={false}
+                  />
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className='absolute left-5 top-24'>
+                <img
+                  className={`h-10 w-10 ${
+                    activeSocketable ? 'cursor-pointer hover:opacity-80' : ''
+                  }`}
+                  src='socket.png'
+                  alt='socket 1'
+                  draggable={false}
+                  onClick={
+                    activeSocketable
+                      ? (e) => {
+                          e.stopPropagation();
+                          onSocketClick?.(1);
+                        }
+                      : undefined
+                  }
+                />
+                {item.socket1effect && item.socket1type && (
+                  <img
+                    className='pointer-events-none absolute inset-0 h-10 w-10'
+                    src={`${item.socket1type}.png`}
+                    alt={`${item.socket1type} in socket 1`}
+                    draggable={false}
+                  />
+                )}
+              </div>
+              <div className='absolute left-[68px] top-24'>
+                <img
+                  className={`h-10 w-10 ${
+                    activeSocketable ? 'cursor-pointer hover:opacity-80' : ''
+                  }`}
+                  src='socket.png'
+                  alt='socket 2'
+                  draggable={false}
+                  onClick={
+                    activeSocketable
+                      ? (e) => {
+                          e.stopPropagation();
+                          onSocketClick?.(2);
+                        }
+                      : undefined
+                  }
+                />
+                {item.socket2effect && item.socket2type && (
+                  <img
+                    className='pointer-events-none absolute inset-0 h-10 w-10'
+                    src={`${item.socket2type}.png`}
+                    alt={`${item.socket2type} in socket 2`}
+                    draggable={false}
+                  />
+                )}
+              </div>
+            </>
+          ))}
+
+        {item.sockets === 3 &&
+          (['Staff'].includes(currentBase.item_class) ? (
+            <>
+              <div className='absolute left-1/2 top-[50px] -translate-x-1/2'>
+                <img
+                  className={`h-10 w-10 ${
+                    activeSocketable ? 'cursor-pointer hover:opacity-80' : ''
+                  }`}
+                  src='socket.png'
+                  alt='socket 1'
+                  draggable={false}
+                  onClick={
+                    activeSocketable
+                      ? (e) => {
+                          e.stopPropagation();
+                          onSocketClick?.(1);
+                        }
+                      : undefined
+                  }
+                />
+                {item.socket1effect && item.socket1type && (
+                  <img
+                    className='pointer-events-none absolute inset-0 h-10 w-10'
+                    src={`${item.socket1type}.png`}
+                    alt={`${item.socket1type} in socket 1`}
+                    draggable={false}
+                  />
+                )}
+              </div>
+              <div className='absolute left-1/2 top-[100px] -translate-x-1/2'>
+                <img
+                  className={`h-10 w-10 ${
+                    activeSocketable ? 'cursor-pointer hover:opacity-80' : ''
+                  }`}
+                  src='socket.png'
+                  alt='socket 2'
+                  draggable={false}
+                  onClick={
+                    activeSocketable
+                      ? (e) => {
+                          e.stopPropagation();
+                          onSocketClick?.(2);
+                        }
+                      : undefined
+                  }
+                />
+                {item.socket2effect && item.socket2type && (
+                  <img
+                    className='pointer-events-none absolute inset-0 h-10 w-10'
+                    src={`${item.socket2type}.png`}
+                    alt={`${item.socket2type} in socket 2`}
+                    draggable={false}
+                  />
+                )}
+              </div>
+              <div className='absolute left-1/2 top-[150px] -translate-x-1/2'>
+                <img
+                  className={`h-10 w-10 ${
+                    activeSocketable ? 'cursor-pointer hover:opacity-80' : ''
+                  }`}
+                  src='socket.png'
+                  alt='socket 3'
+                  draggable={false}
+                  onClick={
+                    activeSocketable
+                      ? (e) => {
+                          e.stopPropagation();
+                          onSocketClick?.(3);
+                        }
+                      : undefined
+                  }
+                />
+                {item.socket3effect && item.socket3type && (
+                  <img
+                    className='pointer-events-none absolute inset-0 h-10 w-10'
+                    src={`${item.socket3type}.png`}
+                    alt={`${item.socket3type} in socket 3`}
+                    draggable={false}
+                  />
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className='absolute left-5 top-24'>
+                <img
+                  className={`h-10 w-10 ${
+                    activeSocketable ? 'cursor-pointer hover:opacity-80' : ''
+                  }`}
+                  src='socket.png'
+                  alt='socket 1'
+                  draggable={false}
+                  onClick={
+                    activeSocketable
+                      ? (e) => {
+                          e.stopPropagation();
+                          onSocketClick?.(1);
+                        }
+                      : undefined
+                  }
+                />
+                {item.socket1effect && item.socket1type && (
+                  <img
+                    className='pointer-events-none absolute inset-0 h-10 w-10'
+                    src={`${item.socket1type}.png`}
+                    alt={`${item.socket1type} in socket 1`}
+                    draggable={false}
+                  />
+                )}
+              </div>
+              <div className='absolute left-[68px] top-24'>
+                <img
+                  className={`h-10 w-10 ${
+                    activeSocketable ? 'cursor-pointer hover:opacity-80' : ''
+                  }`}
+                  src='socket.png'
+                  alt='socket 2'
+                  draggable={false}
+                  onClick={
+                    activeSocketable
+                      ? (e) => {
+                          e.stopPropagation();
+                          onSocketClick?.(2);
+                        }
+                      : undefined
+                  }
+                />
+                {item.socket2effect && item.socket2type && (
+                  <img
+                    className='pointer-events-none absolute inset-0 h-10 w-10'
+                    src={`${item.socket2type}.png`}
+                    alt={`${item.socket2type} in socket 2`}
+                    draggable={false}
+                  />
+                )}
+              </div>
+              <div className='absolute left-[68px] top-36'>
+                <img
+                  className={`h-10 w-10 ${
+                    activeSocketable ? 'cursor-pointer hover:opacity-80' : ''
+                  }`}
+                  src='socket.png'
+                  alt='socket 3'
+                  draggable={false}
+                  onClick={
+                    activeSocketable
+                      ? (e) => {
+                          e.stopPropagation();
+                          onSocketClick?.(3);
+                        }
+                      : undefined
+                  }
+                />
+                {item.socket3effect && item.socket3type && (
+                  <img
+                    className='pointer-events-none absolute inset-0 h-10 w-10'
+                    src={`${item.socket3type}.png`}
+                    alt={`${item.socket3type} in socket 3`}
+                    draggable={false}
+                  />
+                )}
+              </div>
+            </>
+          ))}
       </div>
     </div>
   );

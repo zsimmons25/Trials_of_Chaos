@@ -167,7 +167,7 @@ function MGSettings({
   };
 
   return (
-    <div className='flex min-h-screen flex-col items-center bg-neutral-900 pb-10 text-neutral-300'>
+    <div className='flex min-h-screen flex-col items-center bg-zinc-800 pb-10 text-neutral-300'>
       <div className='mb-4 pt-4 text-center'>
         <h1 className='mb-2 text-3xl font-bold text-red-700'>
           Select your vulnerabilities
@@ -235,7 +235,7 @@ function MGSettings({
                 <div
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={(e) => handleDrop(e, category)}
-                  className={`flex min-h-96 flex-col items-center rounded-lg border border-neutral-700 bg-neutral-800 bg-opacity-50 p-3 transition-colors hover:border-neutral-500 ${
+                  className={`flex min-h-96 flex-col items-center rounded-lg border border-neutral-700 bg-zinc-800 bg-opacity-50 p-3 transition-colors hover:border-neutral-500 ${
                     orderMatters ? 'gap-6' : 'gap-2'
                   }`}
                 >

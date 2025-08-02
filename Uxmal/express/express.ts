@@ -7,6 +7,7 @@ import monstersRouter from './routes/monsters.js';
 import affixesRouter from './routes/affixes.js';
 import itemsRouter from './routes/items.js';
 import enchantsRouter from './routes/enchants.js';
+import socketablesRouter from './routes/socketables.js';
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use(monstersRouter.router);
 app.use(affixesRouter.router);
 app.use(itemsRouter.router);
 app.use(enchantsRouter.router);
+app.use(socketablesRouter.router);
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

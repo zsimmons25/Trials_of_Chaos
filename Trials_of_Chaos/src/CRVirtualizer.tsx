@@ -98,6 +98,7 @@ export const CRVirtualizer: React.FC<CRVirtualizerProps> = ({
                           item={item}
                           bases={bases}
                           affixes={affixes}
+                          rarity={item.rarity}
                         />
                       ))}
                     </div>

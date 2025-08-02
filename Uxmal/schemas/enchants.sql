@@ -19,7 +19,7 @@ INSERT INTO enchants (id, effect, item_slots, item_tags, scope, active) VALUES
 ('IncreasedArmourEvasionPercent', '(15-25)% increased Armour and Evasion', 'armour, offhand', 'str_dex_armour, shield', 'local', TRUE),
 ('IncreasedArmourEnergyShieldPercent', '(15-25)% increased Armour and Energy Shield', 'armour, offhand', 'str_int_armour, shield', 'local', TRUE),
 ('IncreasedEvasionEnergyShieldPercent', '(15-25)% increased Evasion and Energy Shield', 'armour, offhand', 'dex_int_armour', 'local', TRUE),
-('ReducedLocalAttributeRequirements', '(10-20)% reduced Attribute Requirements', 'weapon, armour, offhand', 'two_hand, one_hand, bow, stave, wand, sceptre, shield, focus, str_armour, dex_armour, int_armour, str_dex_armour, str_int_armour, dex_int_armour', 'local', TRUE),
+('ReducedLocalAttributeRequirements', '(10-20)% reduced Attribute Requirements', 'weapon, armour, offhand', 'two_hand, one_hand, bow, staff, wand, sceptre, shield, focus, str_armour, dex_armour, int_armour, str_dex_armour, str_int_armour, dex_int_armour', 'local', TRUE),
 
 -- //
 -- Armour
@@ -78,8 +78,8 @@ INSERT INTO enchants (id, effect, item_slots, item_tags, scope, active) VALUES
 ('ManaGainOnBlock', '(10-15) Mana gained when you Block', 'offhand', 'shield', 'global', TRUE),
 
 -- Quiver
-('LifeGainOnKill', 'Gain (20-25) Life per Enemy Killed', 'weapon, offhand', 'quiver, stave, wand', 'global', TRUE),
-('ManaGainOnKill', 'Gain (10-15) Mana per Enemy Killed', 'weapon, offhand', 'quiver, stave, wand', 'global', TRUE),
+('LifeGainOnKill', 'Gain (20-25) Life per Enemy Killed', 'weapon, offhand', 'quiver, staff, wand', 'global', TRUE),
+('ManaGainOnKill', 'Gain (10-15) Mana per Enemy Killed', 'weapon, offhand', 'quiver, staff, wand', 'global', TRUE),
 ('IncreasedProjectilePierceChance', '(20-30)% chance to Pierce an Enemy', 'offhand', 'quiver', 'global', TRUE),
 ('RicochetChance', 'Projectiles have (10-20)% chance to Chain an additional time from terrain', 'offhand', 'quiver', 'global', TRUE),
 ('IncreasedCriticalDamageBonus', '(15-20)% increased Critical Damage Bonus', 'offhand, ring', 'quiver', 'global', TRUE),
@@ -130,18 +130,18 @@ INSERT INTO enchants (id, effect, item_slots, item_tags, scope, active) VALUES
 ('IncreasedAllyCritDamage', 'Allies in your Presence have (10-15)% increased Critical Damage Bonus', 'weapon', 'sceptre', 'global', TRUE),
 ('IncreasedLocalSpirit', '(15-25)% increased Spirit', 'weapon', 'sceptre', 'global', TRUE),
 
--- Staves & Wands
-('IncreasedSpellDamageTwoHand', '(40-50)% increased Spell Damage', 'weapon', 'stave', 'local', TRUE),
-('IncreasedCastSpeed', '(10-15)% increased Cast Speed', 'weapon', 'stave, wand', 'global', TRUE),
-('IncreasedSpellCritChance', '(20-30)% increased Critical Hit Chance for Spells', 'weapon', 'stave, wand', 'global', TRUE),
-('IncreasedIgniteChance', '(20-30)% increased chance to Ignite', 'weapon', 'stave, wand', 'global', TRUE),
-('IncreasedFreezeBuildup', '(20-30)% increased Freeze Buildup', 'weapon', 'stave, wand', 'global', TRUE),
-('IncreasedShockChance', '(20-30)% increased chance to Shock', 'weapon', 'stave, wand', 'global', TRUE),
-('IncreasedPhysicalGemLevel', '+1 to Level of all Physical Spell Skills', 'weapon', 'stave, wand', 'global', TRUE),
-('IncreasedFireGemLevel', '+1 to Level of all Fire Spell Skills', 'weapon', 'stave, wand', 'global', TRUE),
-('IncreasedColdGemLevel', '+1 to Level of all Cold Spell Skills', 'weapon', 'stave, wand', 'global', TRUE),
-('IncreasedLightningGemLevel', '+1 to Level of all Lightning Spell Skills', 'weapon', 'stave, wand', 'global', TRUE),
-('IncreasedChaosGemLevel', '+1 to Level of all Chaos Spell Skills', 'weapon', 'stave, wand', 'global', TRUE),
+-- Staffs & Wands
+('IncreasedSpellDamageTwoHand', '(40-50)% increased Spell Damage', 'weapon', 'staff', 'local', TRUE),
+('IncreasedCastSpeed', '(10-15)% increased Cast Speed', 'weapon', 'staff, wand', 'global', TRUE),
+('IncreasedSpellCritChance', '(20-30)% increased Critical Hit Chance for Spells', 'weapon', 'staff, wand', 'global', TRUE),
+('IncreasedIgniteChance', '(20-30)% increased chance to Ignite', 'weapon', 'staff, wand', 'global', TRUE),
+('IncreasedFreezeBuildup', '(20-30)% increased Freeze Buildup', 'weapon', 'staff, wand', 'global', TRUE),
+('IncreasedShockChance', '(20-30)% increased chance to Shock', 'weapon', 'staff, wand', 'global', TRUE),
+('IncreasedPhysicalGemLevel', '+1 to Level of all Physical Spell Skills', 'weapon', 'staff, wand', 'global', TRUE),
+('IncreasedFireGemLevel', '+1 to Level of all Fire Spell Skills', 'weapon', 'staff, wand', 'global', TRUE),
+('IncreasedColdGemLevel', '+1 to Level of all Cold Spell Skills', 'weapon', 'staff, wand', 'global', TRUE),
+('IncreasedLightningGemLevel', '+1 to Level of all Lightning Spell Skills', 'weapon', 'staff, wand', 'global', TRUE),
+('IncreasedChaosGemLevel', '+1 to Level of all Chaos Spell Skills', 'weapon', 'staff, wand', 'global', TRUE),
 
 -- //
 -- Jewellery

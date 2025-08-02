@@ -29,6 +29,12 @@ CREATE TABLE IF NOT EXISTS items (
     ilvl INT NOT NULL DEFAULT 80,
     enchant VARCHAR(255),
     sockets INT,
+    socket1effect VARCHAR(255) DEFAULT NULL,
+    socket1type VARCHAR(255) DEFAULT NULL,
+    socket2effect VARCHAR(255) DEFAULT NULL,
+    socket2type VARCHAR(255) DEFAULT NULL,
+    socket3effect VARCHAR(255) DEFAULT NULL,
+    socket3type VARCHAR(255) DEFAULT NULL,
     implicit INT DEFAULT 0,
     prefix1 VARCHAR(255),
     p1v1 INT,
@@ -92,7 +98,7 @@ INSERT INTO bases (base_name, item_class, lvl_req, str_req, dex_req, int_req, ar
 ('Guarded Helm', 'Helmet', 11, 13, 13, 0, 34, 28, 0, 0, '0', '0', '0', '0', '', 'str_dex_armour, novice', TRUE),
 ('Visored Helm', 'Helmet', 16, 18, 18, 0, 44, 37, 0, 0, '0', '0', '0', '0', '', 'str_dex_armour, novice', TRUE),
 ('Cowled Helm', 'Helmet', 26, 27, 27, 0, 62, 54, 0, 0, '0', '0', '0', '0', '', 'str_dex_armour, novice', TRUE),
-('Shieled Helm', 'Helmet', 33, 34, 34, 0, 75, 66, 0, 0, '0', '0', '0', '0', '', 'str_dex_armour, novice', TRUE),
+('Shielded Helm', 'Helmet', 33, 34, 34, 0, 75, 66, 0, 0, '0', '0', '0', '0', '', 'str_dex_armour, novice', TRUE),
 
 -- STR/INT
 ('Iron Crown', 'Helmet', 5, 0, 0, 0, 23, 0, 12, 0, '0', '0', '0', '0', '', 'str_int_armour, novice', TRUE),
@@ -189,9 +195,9 @@ INSERT INTO bases (base_name, item_class, lvl_req, str_req, dex_req, int_req, ar
 ('Intricate Gloves', 'Gloves', 33, 0, 0, 53, 0, 0, 26, 0, '0', '0', '0', '0', '', 'int_armour, novice', TRUE),
 
 -- STR/DEX
-('Ringmail Guantlets', 'Gloves', 6, 7, 7, 0, 13, 10, 0, 0, '0', '0', '0', '0', '', 'str_dex_armour, novice', TRUE),
-('Layered Guantlets', 'Gloves', 16, 15, 15, 0, 22, 18, 0, 0, '0', '0', '0', '0', '', 'str_dex_armour, novice', TRUE),
-('Doubled Guantlets', 'Gloves', 33, 30, 30, 0, 37, 33, 0, 0, '0', '0', '0', '0', '', 'str_dex_armour, novice', TRUE),
+('Ringmail Gauntlets', 'Gloves', 6, 7, 7, 0, 13, 10, 0, 0, '0', '0', '0', '0', '', 'str_dex_armour, novice', TRUE),
+('Layered Gauntlets', 'Gloves', 16, 15, 15, 0, 22, 18, 0, 0, '0', '0', '0', '0', '', 'str_dex_armour, novice', TRUE),
+('Doubled Gauntlets', 'Gloves', 33, 30, 30, 0, 37, 33, 0, 0, '0', '0', '0', '0', '', 'str_dex_armour, novice', TRUE),
 
 -- STR/INT
 ('Rope Cuffs', 'Gloves', 5, 6, 0, 6, 12, 0, 6, 0, '0', '0', '0', '0', '', 'str_int_armour, novice', TRUE),
@@ -406,7 +412,7 @@ INSERT INTO bases (base_name, item_class, lvl_req, str_req, dex_req, int_req, ar
 -- Bow
 -- \\
 ('Crude Bow', 'Bow', 1, 0, 0, 0, 0, 0, 0, 0, '6-9', '5%', '1.2', '', '', 'one_hand_weapon, bow, novice', TRUE),
-('Short Bow', 'Bow', 5, 0, 14, 0, 0, 0, 0, 0, '7-14', '5%', '1.25', '', '', 'one_hand_weapon, bow, novice', TRUE),
+('ShortBow', 'Bow', 5, 0, 14, 0, 0, 0, 0, 0, '7-14', '5%', '1.25', '', '', 'one_hand_weapon, bow, novice', TRUE),
 ('Warden Bow', 'Bow', 11, 0, 27, 0, 0, 0, 0, 0, '12-18', '5%', '1.15', '', '(20-30)% chance to Chain an additional time', 'one_hand_weapon, bow, novice', TRUE),
 ('Recurve Bow', 'Bow', 16, 0, 38, 0, 0, 0, 0, 0, '15-31', '5%', '1.1', '', '', 'one_hand_weapon, bow, novice', TRUE),
 ('Composite Bow', 'Bow', 22, 0, 52, 0, 0, 0, 0, 0, '19-31', '5%', '1.2', '', '', 'one_hand_weapon, bow, novice', TRUE),
@@ -559,9 +565,9 @@ INSERT INTO bases (base_name, item_class, lvl_req, str_req, dex_req, int_req, ar
 ('Gold Gloves', 'Gloves', 59, 0, 0, 95, 0, 0, 39, 0, '0', '0', '0', '0', '', 'int_armour, advanced', TRUE),
 
 -- STR/DEX
-('Ironmail Guantlets', 'Gloves', 45, 40, 40, 0, 48, 44, 0, 0, '0', '0', '0', '0', '', 'str_dex_armour, advanced', TRUE),
-('Captain Guantlets', 'Gloves', 51, 46, 46, 0, 54, 49, 0, 0, '0', '0', '0', '0', '', 'str_dex_armour, advanced', TRUE),
-('Zealot Guantlets', 'Gloves', 59, 52, 52, 0, 61, 56, 0, 0, '0', '0', '0', '0', '', 'str_dex_armour, advanced', TRUE),
+('Ironmail Gauntlets', 'Gloves', 45, 40, 40, 0, 48, 44, 0, 0, '0', '0', '0', '0', '', 'str_dex_armour, advanced', TRUE),
+('Captain Gauntlets', 'Gloves', 51, 46, 46, 0, 54, 49, 0, 0, '0', '0', '0', '0', '', 'str_dex_armour, advanced', TRUE),
+('Zealot Gauntlets', 'Gloves', 59, 52, 52, 0, 61, 56, 0, 0, '0', '0', '0', '0', '', 'str_dex_armour, advanced', TRUE),
 
 -- STR/INT
 ('Braided Cuffs', 'Gloves', 45, 40, 0, 40, 48, 0, 17, 0, '0', '0', '0', '0', '', 'str_int_armour, advanced', TRUE),
@@ -806,14 +812,14 @@ INSERT INTO bases (base_name, item_class, lvl_req, str_req, dex_req, int_req, ar
 -- \\
 
 -- STR
-('Soldier Plate', 'Body Armour', 65, 157, 0, 0, 534, 0, 0, 0, '0', '0', '0', '0', '', 'str_armour, expert', TRUE),
+('Soldier Cuirass', 'Body Armour', 65, 157, 0, 0, 534, 0, 0, 0, '0', '0', '0', '0', '', 'str_armour, expert', TRUE),
 ('Ornate Plate', 'Body Armour', 70, 157, 0, 0, 445, 0, 0, 0, '0', '0', '0', '0', 'Regenerate (1.5-2.5)% of Life per second', 'str_armour, expert', TRUE),
 ('Utzaal Cuirass', 'Body Armour', 75, 157, 0, 0, 445, 0, 0, 0, '0', '0', '0', '0', '(30-40)% increased Stun Threshold', 'str_armour, expert', TRUE),
 
 -- DEX
 ('Swiftstalker Coat', 'Body Armour', 65, 0, 157, 0, 0, 406, 0, 0, '0', '0', '0', '0', '+(30-20)% reduced Slowing Potency of Debuffs on You', 'dex_armour, expert', TRUE),
 ('Slipstrike Vest', 'Body Armour', 70, 0, 157, 0, 0, 487, 0, 0, '0', '0', '0', '0', '', 'dex_armour, expert', TRUE),
-('Wrymscale Coat', 'Body Armour', 75, 0, 157, 0, 0, 406, 0, 0, '0', '0', '0', '0', '(30-40)% increased Elemental Ailment Threshold', 'dex_armour, expert', TRUE),
+('Wyrmscale Coat', 'Body Armour', 75, 0, 157, 0, 0, 406, 0, 0, '0', '0', '0', '0', '(30-40)% increased Elemental Ailment Threshold', 'dex_armour, expert', TRUE),
 
 -- INT
 ('Vile Robe', 'Body Armour', 65, 0, 0, 157, 0, 0, 184, 0, '0', '0', '0', '0', '', 'int_armour, expert', TRUE),
@@ -854,9 +860,9 @@ INSERT INTO bases (base_name, item_class, lvl_req, str_req, dex_req, int_req, ar
 ('Vaal Gloves', 'Gloves', 75, 0, 0, 122, 0, 0, 50, 0, '0', '0', '0', '0', '', 'int_armour, expert', TRUE),
 
 -- STR/DEX
-('Steelmail Guantlets', 'Gloves', 65, 57, 57, 0, 67, 61, 0, 0, '0', '0', '0', '0', '', 'str_dex_armour, expert', TRUE),
-('Commander Guantlets', 'Gloves', 70, 62, 62, 0, 74, 67, 0, 0, '0', '0', '0', '0', '', 'str_dex_armour, expert', TRUE),
-('Cultist Guantlets', 'Gloves', 75, 67, 67, 0, 80, 73, 0, 0, '0', '0', '0', '0', '', 'str_dex_armour, expert', TRUE),
+('Steelmail Gauntlets', 'Gloves', 65, 57, 57, 0, 67, 61, 0, 0, '0', '0', '0', '0', '', 'str_dex_armour, expert', TRUE),
+('Commander Gauntlets', 'Gloves', 70, 62, 62, 0, 74, 67, 0, 0, '0', '0', '0', '0', '', 'str_dex_armour, expert', TRUE),
+('Cultist Gauntlets', 'Gloves', 75, 67, 67, 0, 80, 73, 0, 0, '0', '0', '0', '0', '', 'str_dex_armour, expert', TRUE),
 
 -- STR/INT
 ('Bound Cuffs', 'Gloves', 65, 57, 0, 57, 67, 0, 23, 0, '0', '0', '0', '0', '', 'str_int_armour, expert', TRUE),
@@ -878,7 +884,7 @@ INSERT INTO bases (base_name, item_class, lvl_req, str_req, dex_req, int_req, ar
 
 -- DEX
 ('Cinched Boots', 'Boots', 65, 0, 111, 0, 0, 166, 0, 0, '0', '0', '0', '0', '', 'dex_armour, expert', TRUE),
-('Calvary Boots', 'Boots', 70, 0, 121, 0, 0, 183, 0, 0, '0', '0', '0', '0', '', 'dex_armour, expert', TRUE),
+('Cavalry Boots', 'Boots', 70, 0, 121, 0, 0, 183, 0, 0, '0', '0', '0', '0', '', 'dex_armour, expert', TRUE),
 ('Dragonscale Boots', 'Boots', 75, 0, 131, 0, 0, 200, 0, 0, '0', '0', '0', '0', '', 'dex_armour, expert', TRUE),
 
 -- INT
@@ -943,7 +949,7 @@ INSERT INTO bases (base_name, item_class, lvl_req, str_req, dex_req, int_req, ar
 ('Torment Club', 'One Hand Mace', 65, 148, 0, 0, 0, 0, 0, 0, '44-73', '5%', '1.45', '1.1', '', 'one_hand_weapon, expert', FALSE),
 ('Flanged Mace', 'One Hand Mace', 67, 174, 0, 0, 0, 0, 0, 0, '45-67', '5%', '1.55', '1.1', '', 'one_hand_weapon, expert', TRUE),
 ('Crown Mace', 'One Hand Mace', 72, 193, 0, 0, 0, 0, 0, 0, '43-89', '5%', '1.4', '1.1', '', 'one_hand_weapon, expert', TRUE),
-('Marauding Mace', 'One Hand Mace', 77, 212, 0, 0, 0, 0, 0, 0, '51-84', '5%', '1.45', '1.1', '', 'one_hand_weapon, expert', FALSE),
+('Marauding Mace', 'One Hand Mace', 77, 212, 0, 0, 0, 0, 0, 0, '51-84', '5%', '1.45', '1.1', '', 'one_hand_weapon, expert', TRUE),
 ('Molten Hammer', 'One Hand Mace', 77, 212, 0, 0, 0, 0, 0, 0, '60-100', '5%', '1.45', '1.1', 'Base Fire Damage [50%]', 'one_hand_weapon, expert', TRUE),
 ('Strife Pick', 'One Hand Mace', 78, 212, 0, 0, 0, 0, 0, 0, '49-66', '7%', '1.45', '1.1', '+(10-15)% to Critical Damage Bonus', 'one_hand_weapon, expert', TRUE),
 ('Fortified Hammer', 'One Hand Mace', 79, 212, 0, 0, 0, 0, 0, 0, '60-73', '5%', '1.4', '1.1', 'Causes Daze buildup equal to 100% of Damage dealt', 'one_hand_weapon, expert', TRUE),
@@ -964,7 +970,7 @@ INSERT INTO bases (base_name, item_class, lvl_req, str_req, dex_req, int_req, ar
 
 -- Two Hand Sword
 -- \\
-('Ultra Greatblade', 'Two Hand Sword', 65, 81, 81, 0, 0, 0, 0, 0, '72-119', '5%', '1.3', '1.3', '', 'two_hand_weapon, expert', TRUE),
+('Ultra Greatsword', 'Two Hand Sword', 65, 81, 81, 0, 0, 0, 0, 0, '72-119', '5%', '1.3', '1.3', '', 'two_hand_weapon, expert', TRUE),
 
 -- Claw
 -- \\
@@ -991,7 +997,7 @@ INSERT INTO bases (base_name, item_class, lvl_req, str_req, dex_req, int_req, ar
 -- Bow
 -- \\
 ('Ironwood Shortbow', 'Bow', 67, 0, 174, 0, 0, 0, 0, 0, '41-76', '5%', '1.25', '', '', 'one_hand_weapon, bow, expert', TRUE),
-('Calvary Bow', 'Bow', 72, 0, 193, 0, 0, 0, 0, 0, '49-82', '5%', '1.2', '', '', 'one_hand_weapon, bow, expert', TRUE),
+('Cavalry Bow', 'Bow', 72, 0, 193, 0, 0, 0, 0, 0, '49-82', '5%', '1.2', '', '', 'one_hand_weapon, bow, expert', TRUE),
 ('Guardian Bow', 'Bow', 77, 0, 212, 0, 0, 0, 0, 0, '53-80', '5%', '1.15', '', '(20-30)% chance to Chain an additional time', 'one_hand_weapon, bow, expert', TRUE),
 ('Warmonger Bow', 'Bow', 77, 0, 212, 0, 0, 0, 0, 0, '56-84', '5%', '1.2', '', '', 'one_hand_weapon, bow, expert', TRUE),
 ('Gemini Bow', 'Bow', 78, 0, 212, 0, 0, 0, 0, 0, '39-73', '5%', '1.2', '', 'Bow Attacks fire an additional Arrow', 'one_hand_weapon, bow, expert', TRUE),
@@ -1054,8 +1060,8 @@ INSERT INTO bases (base_name, item_class, lvl_req, str_req, dex_req, int_req, ar
 ('Broadhead Quiver', 'Quiver', 1, 0, 0, 0, 0, 0, 0, 0, '0', '0', '0', '0', 'Adds 1 to 3 Physical Damage to Attacks', 'quiver, novice', TRUE),
 ('Fire Quiver', 'Quiver', 8, 0, 0, 0, 0, 0, 0, 0, '0', '0', '0', '0', 'Adds 3 to 5 Fire Damage to Attacks', 'quiver, novice', TRUE),
 ('Sacral Quiver', 'Quiver', 16, 0, 0, 0, 0, 0, 0, 0, '0', '0', '0', '0', 'Gain (2-3) Life per Enemy Hit with Attacks', 'quiver, novice', TRUE),
+('Blunt Quiver', 'Quiver', 33, 0, 0, 0, 0, 0, 0, 0, '0', '0', '0', '0', '(20-30)% reduced Enemy Stun Threshold', 'quiver, novice', TRUE),
 ('Two-Point Quiver', 'Quiver', 24, 0, 0, 0, 0, 0, 0, 0, '0', '0', '0', '0', '(20-30)% increased accuracy rating', 'quiver, expert', TRUE),
-('Blunt Quiver', 'Quiver', 33, 0, 0, 0, 0, 0, 0, 0, '0', '0', '0', '0', '(20-30)% reduced Enemy Stun Threshold', 'quiver, expert', TRUE),
 ('Toxic Quiver', 'Quiver', 39, 0, 0, 0, 0, 0, 0, 0, '0', '0', '0', '0', '(10-15)% chance to poison with attacks', 'quiver, expert', TRUE),
 ('Serrated Quiver', 'Quiver', 44, 0, 0, 0, 0, 0, 0, 0, '0', '0', '0', '0', 'Attacks have (10-15)% chance to cause bleeding', 'quiver, expert', TRUE),
 ('Primed Quiver', 'Quiver', 51, 0, 0, 0, 0, 0, 0, 0, '0', '0', '0', '0', '(7-10)% increased attack speed', 'quiver, expert', TRUE),
@@ -1119,7 +1125,7 @@ INSERT INTO bases (base_name, item_class, lvl_req, str_req, dex_req, int_req, ar
 -- \\
 -- Jewels
 -- \\
-('Diamond', 'Jewel', 0, 0, 0, 0, 0, 0, 0, 0, '0', '0', '0', '0', 'Limited to 3 Explicits 1 per Type of Jewel', 'jewel', TRUE),
+('Diamond', 'Jewel', 0, 0, 0, 0, 0, 0, 0, 0, '0', '0', '0', '0', 'Always has 3 Explicits 1 per Type of Jewel', 'jewel', TRUE),
 ('Emerald', 'Jewel', 0, 0, 0, 0, 0, 0, 0, 0, '0', '0', '0', '0', '', 'jewel', TRUE),
 ('Ruby', 'Jewel', 0, 0, 0, 0, 0, 0, 0, 0, '0', '0', '0', '0', '', 'jewel', TRUE),
 ('Sapphire', 'Jewel', 0, 0, 0, 0, 0, 0, 0, 0, '0', '0', '0', '0', '', 'jewel', TRUE);

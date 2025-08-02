@@ -43,7 +43,7 @@ function Corruption() {
     'spear',
     'bow',
     'crossbow',
-    'stave',
+    'staff',
     'quarterstaff',
     'wand',
     'sceptre',
@@ -399,7 +399,7 @@ function Corruption() {
             'two_hand_axe',
             'two_hand_mace',
             'two_hand_sword',
-            'stave',
+            'staff',
           ].includes(activeSelection.subtype)
         ) {
           return {
@@ -492,17 +492,23 @@ function Corruption() {
           className={`relative inline-flex cursor-pointer flex-col items-center justify-center rounded border text-xs transition-colors sm:text-sm ${
             isSlotSelected(name)
               ? 'border-yellow-500 bg-zinc-700 text-yellow-200'
-              : 'border-zinc-600 bg-zinc-800 text-neutral-400 hover:bg-zinc-700'
+              : 'border-zinc-600 hover:bg-zinc-700'
           }`}
           onClick={() => handleSlotClick(name)}
         >
           <div className='relative'>
-            <img src={name + '.png'} alt={name} className='block' />
+            <img
+              src={name + '.png'}
+              alt={name}
+              className='block'
+              draggable={false}
+            />
             {itemImage && (
               <img
                 src={itemImage.src}
                 alt={itemImage.alt}
                 className={itemImage.className}
+                draggable={false}
               />
             )}
           </div>

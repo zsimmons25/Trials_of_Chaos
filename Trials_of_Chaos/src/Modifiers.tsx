@@ -42,7 +42,7 @@ function Modifiers() {
   }
   const marker = <img className='h-8 w-4' src={red_marker} alt='rm' />;
   return (
-    <div className='h-screen w-screen bg-neutral-900 text-center text-neutral-300'>
+    <div className='h-full w-screen bg-zinc-800 text-center text-neutral-300'>
       <div className='relative mt-8 flex w-screen flex-wrap items-center justify-center @container/modifiers'>
         {modifiers
           .filter((modifier) => modifier.active)

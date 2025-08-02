@@ -4,65 +4,122 @@ import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
 function RootComponent() {
   return (
     <>
-      <div className='flex gap-2 bg-neutral-800 p-2 text-slate-300'>
-        <Link to='/' className='hover:text-gold [&.active]:font-bold'>
+      <div className='flex items-center justify-between gap-6 bg-neutral-800 p-2 text-slate-300'>
+        <Link
+          to='/'
+          className='ml-20 flex flex-col items-center hover:text-gold [&.active]:text-gold'
+        >
           Intro
+          <img
+            className='h-10 w-10'
+            src='chimeral_ultimatum.webp'
+            alt='Chimeral Ultimatum'
+            draggable={false}
+          />
         </Link>
         <Link
           to='/modifiers'
           preload='intent'
-          className='hover:text-gold [&.active]:font-bold'
+          className='flex flex-col items-center hover:text-gold [&.active]:text-gold'
         >
           Modifers
+          <img
+            className='h-10 w-10'
+            src='lethal_rare.png'
+            alt='Lethal Rare'
+            draggable={false}
+          />
         </Link>
         <Link
           to='/monsters'
           preload='intent'
-          className='hover:text-gold [&.active]:font-bold'
+          className='flex flex-col items-center hover:text-gold [&.active]:text-gold'
         >
           Monsters
+          <img
+            className='h-10 w-10'
+            src='heart.webp'
+            alt='Heart'
+            draggable={false}
+          />
         </Link>
         <Link
           to='/rooms'
           preload='intent'
-          className='hover:text-gold [&.active]:font-bold'
+          className='ml-2 flex flex-col items-center hover:text-gold [&.active]:text-gold'
         >
           Rooms
+          <img
+            className='h-10 w-10'
+            src='soul_core_mini.webp'
+            alt='Soul Core'
+            draggable={false}
+          />
         </Link>
         <Link
           to='/rewards'
           preload='intent'
-          className='hover:text-gold [&.active]:font-bold'
+          className='ml-8 flex flex-col items-center hover:text-gold [&.active]:text-gold'
         >
           Rewards
+          <img
+            className='h-10 w-11'
+            src='rewards.png'
+            alt='Rewards'
+            draggable={false}
+          />
         </Link>
         <Link
           to='/corruption'
           preload='intent'
-          className='hover:text-gold [&.active]:font-bold'
+          className='flex flex-col items-center hover:text-gold [&.active]:text-gold'
         >
           Corruption
+          <img
+            className='h-10 w-10'
+            src='Vaal Orb.png'
+            alt='Vaal Orb'
+            draggable={false}
+          />
         </Link>
         <Link
           to='/crafting'
           preload='intent'
-          className='hover:text-gold [&.active]:font-bold'
+          className='flex flex-col items-center hover:text-gold [&.active]:text-gold'
         >
           Crafting
+          <img
+            className='h-10 w-10'
+            src='Chaos Orb.png'
+            alt='Chaos Orb'
+            draggable={false}
+          />
         </Link>
         <Link
           to='/chronicle'
           preload='intent'
-          className='hover:text-gold [&.active]:font-bold'
+          className='flex flex-col items-center hover:text-gold [&.active]:text-gold'
         >
           Chronicle
+          <img
+            className='h-10 w-10'
+            src='time_paradox.png'
+            alt='Time Paradox'
+            draggable={false}
+          />
         </Link>
         <Link
           to='/sanity'
           preload='intent'
-          className='hover:text-gold [&.active]:font-bold'
+          className='mr-20 flex flex-col items-center hover:text-gold [&.active]:text-gold'
         >
           Sanity
+          <img
+            className='h-10 w-10'
+            src='culmination.webp'
+            alt='Culmination Support'
+            draggable={false}
+          />
         </Link>
       </div>
       <hr />

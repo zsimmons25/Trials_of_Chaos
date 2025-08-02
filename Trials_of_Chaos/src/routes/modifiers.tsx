@@ -17,7 +17,7 @@ function ModifiersLayout() {
     (match) => match.routeId === '/modifiers/game'
   );
   return (
-    <div className='min-h-screen bg-neutral-900'>
+    <div className='min-h-screen bg-zinc-800'>
       {isGameRoute ? (
         <Outlet />
       ) : (

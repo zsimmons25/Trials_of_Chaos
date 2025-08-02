@@ -1,7 +1,12 @@
 function Sanity() {
   return (
-    <div className='min-h-screen w-screen bg-zinc-700 p-8 text-center text-neutral-300'>
-      Increased Sanity Support Gem
+    <div className='mx-auto min-h-screen w-6/12 flex-col items-center justify-center bg-zinc-800 py-8'>
+      <div className='mx-auto w-full max-w-4xl px-6 text-center text-slate-300'>
+        Increased Sanity Support Gem
+      </div>
+      <div>
+        <img src='video_frame.webp' alt='video frame' />
+      </div>
     </div>
   );
 }

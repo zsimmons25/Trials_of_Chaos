@@ -256,7 +256,7 @@ function ModifierGame(): JSX.Element {
 
   if (gameOver)
     return (
-      <div className='flex h-screen w-screen flex-col items-center justify-center bg-neutral-900 text-neutral-300'>
+      <div className='flex h-screen w-screen flex-col items-center justify-center bg-zinc-800 text-neutral-300'>
         <div className='rounded-lg bg-black bg-opacity-75 p-8 text-center'>
           <h1 className='mb-6 text-4xl font-bold text-gold'>
             Your trial has ended!
@@ -290,7 +290,7 @@ function ModifierGame(): JSX.Element {
     );
 
   return (
-    <div className='flex h-screen w-screen flex-col items-center justify-center bg-neutral-900 text-neutral-300'>
+    <div className='flex h-screen w-screen flex-col items-center justify-center bg-zinc-800 text-neutral-300'>
       <div className='mb-8 text-center'>
         <h1 className='mb-2 text-3xl font-bold text-gold'>
           The Trials of Chaos

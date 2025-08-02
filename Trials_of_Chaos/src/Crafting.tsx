@@ -1,109 +1,29 @@
 import React, { useState } from 'react';
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { useRanger } from '@tanstack/react-ranger';
 import { itemqfn, ItemsResponse } from './handlers/itemsquery';
+import { Item } from './types/items';
 import { affixqfn } from './handlers/affixesquery';
-import { Affix, Affixes, AffixFamilyGroup } from './types/affixes';
+import { Affix, Affixes } from './types/affixes';
+import { enchantsqfn } from './handlers/enchantsquery';
+import { Enchant, Enchants } from './types/enchants';
+import { socketablesqfn } from './handlers/socketablesquery';
+import { Socketable, Socketables } from './types/socketables';
+import { SocketablesInv } from './Socketables';
+import { ItemSlots } from './ItemSlots';
 import { ItemDisplay } from './ItemDisplay';
-import { Base, Item } from './types/items';
-
-const RangeSlider = ({
-  values,
-  onChange,
-  min,
-  max,
-  step = 1,
-  disabled = false,
-  color = 'blue',
-}: {
-  values: number[];
-  onChange: (values: number[]) => void;
-  min: number;
-  max: number;
-  step?: number;
-  disabled?: boolean;
-  color?: 'blue' | 'yellow';
-}) => {
-  const trackElRef = React.useRef<HTMLDivElement>(null);
-  const rangerInstance = useRanger({
-    values,
-    onChange: (instance) => onChange([...instance.sortedValues]),
-    min,
-    max,
-    stepSize: step,
-    getRangerElement: () => trackElRef.current,
-  });
-
-  if (disabled || min === max) {
-    return (
-      <div className='mt-2'>
-        <div className='text-xs text-zinc-300'>Value: {min} (fixed)</div>
-      </div>
-    );
-  }
-
-  const currentValue = values[0];
-  const percentage = rangerInstance.getPercentageForValue(currentValue);
-  const colorClasses =
-    color === 'blue'
-      ? {
-          track: 'bg-blue-600',
-          handle: 'bg-blue-500 hover:bg-blue-400',
-          ring: 'focus:ring-blue-400',
-        }
-      : {
-          track: 'bg-yellow-600',
-          handle: 'bg-yellow-500 hover:bg-yellow-400',
-          ring: 'focus:ring-yellow-400',
-        };
-
-  return (
-    <div className='mt-2'>
-      <div className='mb-1 flex items-center justify-between text-xs text-zinc-300'>
-        <span>Value: {currentValue}</span>
-        <span>
-          ({min}-{max})
-        </span>
-      </div>
-      <div className='flex h-8 items-center'>
-        <div
-          ref={trackElRef}
-          className='relative h-3 w-full cursor-pointer rounded-full bg-gray-700 transition-colors duration-150 hover:bg-gray-600'
-        >
-          <div
-            className={`absolute inset-y-0 left-0 rounded-full ${colorClasses.track} transition-all duration-150 ease-out`}
-            style={{ width: `${percentage}%` }}
-          />
-          {rangerInstance.handles().map((handle, index) => (
-            <div
-              key={index}
-              onKeyDown={handle.onKeyDownHandler}
-              onMouseDown={handle.onMouseDownHandler}
-              onTouchStart={handle.onTouchStart}
-              role='slider'
-              tabIndex={0}
-              aria-valuemin={min}
-              aria-valuemax={max}
-              aria-valuenow={currentValue}
-              style={{ left: `${percentage}%` }}
-              className={`absolute top-1/2 h-6 w-6 -translate-x-1/2 -translate-y-1/2 transform cursor-grab rounded-full border-2 border-white ${colorClasses.handle} shadow-lg transition-all duration-150 ease-out hover:scale-105 ${colorClasses.ring} focus:outline-none focus:ring-2 focus:ring-opacity-50 active:cursor-grabbing`}
-            >
-              <div className='absolute inset-1 rounded-full bg-white opacity-30'></div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
+import { RangeSlider } from './RangeSlider';
+import {
+  generateImplicitValue,
+  getMatchingAffixes,
+  getValueRanges,
+  generateAffixValues,
+  applyValueToEffect,
+} from './utils/affixHelpers';
+import { useOrbHandlers } from './Orbs';
 
 function Crafting() {
-  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
-  const [selectedSubtype, setSelectedSubtype] = useState<string | null>(null);
-  const [selectedShieldType, setSelectedShieldType] = useState<string | null>(
-    null
-  );
-  const [selectedBaseType, setSelectedBaseType] = useState<string | null>(null);
+  const [bluebg, setBluebg] = useState(false);
+  const [tooltips, setTooltips] = useState(true);
   const [itemLevel, setItemLevel] = useState<number>(82);
   const [activeSelection, setActiveSelection] = useState<{
     slot: string;
@@ -112,61 +32,154 @@ function Crafting() {
     baseType?: string;
     ringSlot?: 'left' | 'right';
   } | null>(null);
-  const [expandedTiers, setExpandedTiers] = useState<{
-    [key: string]: boolean;
-  }>({
-    expert: true,
-    advanced: false,
-    novice: false,
-  });
+  const [itemRarity, setItemRarity] = useState<'normal' | 'magic' | 'rare'>(
+    'normal'
+  );
+  const [implicitResult, setImplicitResult] = useState<{
+    text: string;
+    value: number;
+  }>({ text: '', value: 0 });
+  const [affixLog, setAffixLog] = useState<string[]>([]);
   const [expandedAffixFamilies, setExpandedAffixFamilies] = useState<{
     [key: string]: boolean;
   }>({});
-  const [lastSelectedSubtype, setLastSelectedSubtype] = useState<string | null>(
+  const [expandedCustomWeightFamilies, setExpandedCustomWeightFamilies] =
+    useState<{ [key: string]: boolean }>({});
+  const [activeOrb, setActiveOrb] = useState<string | null>(null);
+  const [activeSocketable, setActiveSocketable] = useState<Socketable | null>(
     null
   );
-  const [affixLog, setAffixLog] = useState<string[]>([]);
-  const [activeOrb, setActiveOrb] = useState<string | null>(null);
   const [cursorPos, setCursorPos] = useState<{ x: number; y: number }>({
     x: 0,
     y: 0,
   });
-  const [implicitResult, setImplicitResult] = useState<{
-    text: string;
-    value: number | null;
-  }>({ text: '', value: null });
-  const [itemRarity, setItemRarity] = useState<'normal' | 'magic' | 'rare'>(
-    'normal'
-  );
   const [itemQuality, setItemQuality] = useState(0);
   const [itemSockets, setItemSockets] = useState(0);
+  const [itemSocket1effect, setItemSocket1effect] = useState('');
+  const [itemSocket1type, setitemSocket1type] = useState('');
+  const [itemSocket2effect, setItemSocket2effect] = useState('');
+  const [itemSocket2type, setitemSocket2type] = useState('');
+  const [itemSocket3effect, setItemSocket3effect] = useState('');
+  const [itemSocket3type, setitemSocket3type] = useState('');
   const [itemCorruption, setItemCorruption] = useState(0);
+  const [enchantResult, setEnchantResult] = useState<{
+    enchant: Enchant;
+    value: number | null;
+  } | null>(null);
   const [CorruptionOmen, setCorruptionOmen] = useState(0);
+  const [WhittlingOmen, setWhittlingOmen] = useState(0);
+  const [SinistralErasureOmen, setSinistralErasureOmen] = useState(0);
+  const [DextralErasureOmen, setDextralErasureOmen] = useState(0);
+  const [SinistralAnnulmentOmen, setSinistralAnnulmentOmen] = useState(0);
+  const [DextralAnnulmentOmen, setDextralAnnulmentOmen] = useState(0);
   const [fracturedAffixId, setFracturedAffixId] = useState<string | null>(null);
+  const [useWeights, setUseWeights] = useState(true);
+  const [useCustomWeights, setUseCustomWeights] = useState(false);
+  const [customWeights, setCustomWeights] = useState<Record<string, number>>(
+    {}
+  );
+
+  const [showSocketables, setShowSocketables] = useState(false);
+
+  const [stateHistory, setStateHistory] = useState<
+    Array<{
+      craftedAffixes: typeof craftedAffixes;
+      itemRarity: typeof itemRarity;
+      itemQuality: number;
+      itemSockets: number;
+      itemCorruption: number;
+      fracturedAffixId: string | null;
+      enchantResult: typeof enchantResult;
+      implicitResult: typeof implicitResult;
+      affixLog: string[];
+      timestamp: number;
+    }>
+  >([]);
+
+  // Undo Function
+  const undoLastAction = () => {
+    if (stateHistory.length === 0) return;
+
+    const previousState = stateHistory[stateHistory.length - 1];
+
+    // Restore all state
+    setCraftedAffixes(previousState.craftedAffixes);
+    setItemRarity(previousState.itemRarity);
+    setItemQuality(previousState.itemQuality);
+    setItemSockets(previousState.itemSockets);
+    setShowSocketables(false);
+    setItemCorruption(previousState.itemCorruption);
+    setFracturedAffixId(previousState.fracturedAffixId);
+    setEnchantResult(previousState.enchantResult);
+    setImplicitResult(previousState.implicitResult);
+    setAffixLog(previousState.affixLog);
+
+    // Remove the last state from history
+    setStateHistory((prev) => prev.slice(0, -1));
+  };
+
+  // Save State Function
+  const saveStateBeforeAction = () => {
+    const currentState = {
+      craftedAffixes,
+      itemRarity,
+      itemQuality,
+      itemSockets,
+      itemCorruption,
+      fracturedAffixId,
+      enchantResult,
+      implicitResult,
+      affixLog,
+      timestamp: Date.now(),
+    };
+
+    setStateHistory((prev) => [...prev, currentState].slice(-20)); // Keep last 20 states
+  };
 
   const nhl = (
-    <img
-      src='https://www.poe2wiki.net/w/images/3/3a/Item_UI_header_normal_left.png'
-      alt='header left'
-      className='h-full'
-      draggable={false}
-    />
+    <img src='header_normal_left.png' alt='header left' className='h-full' />
   );
   const nhm = (
     <div
       className='h-full flex-grow bg-repeat-x'
       style={{
-        backgroundImage: `url('https://www.poe2wiki.net/w/images/8/8e/Item_UI_header_normal_middle.png')`,
+        backgroundImage: `url('header_normal_middle.png')`,
         backgroundSize: 'auto 100%',
       }}
     />
   );
   const nhr = (
+    <img src='header_normal_right.png' alt='header right' className='h-full' />
+  );
+
+  const chl = (
     <img
-      src='https://www.poe2wiki.net/w/images/5/54/Item_UI_header_normal_right.png'
-      alt='header right'
+      src='header_currency_left.png'
+      alt='header left currency'
       className='h-full'
-      draggable={false}
+    />
+  );
+  const chm = (
+    <div
+      className='h-full flex-grow bg-repeat-x'
+      style={{
+        backgroundImage: `url('header_currency_middle.png')`,
+        backgroundSize: 'auto 100%',
+      }}
+    />
+  );
+  const chr = (
+    <img
+      src='header_currency_right.png'
+      alt='header right currency'
+      className='h-full'
+    />
+  );
+  const csep = (
+    <img
+      className='mx-auto my-1'
+      src='separator_currency.png'
+      alt='currency seperator'
     />
   );
 
@@ -176,520 +189,34 @@ function Crafting() {
     refetchOnWindowFocus: false,
   });
 
+  const { bases } = itemAndBaseData!;
+
   const { data: affixesData } = useSuspenseQuery<Affixes>({
     queryKey: ['affixes'],
     queryFn: affixqfn,
     refetchOnWindowFocus: false,
   });
 
-  const { bases } = itemAndBaseData!;
+  const { data: enchantsData } = useSuspenseQuery<Enchants>({
+    queryKey: ['enchants'],
+    queryFn: enchantsqfn,
+    refetchOnWindowFocus: false,
+  });
 
-  const weapon_types = [
-    'axe',
-    'two_hand_axe',
-    'mace',
-    'two_hand_mace',
-    'sword',
-    'two_hand_sword',
-    'claw',
-    'dagger',
-    'flail',
-    'spear',
-    'bow',
-    'crossbow',
-    'staff',
-    'quarterstaff',
-    'wand',
-    'sceptre',
-  ];
-
-  const offhand_types = ['quiver', 'focus', 'buckler', 'shield'];
-
-  const shield_types = ['str', 'str/dex', 'str/int'];
-
-  const armour_types = ['STR', 'DEX', 'INT', 'STR/DEX', 'STR/INT', 'DEX/INT'];
-
-  const getSubtypeOptions = (slotName: string) => {
-    switch (slotName.toLowerCase()) {
-      case 'weapon':
-        return weapon_types;
-      case 'offhand':
-        return offhand_types;
-      case 'helmet':
-      case 'body armour':
-      case 'gloves':
-      case 'boots':
-        return armour_types;
-      default:
-        return [];
-    }
-  };
-
-  const needsSubtypeSelection = (slotName: string) => {
-    const noSubtypeSlots = ['ring', 'belt', 'amulet', 'jewel'];
-    return !noSubtypeSlots.includes(slotName.toLowerCase());
-  };
-
-  const getItemTags = (slot: string, subtype?: string, shieldType?: string) => {
-    const slotLower = slot.toLowerCase();
-
-    // Handle weapon types
-    if (slotLower === 'weapon' && subtype) {
-      if (
-        [
-          'crossbow',
-          'quarterstaff',
-          'two_hand_axe',
-          'two_hand_mace',
-          'two_hand_sword',
-        ].includes(subtype)
-      ) {
-        return ['two_hand', subtype];
-      }
-      if (
-        ['axe', 'mace', 'sword', 'claw', 'dagger', 'flail', 'spear'].includes(
-          subtype
-        )
-      ) {
-        return ['one_hand', subtype];
-      }
-      return [subtype];
-    }
-
-    // Handle offhand types
-    if (slotLower === 'offhand' && subtype) {
-      if (subtype === 'shield' && shieldType) {
-        switch (shieldType) {
-          case 'str':
-            return ['shield', 'str_armour'];
-          case 'str/dex':
-            return ['shield', 'str_dex_armour'];
-          case 'str/int':
-            return ['shield', 'str_int_armour'];
-          default:
-            return ['shield'];
-        }
-      }
-      if (subtype === 'buckler') {
-        return ['shield', 'dex_armour'];
-      }
-      return [subtype];
-    }
-
-    // Handle armour types
-    if (
-      ['helmet', 'body armour', 'gloves', 'boots'].includes(slotLower) &&
-      subtype
-    ) {
-      switch (subtype) {
-        case 'STR':
-          return ['str_armour'];
-        case 'DEX':
-          return ['dex_armour'];
-        case 'INT':
-          return ['int_armour'];
-        case 'STR/DEX':
-          return ['str_dex_armour'];
-        case 'STR/INT':
-          return ['str_int_armour'];
-        case 'DEX/INT':
-          return ['dex_int_armour'];
-        default:
-          return [];
-      }
-    }
-
-    // Handle items that don't need subtype selection
-    if (['ring', 'belt', 'amulet', 'jewel'].includes(slotLower)) {
-      return [slotLower];
-    }
-
-    return [];
-  };
-
-  // Update handleSlotClick to save the selection before clearing it
-  const handleSlotClick = (slotName: string, ringSlot?: 'left' | 'right') => {
-    if (
-      activeSelection &&
-      activeSelection.slot === slotName &&
-      (slotName !== 'Ring' || activeSelection.ringSlot === ringSlot)
-    ) {
-      // Save the current selection before clearing it
-      setLastSelectedSubtype(activeSelection.subtype);
-      setActiveSelection(null);
-      return;
-    }
-
-    setSelectedSlot(slotName);
-    setSelectedSubtype(null);
-    setSelectedShieldType(null);
-    setSelectedBaseType(null);
-
-    // Store which ring slot was clicked
-    if (slotName === 'Ring' && ringSlot) {
-      setActiveSelection({ slot: slotName, subtype: '', ringSlot });
-    }
-
-    // Reset expanded tiers to show only expert
-    setExpandedTiers({
-      expert: true,
-      advanced: false,
-      novice: false,
-    });
-  };
-
-  const handleSubtypeSelect = (subtype: string) => {
-    // Check if we should clear affixes when changing subtypes
-    if (
-      lastSelectedSubtype &&
-      lastSelectedSubtype !== subtype &&
-      (craftedAffixes.prefixes.length > 0 || craftedAffixes.suffixes.length > 0)
-    ) {
-      // For armor pieces - clear affixes if armor attribute changed
-      if (
-        ['helmet', 'body armour', 'gloves', 'boots'].includes(
-          selectedSlot?.toLowerCase() || ''
-        )
-      ) {
-        // Get tags for comparison
-        const oldTags = getItemTags(selectedSlot!, lastSelectedSubtype);
-        const newTags = getItemTags(selectedSlot!, subtype);
-
-        const oldArmorTags = oldTags.filter((tag) => tag.includes('_armour'));
-        const newArmorTags = newTags.filter((tag) => tag.includes('_armour'));
-
-        const tagsMatch =
-          oldArmorTags.length === newArmorTags.length &&
-          oldArmorTags.every((tag) => newArmorTags.includes(tag));
-
-        if (!tagsMatch) {
-          setCraftedAffixes({ prefixes: [], suffixes: [] });
-          setAffixLog([]);
-          setItemRarity('normal');
-          setItemQuality(0);
-          setItemSockets(0);
-        }
-      }
-
-      // For weapons
-      if (selectedSlot?.toLowerCase() === 'weapon') {
-        const oldTags = getItemTags(selectedSlot!, lastSelectedSubtype);
-        const newTags = getItemTags(selectedSlot!, subtype);
-
-        // Check if hand type changed (one_hand vs two_hand)
-        const oldHandType = oldTags.find(
-          (tag) => tag === 'one_hand' || tag === 'two_hand'
-        );
-        const newHandType = newTags.find(
-          (tag) => tag === 'one_hand' || tag === 'two_hand'
-        );
-
-        // Check if weapon type changed (axe vs sword vs mace, etc.)
-        //const oldWeaponType = oldTags.find(
-        //  (tag) => !['one_hand', 'two_hand'].includes(tag)
-        //);
-        //const newWeaponType = newTags.find(
-        //  (tag) => !['one_hand', 'two_hand'].includes(tag)
-        //);
-
-        if (oldHandType !== newHandType) {
-          setCraftedAffixes({ prefixes: [], suffixes: [] });
-          setAffixLog([]);
-          setItemRarity('normal');
-          setItemQuality(0);
-          setItemSockets(0);
-        }
-      }
-
-      // For offhand items
-      if (selectedSlot?.toLowerCase() === 'offhand') {
-        if (lastSelectedSubtype !== subtype) {
-          setCraftedAffixes({ prefixes: [], suffixes: [] });
-          setAffixLog([]);
-          setItemRarity('normal');
-          setItemQuality(0);
-          setItemSockets(0);
-        }
-      }
-
-      // Clear the lastSelectedSubtype after using it
-      setLastSelectedSubtype(null);
-    }
-
-    setSelectedSubtype(subtype);
-    setSelectedShieldType(null);
-
-    if (subtype === 'buckler') {
-      setSelectedShieldType('dex');
-      return;
-    }
-
-    // if (subtype !== 'shield') {
-    //   completeSelection(selectedSlot!, subtype);
-    // }
-  };
-
-  const handleShieldTypeSelect = (shieldType: string) => {
-    // Check if we should clear affixes when changing shield types
-    if (activeSelection && selectedSubtype === 'shield') {
-      // Create temporary selections to compare compatibility
-      const oldSelection = {
-        slot: selectedSlot!,
-        subtype: selectedSubtype,
-        shieldType: activeSelection.shieldType,
-      };
-
-      const newSelection = {
-        slot: selectedSlot!,
-        subtype: selectedSubtype,
-        shieldType: shieldType,
-      };
-
-      // Check if the armor attribute tags would be different
-      const oldTags = getItemTags(
-        oldSelection.slot,
-        oldSelection.subtype,
-        oldSelection.shieldType
-      );
-      const newTags = getItemTags(
-        newSelection.slot,
-        newSelection.subtype,
-        newSelection.shieldType
-      );
-
-      // If the armor attribute tags are different, clear affixes
-      const oldArmorTags = oldTags.filter((tag) => tag.includes('_armour'));
-      const newArmorTags = newTags.filter((tag) => tag.includes('_armour'));
-
-      const tagsMatch =
-        oldArmorTags.length === newArmorTags.length &&
-        oldArmorTags.every((tag) => newArmorTags.includes(tag));
-
-      if (!tagsMatch) {
-        setCraftedAffixes({ prefixes: [], suffixes: [] });
-        setAffixLog([]);
-        setItemRarity('normal');
-        setItemQuality(0);
-        setItemSockets(0);
-      }
-    }
-
-    setSelectedShieldType(shieldType);
-  };
-
-  const getBaseTypes = (
-    slot: string,
-    subtype?: string,
-    shieldType?: string
-  ) => {
-    const slotLower = slot.toLowerCase();
-
-    // Map slot names and subtypes to item_class values
-    const getRequiredItemClass = (slotName: string, weaponSubtype?: string) => {
-      switch (slotName) {
-        case 'helmet':
-          return 'Helmet';
-        case 'body armour':
-          return 'Body Armour';
-        case 'gloves':
-          return 'Gloves';
-        case 'boots':
-          return 'Boots';
-        case 'weapon':
-          // For weapons, return the specific weapon type as item_class
-          if (weaponSubtype) {
-            switch (weaponSubtype) {
-              case 'axe':
-                return 'One Hand Axe';
-              case 'two_hand_axe':
-                return 'Two Hand Axe';
-              case 'mace':
-                return 'One Hand Mace';
-              case 'two_hand_mace':
-                return 'Two Hand Mace';
-              case 'sword':
-                return 'One Hand Sword';
-              case 'two_hand_sword':
-                return 'Two Hand Sword';
-              case 'claw':
-                return 'Claw';
-              case 'dagger':
-                return 'Dagger';
-              case 'flail':
-                return 'Flail';
-              case 'spear':
-                return 'Spear';
-              case 'bow':
-                return 'Bow';
-              case 'crossbow':
-                return 'Crossbow';
-              case 'staff':
-                return 'Staff';
-              case 'quarterstaff':
-                return 'Quarterstaff';
-              case 'wand':
-                return 'Wand';
-              case 'sceptre':
-                return 'Sceptre';
-              default:
-                return 'Weapon';
-            }
-          }
-          return 'Weapon';
-        case 'offhand':
-          // For offhand, return the specific offhand type as item_class
-          if (subtype) {
-            switch (subtype) {
-              case 'quiver':
-                return 'Quiver';
-              case 'focus':
-                return 'Focus';
-              case 'buckler':
-                return 'Shield';
-              case 'shield':
-                return 'Shield';
-              default:
-                return 'Offhand';
-            }
-          }
-          return 'Offhand';
-        case 'ring':
-          return 'Ring';
-        case 'belt':
-          return 'Belt';
-        case 'amulet':
-          return 'Amulet';
-        case 'jewel':
-          return 'Jewel';
-        default:
-          return null;
-      }
-    };
-
-    // Get required attribute tags for armor pieces and shields
-    const getRequiredAttributeTags = (
-      slotName: string,
-      armorSubtype?: string,
-      shieldType?: string
-    ) => {
-      // Handle shield attribute tags
-      if (slotName === 'offhand' && armorSubtype === 'buckler') {
-        // Buckler always uses dex_armour
-        return ['dex_armour'];
-      }
-
-      if (slotName === 'offhand' && armorSubtype === 'shield' && shieldType) {
-        switch (shieldType) {
-          case 'str':
-            return ['str_armour'];
-          case 'str/dex':
-            return ['str_dex_armour'];
-          case 'str/int':
-            return ['str_int_armour'];
-          default:
-            return [];
-        }
-      }
-
-      // Handle armor attribute tags
-      if (
-        !['helmet', 'body armour', 'gloves', 'boots'].includes(slotName) ||
-        !armorSubtype
-      ) {
-        return [];
-      }
-
-      switch (armorSubtype) {
-        case 'STR':
-          return ['str_armour'];
-        case 'DEX':
-          return ['dex_armour'];
-        case 'INT':
-          return ['int_armour'];
-        case 'STR/DEX':
-          return ['str_dex_armour'];
-        case 'STR/INT':
-          return ['str_int_armour'];
-        case 'DEX/INT':
-          return ['dex_int_armour'];
-        default:
-          return [];
-      }
-    };
-
-    const requiredItemClass = getRequiredItemClass(slotLower, subtype);
-    const requiredAttributeTags = getRequiredAttributeTags(
-      slotLower,
-      subtype,
-      shieldType
-    );
-
-    if (!requiredItemClass) {
-      return { expert: [], advanced: [], novice: [] };
-    }
-
-    // Filter bases by item_class and attribute tags
-    const filteredBases = bases.filter((base) => {
-      if (base.active === 0) {
-        return false;
-      }
-
-      if (base.item_class !== requiredItemClass) {
-        return false;
-      }
-
-      // For armor pieces and shields, also check attribute tags
-      if (requiredAttributeTags.length > 0) {
-        const baseTags = base.item_tags ? base.item_tags.split(', ') : [];
-        return requiredAttributeTags.every((tag) => baseTags.includes(tag));
-      }
-
-      // For other items (weapons, jewelry, etc.), just item_class is enough
-      return true;
-    });
-
-    // For jewelry, return all bases in the 'expert' category (since we display them without tiers)
-    if (['ring', 'belt', 'amulet', 'jewel'].includes(slotLower)) {
-      return {
-        expert: filteredBases.sort(
-          (a, b) => (a.lvl_req ?? 0) - (b.lvl_req ?? 0)
-        ),
-        advanced: [],
-        novice: [],
-      };
-    }
-
-    // For non-jewelry, filter by tier tags in item_tags and sort by level requirement
-    return {
-      expert: filteredBases
-        .filter((base) => base.item_tags && base.item_tags.includes('expert'))
-        .sort((a, b) => (a.lvl_req ?? 0) - (b.lvl_req ?? 0)),
-      advanced: filteredBases
-        .filter((base) => base.item_tags && base.item_tags.includes('advanced'))
-        .sort((a, b) => (a.lvl_req ?? 0) - (b.lvl_req ?? 0)),
-      novice: filteredBases
-        .filter((base) => base.item_tags && base.item_tags.includes('novice'))
-        .sort((a, b) => (a.lvl_req ?? 0) - (b.lvl_req ?? 0)),
-    };
-  };
-
-  const handleBaseTypeSelect = (baseType: string) => {
-    setSelectedBaseType(baseType);
-    completeSelection(
-      selectedSlot!,
-      selectedSubtype!,
-      selectedShieldType || undefined,
-      baseType
-    );
-  };
+  const { data: socketablesData } = useSuspenseQuery<Socketables>({
+    queryKey: ['socketables'],
+    queryFn: socketablesqfn,
+    refetchOnWindowFocus: false,
+  });
 
   const completeSelection = (
     slot: string,
     subtype: string,
     shieldType?: string,
-    baseType?: string
+    baseType?: string,
+    ringSlot?: 'left' | 'right'
   ) => {
-    // Check if we should clear affixes when changing base types FIRST
+    // Check if we should clear affixes when changing base types
     if (
       activeSelection?.baseType &&
       baseType &&
@@ -706,697 +233,78 @@ function Crafting() {
         setItemRarity('normal');
         setItemQuality(0);
         setItemSockets(0);
+        setItemSocket1effect('');
+        setitemSocket1type('');
+        setItemSocket2effect('');
+        setitemSocket2type('');
+        setItemSocket3effect('');
+        setitemSocket3type('');
+        setShowSocketables(false);
+        setItemCorruption(0);
+        setEnchantResult(null);
+        setFracturedAffixId(null);
+        setStateHistory([]);
       }
     }
 
-    // Then set the new selection
+    // Set the new selection
     const newSelection = {
       slot,
       subtype,
       shieldType,
       baseType,
-      ringSlot: activeSelection?.ringSlot,
+      ringSlot,
     };
 
+    setStateHistory([]);
     setActiveSelection(newSelection);
-    handleCloseMenu();
-  };
 
-  const handleCloseMenu = () => {
-    setSelectedSlot(null);
-    setSelectedSubtype(null);
-    setSelectedShieldType(null);
-    setSelectedBaseType(null);
-  };
+    // Special handling for diamond jewels
+    if (isDiamondBase(baseType)) {
+      // Clear any existing affixes and set to rare
+      setCraftedAffixes({ prefixes: [], suffixes: [] });
+      setItemRarity('rare');
 
-  const toggleTier = (tier: string) => {
-    setExpandedTiers((prev) => ({
-      expert: tier === 'expert' ? !prev.expert : false,
-      advanced: tier === 'advanced' ? !prev.advanced : false,
-      novice: tier === 'novice' ? !prev.novice : false,
-    }));
-  };
+      // Generate 3 random affixes for diamond
+      setTimeout(() => {
+        if (!baseType) return;
+        const matchingAffixes = getMatchingAffixes(
+          baseType,
+          itemLevel,
+          newSelection,
+          bases,
+          affixesData
+        );
 
-  // Add this helper function to get the appropriate image for a base
-  const getBaseImage = (base: Base, slot: string, subtype?: string) => {
-    const slotLower = slot.toLowerCase();
-
-    //if (base.base_name) {
-    //  return {
-    //    src: `${base.base_name}.webp`,
-    //    alt: base.base_name,
-    //   className:
-    //      'absolute left-1/2 top-1/2 block h-[90%] w-[90%] -translate-x-1/2 -translate-y-1/2 object-contain',
-    //  };
-    //}
-
-    // For armor pieces, use the subtype
-    if (
-      ['helmet', 'body armour', 'gloves', 'boots'].includes(slotLower) &&
-      subtype
-    ) {
-      const encodedSubtype = subtype.replace(/\//g, '%2F');
-      return {
-        src: `${slot} (${encodedSubtype}).webp`,
-        alt: `${slot} (${subtype})`,
-        className:
-          'absolute left-1/2 top-1/2 block h-[90%] w-[90%] -translate-x-1/2 -translate-y-1/2 object-contain',
-      };
-    }
-
-    // For weapons, use the subtype if available
-    if (slotLower === 'weapon' && subtype) {
-      return {
-        src: `${subtype.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}.webp`,
-        alt: subtype,
-        className:
-          'absolute left-1/2 top-1/2 block h-[90%] w-[90%] -translate-x-1/2 -translate-y-1/2 object-contain',
-      };
-    }
-
-    // For offhand items
-    if (slotLower === 'offhand' && subtype) {
-      if (subtype === 'shield' && selectedShieldType) {
-        const encodedShieldType = selectedShieldType.replace(/\//g, '%2F');
-        return {
-          src: `Shield (${encodedShieldType.toUpperCase()}).webp`,
-          alt: `${selectedShieldType} Shield`,
-          className:
-            'absolute left-1/2 top-1/2 block h-[90%] w-[90%] -translate-x-1/2 -translate-y-1/2 object-contain',
-        };
-      }
-      return {
-        src: `${subtype.replace(/\b\w/g, (l) => l.toUpperCase())}.webp`,
-        alt: subtype,
-        className:
-          'absolute left-1/2 top-1/2 block h-[90%] w-[90%] -translate-x-1/2 -translate-y-1/2 object-contain',
-      };
-    }
-
-    // For accessories
-    if (['ring', 'belt', 'amulet', 'jewel'].includes(slotLower)) {
-      return {
-        src: `${base.base_name.toLowerCase().replace(/\s/g, '_')}.webp`,
-        alt: base.base_name.toLowerCase().replace(/\s/g, '_'),
-        className:
-          'absolute left-1/2 top-1/2 block h-[90%] w-[90%] -translate-x-1/2 -translate-y-1/2 object-contain',
-      };
-    }
-
-    return null;
-  };
-
-  const BaseItemSlot = ({
-    base,
-    slot,
-    subtype,
-    onClick,
-  }: {
-    base: Base;
-    slot: string;
-    subtype?: string;
-    onClick: () => void;
-  }) => {
-    const baseImage = getBaseImage(base, slot, subtype);
-
-    return (
-      <div className='flex flex-col items-center'>
-        <div
-          className='relative inline-flex cursor-pointer flex-col items-center justify-center rounded bg-zinc-800 p-2 text-xs transition-colors hover:bg-zinc-700 sm:text-sm'
-          onClick={onClick}
-        >
-          <div className='relative h-40 w-40'>
-            {baseImage && (
-              <img
-                src={baseImage.src}
-                alt={baseImage.alt}
-                className='block h-full w-full object-contain'
-                draggable={false}
-              />
-            )}
-          </div>
-        </div>
-        <div className='mt-1 text-center'>
-          <div className='text-xs font-medium text-white'>{base.base_name}</div>
-          <div className='text-xs text-zinc-400'>
-            {(base.lvl_req ?? 0) > 0 && `Lvl ${base.lvl_req ?? 0}`}
-            {base.str_req ? ` • ${base.str_req} Str` : ''}
-            {base.dex_req ? ` • ${base.dex_req} Dex` : ''}
-            {base.int_req ? ` • ${base.int_req} Int` : ''}
-            {/* Local values - defensive stats */}
-            {(base.armour ?? 0) > 0 && (
-              <div className='text-zinc-300'>Armour: {base.armour}</div>
-            )}
-            {(base.evasion ?? 0) > 0 && (
-              <div className='text-zinc-300'>Evasion: {base.evasion}</div>
-            )}
-            {(base.energy_shield ?? 0) > 0 && (
-              <div className='text-zinc-300'>
-                Energy Shield: {base.energy_shield}
-              </div>
-            )}
-            {/* Local values - weapon stats */}
-            {base.physical_dmg && base.physical_dmg !== '0' && (
-              <div className='text-zinc-300'>
-                Physical Damage: {base.physical_dmg}
-              </div>
-            )}
-            {base.crit_chance && base.crit_chance !== '0' && (
-              <div className='text-zinc-300'>
-                Critical Strike Chance: {base.crit_chance}
-              </div>
-            )}
-            {base.aps && base.aps !== '0' && (
-              <div className='text-zinc-300'>
-                Attacks per Second: {base.aps}
-              </div>
-            )}
-            {base.weapon_range && base.weapon_range !== '0' && (
-              <div className='text-zinc-300'>
-                Weapon Range: {base.weapon_range}
-              </div>
-            )}
-            {/* Local values - shield stats */}
-            {(base.block_chance ?? 0) > 0 && (
-              <div className='text-zinc-300'>
-                Chance to Block: {base.block_chance}%
-              </div>
-            )}
-            {/* Implicit */}
-            {base.implicit && (
-              <div className='italic text-blue-300'>{base.implicit}</div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const ItemSlot = ({
-    name,
-    className = '',
-    ringSlot,
-  }: {
-    name: string;
-    className?: string;
-    ringSlot?: 'left' | 'right';
-  }) => {
-    const itemImage =
-      activeSelection?.slot === name && activeSelection.baseType
-        ? getBaseImage(
-            bases.find((b) => b.base_name === activeSelection.baseType)!,
-            name,
-            activeSelection.subtype
-          )
-        : null;
-
-    // For offhand slot, check if a two-handed weapon is selected
-    const offhandImage =
-      name === 'Offhand' &&
-      activeSelection?.slot === 'Weapon' &&
-      activeSelection.baseType &&
-      bases
-        .find((b) => b.base_name === activeSelection.baseType)
-        ?.item_tags?.includes('two_hand')
-        ? {
-            src: `${activeSelection.baseType.toLowerCase().replace(/\s/g, '_')}.webp`,
-            alt: activeSelection.baseType.toLowerCase().replace(/\s/g, '_'),
-            className:
-              'absolute left-1/2 top-1/2 block h-[90%] w-[90%] -translate-x-1/2 -translate-y-1/2 object-contain opacity-60',
-          }
-        : null;
-
-    const jewelImage =
-      name === 'Jewel' &&
-      activeSelection?.slot === 'Jewel' &&
-      activeSelection.baseType
-        ? {
-            src: `${activeSelection.baseType}Socket.png`,
-            alt: activeSelection.baseType,
-            className:
-              'absolute left-1/2 top-1/2 block h-[90%] w-[90%] -translate-x-1/2 -translate-y-1/2 object-contain',
-          }
-        : null;
-
-    const ringImage =
-      name === 'Ring' &&
-      activeSelection?.slot === 'Ring' &&
-      activeSelection.baseType &&
-      ringSlot === activeSelection.ringSlot
-        ? {
-            src: `${activeSelection.baseType.toLowerCase().replace(/\s/g, '_')}.webp`,
-            alt: activeSelection.baseType.toLowerCase().replace(/\s/g, '_'),
-            className:
-              'absolute left-1/2 top-1/2 block h-[90%] w-[90%] -translate-x-1/2 -translate-y-1/2 object-contain',
-          }
-        : null;
-
-    const mirrorRingImage =
-      name === 'Ring' &&
-      activeSelection?.slot === 'Ring' &&
-      activeSelection.baseType &&
-      ringSlot !== activeSelection.ringSlot
-        ? {
-            src:
-              ringSlot === 'left'
-                ? 'MirrorRing.webp'
-                : 'MirrorRingFlipped.webp',
-            alt: 'Mirror Ring',
-            className:
-              'absolute left-1/2 top-1/2 block h-[90%] w-[90%] -translate-x-1/2 -translate-y-1/2 object-contain',
-          }
-        : null;
-
-    const displayImage =
-      offhandImage || jewelImage || ringImage || mirrorRingImage || itemImage;
-
-    return (
-      <div className={`flex items-center justify-center ${className}`}>
-        <div
-          className={`relative inline-flex cursor-pointer flex-col items-center justify-center rounded border border-zinc-600 text-xs transition-colors sm:text-sm`}
-          onClick={() => handleSlotClick(name, ringSlot)}
-        >
-          <div className='relative'>
-            <img src={name + '.png'} alt={name} className='block' />
-            {displayImage && (
-              <img
-                src={displayImage.src}
-                alt={displayImage.alt}
-                className={displayImage.className}
-              />
-            )}
-          </div>
-          <span
-            className={`h-5 max-w-36 whitespace-nowrap text-center ${
-              (name === 'Amulet' || name === 'Ring') &&
-              (activeSelection?.slot === 'Amulet' ||
-                activeSelection?.slot === 'Ring')
-                ? 'text-xs'
-                : 'text-sm'
-            }`}
-          >
-            {activeSelection?.slot === name &&
-            activeSelection.baseType &&
-            (name !== 'Ring' || ringSlot === activeSelection.ringSlot)
-              ? activeSelection.baseType
-              : name}
-          </span>
-        </div>
-      </div>
-    );
-  };
-
-  // Add this helper function to generate a random value within the implicit range
-  const generateImplicitValue = (
-    base: Base
-  ): { text: string; value: number | null } => {
-    if (!base.implicit) return { text: '', value: null };
-
-    // Check for decimal ranges first like (1.5-2.5) - must have at least one decimal
-    const decimalRangeMatch = base.implicit.match(
-      /\((\d+\.\d+)-(\d+(?:\.\d+)?)\)/
-    );
-    if (decimalRangeMatch) {
-      const min = parseFloat(decimalRangeMatch[1]);
-      const max = parseFloat(decimalRangeMatch[2]);
-      const randomValue = Math.random() * (max - min) + min;
-      const roundedValue = Math.floor(randomValue * 10) / 10;
-      const processedText = base.implicit.replace(
-        /\((\d+\.\d+)-(\d+(?:\.\d+)?)\)/,
-        roundedValue.toString()
-      );
-      return { text: processedText, value: roundedValue };
-    }
-
-    // Check for integer ranges like (10-20) - must not have decimals
-    const integerRangeMatch = base.implicit.match(/\((\d+)-(\d+)\)/);
-    if (integerRangeMatch) {
-      const min = parseInt(integerRangeMatch[1]);
-      const max = parseInt(integerRangeMatch[2]);
-      const randomValue = Math.floor(Math.random() * (max - min + 1)) + min;
-      const processedText = base.implicit.replace(
-        /\((\d+)-(\d+)\)/,
-        randomValue.toString()
-      );
-      return { text: processedText, value: randomValue };
-    }
-
-    // If no range found, return the original text and null value
-    return { text: base.implicit, value: null };
-  };
-
-  // Add this function to get matching affixes for the selected base
-  const getMatchingAffixes = (baseType: string, itemLevel: number) => {
-    if (!activeSelection?.baseType || !affixesData)
-      return { prefixes: [], suffixes: [] };
-
-    const selectedBase = bases.find((base) => base.base_name === baseType);
-    if (!selectedBase) return { prefixes: [], suffixes: [] };
-
-    const baseTags = selectedBase.item_tags
-      ? selectedBase.item_tags.split(', ')
-      : [];
-    const baseClass = selectedBase.item_class;
-
-    // Get item class mapping for affixes
-    const getItemClassForAffixes = (itemClass: string) => {
-      switch (itemClass) {
-        case 'One Hand Axe':
-        case 'One Hand Mace':
-        case 'One Hand Sword':
-        case 'Claw':
-        case 'Dagger':
-        case 'Flail':
-        case 'Spear':
-        case 'Wand':
-        case 'Sceptre':
-          return 'one_hand_weapon';
-        case 'Two Hand Axe':
-        case 'Two Hand Mace':
-        case 'Two Hand Sword':
-        case 'Crossbow':
-        case 'Staff':
-        case 'Quarterstaff':
-          return 'two_hand_weapon';
-        case 'Bow':
-          return 'bow';
-        case 'Helmet':
-          return 'helmet';
-        case 'Body Armour':
-          return 'body_armour';
-        case 'Gloves':
-          return 'gloves';
-        case 'Boots':
-          return 'boots';
-        case 'Shield':
-          if (baseTags.includes('str_armour')) return 'str_shield';
-          if (baseTags.includes('str_dex_armour')) return 'str_dex_shield';
-          if (baseTags.includes('str_int_armour')) return 'str_int_shield';
-          if (baseTags.includes('dex_armour')) return 'dex_shield';
-          return 'shield';
-        case 'Ring':
-          return 'ring';
-        case 'Belt':
-          return 'belt';
-        case 'Amulet':
-          return 'amulet';
-        case 'Quiver':
-          return 'quiver';
-        case 'Focus':
-          return 'focus';
-        default:
-          return itemClass.toLowerCase();
-      }
-    };
-
-    const itemTypeForAffixes = getItemClassForAffixes(baseClass);
-
-    // Filter affixes that can spawn on this item type and level
-    const applicableAffixes = affixesData.filter((affix) => {
-      // Check if item level is sufficient
-      const levelMatches = itemLevel >= affix.ilvl;
-      if (!levelMatches) return false;
-
-      // Check if item type matches
-      const affixItemTypes = affix.item_tags.split(', ');
-
-      const itemTypeMatches = affixItemTypes.some((type) => {
-        // Direct item type match
-        if (type === itemTypeForAffixes) return true;
-
-        // Generic weapon match (for affixes that work on all weapons)
         if (
-          type === 'weapon' &&
-          ['one_hand_weapon', 'two_hand_weapon', 'bow'].includes(
-            itemTypeForAffixes
-          )
-        )
-          return true;
-
-        // One-hand weapon match (for affixes that work on all one-hand weapons)
-        if (
-          type === 'one_hand_weapon' &&
-          itemTypeForAffixes === 'one_hand_weapon'
-        )
-          return true;
-
-        // Two-hand weapon match (for affixes that work on all two-hand weapons)
-        if (
-          type === 'two_hand_weapon' &&
-          itemTypeForAffixes === 'two_hand_weapon'
-        )
-          return true;
-
-        // Bow match (for affixes that work on bows)
-        if (type === 'bow' && itemTypeForAffixes === 'bow') return true;
-
-        // Specific weapon type matches - map base item class to affix tags
-        const weaponTypeMapping: { [key: string]: string[] } = {
-          'One Hand Axe': ['axe'],
-          'Two Hand Axe': ['axe'],
-          'One Hand Mace': ['mace'],
-          'Two Hand Mace': ['mace'],
-          'One Hand Sword': ['sword'],
-          'Two Hand Sword': ['sword'],
-          Claw: ['claw'],
-          Dagger: ['dagger'],
-          Flail: ['flail'],
-          Spear: ['spear'],
-          Bow: ['bow'],
-          Crossbow: ['crossbow'],
-          Staff: ['staff'],
-          Quarterstaff: ['quarterstaff'],
-          Wand: ['wand'],
-          Sceptre: ['sceptre'],
-        };
-
-        const specificWeaponTypes = weaponTypeMapping[baseClass] || [];
-        if (specificWeaponTypes.includes(type)) return true;
-
-        // Generic armor match (for affixes that work on all armor)
-        if (
-          type === 'armour' &&
-          ['helmet', 'body_armour', 'gloves', 'boots'].includes(
-            itemTypeForAffixes
-          )
+          matchingAffixes.prefixes.length > 0 ||
+          matchingAffixes.suffixes.length > 0
         ) {
-          return true;
+          generateDiamondAffixes(matchingAffixes);
         }
-
-        if (
-          ['helmet', 'body_armour', 'gloves', 'boots'].includes(
-            itemTypeForAffixes
-          )
-        ) {
-          const armorAttributeTags = baseTags.filter((tag) =>
-            tag.includes('_armour')
-          );
-          // Check if this affix supports the armor attribute type
-          if (armorAttributeTags.some((armorTag) => armorTag === type)) {
-            return true;
-          }
-        }
-
-        return false;
-      });
-
-      // If basic item type doesn't match, reject immediately
-      if (!itemTypeMatches) return false;
-
-      // ONLY apply additional defensive filtering for affixes that have the 'defences' craft tag
-      if (affix.craft_tags && affix.craft_tags.includes('defences')) {
-        // For defensive affixes, they must include BOTH the specific item type AND the armor attribute
-        const hasSpecificItemType = affixItemTypes.includes(itemTypeForAffixes);
-
-        if (!hasSpecificItemType) {
-          // If it doesn't include the specific item type, reject it
-          return false;
-        }
-
-        // Also check that the armor attribute matches
-        const armorAttributeTags = baseTags.filter((tag) =>
-          tag.includes('_armour')
-        );
-        const hasMatchingDefensiveType = armorAttributeTags.some((baseTag) =>
-          affixItemTypes.includes(baseTag)
-        );
-
-        // For defensive affixes, they must match the armor attribute requirements
-        if (!hasMatchingDefensiveType) return false;
-      }
-
-      // For shields, always check shield-specific armor attribute tags
-      if (itemTypeForAffixes.includes('shield')) {
-        const requiredShieldTags = baseTags.filter((tag) =>
-          tag.includes('_armour')
-        );
-
-        if (requiredShieldTags.length > 0) {
-          const hasMatchingShieldAttribute = requiredShieldTags.some(
-            (requiredTag) => affixItemTypes.includes(requiredTag)
-          );
-
-          if (!hasMatchingShieldAttribute) return false;
-        }
-      }
-
-      return true;
-    });
-
-    // First, separate affixes by type (prefix/suffix)
-    const prefixAffixes = applicableAffixes.filter(
-      (affix) => affix.affix_type.toLowerCase() === 'prefix'
-    );
-    const suffixAffixes = applicableAffixes.filter(
-      (affix) => affix.affix_type.toLowerCase() === 'suffix'
-    );
-
-    // Then group each type by family
-    const prefixFamilyGroups = prefixAffixes.reduce(
-      (groups, affix) => {
-        const family = affix.family;
-        if (!groups[family]) {
-          groups[family] = [];
-        }
-        groups[family].push(affix);
-        return groups;
-      },
-      {} as Record<string, typeof prefixAffixes>
-    );
-
-    const suffixFamilyGroups = suffixAffixes.reduce(
-      (groups, affix) => {
-        const family = affix.family;
-        if (!groups[family]) {
-          groups[family] = [];
-        }
-        groups[family].push(affix);
-        return groups;
-      },
-      {} as Record<string, typeof suffixAffixes>
-    );
-
-    // Sort each family group by tier (ilvl descending = highest tier first)
-    Object.keys(prefixFamilyGroups).forEach((family) => {
-      prefixFamilyGroups[family].sort((a, b) => {
-        if (b.ilvl !== a.ilvl) {
-          return b.ilvl - a.ilvl; // Higher tier first
-        }
-        return a.affix_name.localeCompare(b.affix_name);
-      });
-    });
-
-    Object.keys(suffixFamilyGroups).forEach((family) => {
-      suffixFamilyGroups[family].sort((a, b) => {
-        if (b.ilvl !== a.ilvl) {
-          return b.ilvl - a.ilvl; // Higher tier first
-        }
-        return a.affix_name.localeCompare(b.affix_name);
-      });
-    });
-
-    // Create family objects with highest tier affix as the representative
-    const prefixFamilies: AffixFamilyGroup[] = [];
-    const suffixFamilies: AffixFamilyGroup[] = [];
-
-    Object.entries(prefixFamilyGroups).forEach(([family, affixes]) => {
-      const representative = affixes[0]; // Highest tier (first after sorting)
-      const familyObj = { family, affixes, representative };
-      prefixFamilies.push(familyObj);
-    });
-
-    Object.entries(suffixFamilyGroups).forEach(([family, affixes]) => {
-      const representative = affixes[0]; // Highest tier (first after sorting)
-      const familyObj = { family, affixes, representative };
-      suffixFamilies.push(familyObj);
-    });
-
-    // Sort families by highest tier representative
-    prefixFamilies.sort((a, b) => {
-      if (b.representative.ilvl !== a.representative.ilvl) {
-        return b.representative.ilvl - a.representative.ilvl;
-      }
-      return a.family.localeCompare(b.family);
-    });
-
-    suffixFamilies.sort((a, b) => {
-      if (b.representative.ilvl !== a.representative.ilvl) {
-        return b.representative.ilvl - a.representative.ilvl;
-      }
-      return a.family.localeCompare(b.family);
-    });
-
-    // Define custom sort order
-    const getPriority = (family: string) => {
-      const priorityMap: { [key: string]: number } = {
-        // Damage
-        PhysicalPercent: 1,
-        PhysicalPercentAccuracy: 2,
-        PhysicalDamage: 3,
-        FireDamage: 4,
-        ColdDamage: 5,
-        LightningDamage: 6,
-        ChaosDamage: 7,
-        SpellDamage: 8,
-
-        // Defenses
-        Life: 10,
-        Mana: 11,
-        Armour: 12,
-        ArmourPercent: 13,
-        ArmourStunHybrid: 14,
-        ArmourLifeHybrid: 15,
-        ArmourManaHybrid: 16,
-        Evasion: 15,
-        EvasionLifeHybrid: 16,
-        EnergyShield: 17,
-        EnergyShieldLifeHybrid: 18,
-        EvasionEnergyShieldHybrid: 19,
-        EvasionEnergyShieldLifeHybrid: 20,
-
-        // Attributes
-        Strength: 25,
-        Dexterity: 26,
-        Intelligence: 27,
-        AllAttributes: 28,
-        AttributeRequirements: 29,
-
-        // Resistances
-        FireResistance: 30,
-        ColdResistance: 31,
-        LightningResistance: 32,
-        ChaosResistance: 33,
-        ElementalResistances: 34,
-
-        // Miscellaneous
-        IncreaseGemLevel: 41,
-        LifeRegeneration: 42,
-        CriticalStrikeChance: 43,
-      };
-
-      return priorityMap[family] || 999;
-    };
-
-    // Sort families by priority
-    prefixFamilies.sort((a, b) => {
-      const priorityA = getPriority(a.family);
-      const priorityB = getPriority(b.family);
-
-      return priorityA - priorityB;
-    });
-
-    suffixFamilies.sort((a, b) => {
-      const priorityA = getPriority(a.family);
-      const priorityB = getPriority(b.family);
-
-      return priorityA - priorityB;
-    });
-
-    return { prefixes: prefixFamilies, suffixes: suffixFamilies };
+      }, 0);
+    }
   };
+
+  const matchingAffixes = activeSelection?.baseType
+    ? getMatchingAffixes(
+        activeSelection.baseType,
+        itemLevel,
+        activeSelection,
+        bases,
+        affixesData
+      )
+    : { prefixes: [], suffixes: [] };
 
   const toggleAffixFamily = (family: string) => {
     setExpandedAffixFamilies((prev) => ({
+      ...prev,
+      [family]: !prev[family],
+    }));
+  };
+
+  const toggleCustomWeightFamily = (family: string) => {
+    setExpandedCustomWeightFamilies((prev) => ({
       ...prev,
       [family]: !prev[family],
     }));
@@ -1410,57 +318,99 @@ function Crafting() {
     suffixes: [],
   });
 
-  const updateAffixValue = (
-    type: 'prefix' | 'suffix',
-    index: number,
-    valueIndex: number,
-    newValue: number
-  ) => {
-    setCraftedAffixes((prev) => {
-      const newAffixes = { ...prev };
-      if (type === 'prefix') {
-        newAffixes.prefixes = [...prev.prefixes];
-        if (newAffixes.prefixes[index]) {
-          newAffixes.prefixes[index] = {
-            ...newAffixes.prefixes[index],
-            values: [...newAffixes.prefixes[index].values],
+  const updateAffixValue = React.useCallback(
+    (
+      type: 'prefix' | 'suffix',
+      index: number,
+      valueIndex: number,
+      newValue: number
+    ) => {
+      const roundedValue = Number.isInteger(newValue)
+        ? newValue
+        : Math.round(newValue * 100) / 100;
+
+      setCraftedAffixes((prev) => {
+        if (type === 'prefix') {
+          const newPrefixes = prev.prefixes.slice();
+          const targetAffix = { ...newPrefixes[index] };
+          targetAffix.values = targetAffix.values.slice();
+          targetAffix.values[valueIndex] = roundedValue;
+          newPrefixes[index] = targetAffix;
+
+          return {
+            ...prev,
+            prefixes: newPrefixes,
           };
-          // Round decimal values to 2 decimal places
-          const roundedValue = Number.isInteger(newValue)
-            ? newValue
-            : Math.round(newValue * 100) / 100;
-          newAffixes.prefixes[index].values[valueIndex] = roundedValue;
-        }
-      } else {
-        newAffixes.suffixes = [...prev.suffixes];
-        if (newAffixes.suffixes[index]) {
-          newAffixes.suffixes[index] = {
-            ...newAffixes.suffixes[index],
-            values: [...newAffixes.suffixes[index].values],
+        } else {
+          const newSuffixes = prev.suffixes.slice();
+          const targetAffix = { ...newSuffixes[index] };
+          targetAffix.values = targetAffix.values.slice();
+          targetAffix.values[valueIndex] = roundedValue;
+          newSuffixes[index] = targetAffix;
+
+          return {
+            ...prev,
+            suffixes: newSuffixes,
           };
-          // Round decimal values to 2 decimal places
-          const roundedValue = Number.isInteger(newValue)
-            ? newValue
-            : Math.round(newValue * 100) / 100;
-          newAffixes.suffixes[index].values[valueIndex] = roundedValue;
         }
-      }
-      return newAffixes;
-    });
+      });
+    },
+    []
+  );
+
+  const getMaxAffixCount = (baseType: string | undefined): number => {
+    if (!baseType) return 3;
+    const jewelBases = ['ruby', 'emerald', 'sapphire'];
+    const isJewelBase = jewelBases.some((jewel) =>
+      baseType.toLowerCase().includes(jewel.toLowerCase())
+    );
+    return isJewelBase ? 2 : 3;
   };
 
-  const generateAffixValues = (affix: Affix): number[] => {
-    const valueRanges = getValueRanges(affix.effect);
-    return valueRanges.map((range) => {
-      if (range.min === range.max) {
-        return range.min;
+  const isDiamondBase = (baseType: string | undefined): boolean => {
+    return baseType ? baseType.toLowerCase().includes('diamond') : false;
+  };
+
+  const generateDiamondAffixes = (matchingAffixes: {
+    prefixes: { family: string; affixes: Affix[] }[];
+    suffixes: { family: string; affixes: Affix[] }[];
+  }) => {
+    const getAffixesForJewel = (jewel: 'ruby' | 'emerald' | 'sapphire') => {
+      const lowerJewel = jewel.toLowerCase();
+      const prefixAffixes = matchingAffixes.prefixes
+        .flatMap((family) => family.affixes)
+        .filter((affix) => affix.item_tags?.toLowerCase().includes(lowerJewel));
+      const suffixAffixes = matchingAffixes.suffixes
+        .flatMap((family) => family.affixes)
+        .filter((affix) => affix.item_tags?.toLowerCase().includes(lowerJewel));
+      return [...prefixAffixes, ...suffixAffixes];
+    };
+
+    const usedFamilies = new Set<string>();
+    const selectedAffixes: {
+      prefixes: { affix: Affix; values: number[]; id: string }[];
+      suffixes: { affix: Affix; values: number[]; id: string }[];
+    } = { prefixes: [], suffixes: [] };
+
+    // Always pick 1 affix from each jewel type
+    (['ruby', 'emerald', 'sapphire'] as const).forEach((jewel) => {
+      const candidates = getAffixesForJewel(jewel).filter(
+        (affix) => !usedFamilies.has(affix.family)
+      );
+      if (candidates.length === 0) return;
+      const affix = candidates[Math.floor(Math.random() * candidates.length)];
+      usedFamilies.add(affix.family);
+      const values = generateAffixValues(affix);
+      const uniqueId = `${affix.id}-${Date.now()}-${Math.random()}`;
+      if (affix.affix_type.toLowerCase() === 'prefix') {
+        selectedAffixes.prefixes.push({ affix, values, id: uniqueId });
+      } else {
+        selectedAffixes.suffixes.push({ affix, values, id: uniqueId });
       }
-      const randomValue = Math.random() * (range.max - range.min) + range.min;
-      // Round decimal values to 2 decimal places
-      return range.isDecimal
-        ? Math.round(randomValue * 100) / 100
-        : Math.round(randomValue);
     });
+
+    setCraftedAffixes(selectedAffixes);
+    setAffixLog([`Diamond automatically crafted with 1 affix per jewel type`]);
   };
 
   const addAffix = (affix: Affix) => {
@@ -1488,11 +438,11 @@ function Crafting() {
       }
     });
 
-    // Collapse the family after adding the affix
-    setExpandedAffixFamilies((prev) => ({
-      ...prev,
-      [affix.family]: false,
-    }));
+    // Collapse family after adding the affix
+    //setExpandedAffixFamilies((prev) => ({
+    //  ...prev,
+    //  [affix.family]: false,
+    //}));
   };
 
   const removeAffix = (affixType: 'prefix' | 'suffix', index: number) => {
@@ -1511,7 +461,80 @@ function Crafting() {
     });
   };
 
-  // Update the getCraftedItemData function to handle the case better
+  const getSocketableEffect = (
+    socketable: Socketable,
+    activeSelection: {
+      slot: string;
+      subtype: string;
+      shieldType?: string;
+      baseType?: string;
+      ringSlot?: 'left' | 'right';
+    } | null
+  ): string => {
+    if (!activeSelection?.slot) return '';
+
+    const currentSlot = activeSelection.slot.toLowerCase();
+    const currentSubtype = activeSelection.subtype?.toLowerCase();
+
+    // For weapons, check subtype first
+    if (currentSlot === 'weapon') {
+      // Martial weapons
+      const martialWeapons = [
+        'axe',
+        'two_hand_axe',
+        'mace',
+        'two hand mace',
+        'sword',
+        'two hand sword',
+        'claw',
+        'dagger',
+        'flail',
+        'spear',
+        'bow',
+        'crossbow',
+        'quarterstaff',
+      ];
+
+      if (
+        martialWeapons.includes(currentSubtype) &&
+        socketable.martial_effect
+      ) {
+        return socketable.martial_effect;
+      }
+
+      // Caster weapons
+      if (
+        ['staff', 'wand'].includes(currentSubtype) &&
+        socketable.caster_effect
+      ) {
+        return socketable.caster_effect;
+      }
+
+      // Sceptre
+      if (currentSubtype === 'sceptre' && socketable.sceptre_effect) {
+        return socketable.sceptre_effect;
+      }
+    }
+
+    // For armor pieces, check specific slot effects first, then fall back to general armour effect
+    switch (currentSlot) {
+      case 'helmet':
+        return socketable.helmet_effect || socketable.armour_effect || '';
+
+      case 'body armour':
+        return socketable.body_effect || socketable.armour_effect || '';
+
+      case 'gloves':
+        return socketable.gloves_effect || socketable.armour_effect || '';
+
+      case 'boots':
+        return socketable.boots_effect || socketable.armour_effect || '';
+
+      default:
+        return socketable.armour_effect || '';
+    }
+  };
+
   const getCraftedItemData = (): Item | null => {
     if (!activeSelection?.baseType) return null;
 
@@ -1520,15 +543,22 @@ function Crafting() {
     );
     if (!selectedBase) return null;
 
-    // Build the item object with explicit property assignment
     const item: Item = {
       id: 0,
       item_name: 'Crafted Item',
       base_type: activeSelection.baseType,
       quality: itemQuality,
       ilvl: itemLevel,
-      enchant: null,
+      enchant: enchantResult?.enchant?.effect
+        ? applyValueToEffect(enchantResult.enchant.effect, enchantResult.value)
+        : null,
       sockets: itemSockets,
+      socket1effect: itemSocket1effect,
+      socket1type: itemSocket1type,
+      socket2effect: itemSocket2effect,
+      socket2type: itemSocket2type,
+      socket3effect: itemSocket3effect,
+      socket3type: itemSocket3type,
       implicit: implicitResult.value ?? 0,
       prefix1: null,
       p1v1: null,
@@ -1552,7 +582,6 @@ function Crafting() {
       rarity: itemRarity,
     };
 
-    // Add prefixes using affix IDs and values
     craftedAffixes.prefixes.forEach((craftedAffix, index) => {
       if (index === 0) {
         item.prefix1 = craftedAffix.affix.id;
@@ -1572,7 +601,6 @@ function Crafting() {
       }
     });
 
-    // Add suffixes using affix IDs and values
     craftedAffixes.suffixes.forEach((craftedAffix, index) => {
       if (index === 0) {
         item.suffix1 = craftedAffix.affix.id;
@@ -1589,51 +617,6 @@ function Crafting() {
     return item;
   };
 
-  // Add these functions before the return statement
-
-  const getValueRanges = (
-    effect: string
-  ): Array<{ min: number; max: number; isDecimal: boolean }> => {
-    const ranges: Array<{ min: number; max: number; isDecimal: boolean }> = [];
-    const rangeMatches = effect.match(/\(([^)]+)\)/g);
-
-    if (rangeMatches) {
-      rangeMatches.forEach((match: string) => {
-        const rangeContent = match.slice(1, -1);
-
-        const decimalRangeMatch = rangeContent.match(
-          /^(\d+\.\d+)-(\d+(?:\.\d+)?)$/
-        );
-        if (decimalRangeMatch) {
-          const min = parseFloat(decimalRangeMatch[1]);
-          const max = parseFloat(decimalRangeMatch[2]);
-          ranges.push({ min, max, isDecimal: true });
-          return;
-        }
-
-        const integerRangeMatch = rangeContent.match(/^(\d+)-(\d+)$/);
-        if (integerRangeMatch) {
-          const min = parseInt(integerRangeMatch[1]);
-          const max = parseInt(integerRangeMatch[2]);
-          ranges.push({ min, max, isDecimal: false });
-          return;
-        }
-
-        const singleNumber = parseFloat(rangeContent);
-        if (!isNaN(singleNumber)) {
-          ranges.push({
-            min: singleNumber,
-            max: singleNumber,
-            isDecimal: rangeContent.includes('.'),
-          });
-        }
-      });
-    }
-
-    return ranges;
-  };
-
-  // Add this helper function to check if base types are compatible for affixes
   const areBaseTypesCompatible = (
     oldBaseType: string,
     newBaseType: string
@@ -1641,13 +624,10 @@ function Crafting() {
     const oldBase = bases.find((base) => base.base_name === oldBaseType);
     const newBase = bases.find((base) => base.base_name === newBaseType);
 
-    if (!oldBase || !newBase) return false;
+    if (!oldBase || !newBase) {
+      return false;
+    }
 
-    // If different item classes, they're not compatible
-    if (oldBase.item_class !== newBase.item_class) return false;
-
-    // For weapons, they must be the exact same item class
-    // This means Two Hand Mace != One Hand Mace, etc.
     const weaponClasses = [
       'One Hand Axe',
       'Two Hand Axe',
@@ -1667,8 +647,23 @@ function Crafting() {
       'Spear',
     ];
 
-    if (weaponClasses.includes(oldBase.item_class)) {
-      return oldBase.item_class === newBase.item_class;
+    if (
+      weaponClasses.includes(oldBase.item_class) &&
+      weaponClasses.includes(newBase.item_class)
+    ) {
+      const oldTags = oldBase.item_tags ? oldBase.item_tags.split(', ') : [];
+      const newTags = newBase.item_tags ? newBase.item_tags.split(', ') : [];
+
+      const oldHandType = oldTags.find(
+        (tag) => tag === 'one_hand_weapon' || tag === 'two_hand_weapon'
+      );
+      const newHandType = newTags.find(
+        (tag) => tag === 'one_hand_weapon' || tag === 'two_hand_weapon'
+      );
+
+      // Compatible if both are one_hand_weapon, or both are two_hand_weapon
+      if (!oldHandType || !newHandType) return false;
+      return oldHandType === newHandType;
     }
 
     // For armor pieces, check if they have the same attribute requirements
@@ -1677,10 +672,11 @@ function Crafting() {
         oldBase.item_class
       )
     ) {
+      if (oldBase.item_class !== newBase.item_class) return false;
+
       const oldTags = oldBase.item_tags ? oldBase.item_tags.split(', ') : [];
       const newTags = newBase.item_tags ? newBase.item_tags.split(', ') : [];
 
-      // Get armor attribute tags
       const oldArmorTags = oldTags.filter((tag) => tag.includes('_armour'));
       const newArmorTags = newTags.filter((tag) => tag.includes('_armour'));
 
@@ -1690,11 +686,21 @@ function Crafting() {
       return oldArmorTags.every((tag) => newArmorTags.includes(tag));
     }
 
-    // For jewelry and other items, they're compatible if same item class
+    const jewelBases = ['ruby', 'emerald', 'sapphire', 'diamond'];
+    if (
+      jewelBases.some((jewel) =>
+        oldBase.base_name.toLowerCase().includes(jewel)
+      ) ||
+      jewelBases.some((jewel) =>
+        newBase.base_name.toLowerCase().includes(jewel)
+      )
+    ) {
+      return false;
+    }
+
     return oldBase.item_class === newBase.item_class;
   };
 
-  // Add helper function to get used families
   const getUsedFamilies = () => {
     const usedPrefixFamilies = new Set(
       craftedAffixes.prefixes.map((affix) => affix.affix.family)
@@ -1706,22 +712,89 @@ function Crafting() {
     return { usedPrefixFamilies, usedSuffixFamilies };
   };
 
+  const getDisplayTier = (affix: Affix, familyAffixes: Affix[]): string => {
+    // Special handling for IncreaseGemLevel family - reset tiers for each affix type
+    if (affix.family === 'IncreaseGemLevel') {
+      const currentAffixType = affix.id.replace(/\d+$/, '');
+
+      const compatibleAffixes = familyAffixes.filter((familyAffix) => {
+        const familyAffixType = familyAffix.id.replace(/\d+$/, '');
+        return familyAffixType === currentAffixType;
+      });
+
+      const sortedAffixes = [...compatibleAffixes].sort((a, b) => {
+        const tierA = parseInt(a.id.match(/(\d+)$/)?.[0] || '0');
+        const tierB = parseInt(b.id.match(/(\d+)$/)?.[0] || '0');
+        return tierA - tierB;
+      });
+
+      const index = sortedAffixes.findIndex(
+        (sortedAffix) => sortedAffix.id === affix.id
+      );
+      return `T${index + 1}`;
+    }
+    // Sort affixes by their tier
+    const sortedAffixes = [...familyAffixes].sort((a, b) => {
+      const tierA = parseInt(a.id.match(/(\d+)$/)?.[0] || '0');
+      const tierB = parseInt(b.id.match(/(\d+)$/)?.[0] || '0');
+      return tierA - tierB;
+    });
+    const index = sortedAffixes.findIndex(
+      (sortedAffix) => sortedAffix.id === affix.id
+    );
+    return `T${index + 1}`;
+  };
+
+  const switchAffixTier = (oldAffix: Affix, newAffix: Affix) => {
+    const isPrefix = oldAffix.affix_type.toLowerCase() === 'prefix';
+
+    setCraftedAffixes((prev) => {
+      if (isPrefix) {
+        return {
+          ...prev,
+          prefixes: prev.prefixes.map((craftedAffix) =>
+            craftedAffix.affix.id === oldAffix.id
+              ? {
+                  ...craftedAffix,
+                  affix: newAffix,
+                  values: generateAffixValues(newAffix),
+                }
+              : craftedAffix
+          ),
+        };
+      } else {
+        return {
+          ...prev,
+          suffixes: prev.suffixes.map((craftedAffix) =>
+            craftedAffix.affix.id === oldAffix.id
+              ? {
+                  ...craftedAffix,
+                  affix: newAffix,
+                  values: generateAffixValues(newAffix),
+                }
+              : craftedAffix
+          ),
+        };
+      }
+    });
+  };
+
   React.useEffect(() => {
     if (activeSelection?.baseType) {
       const base = bases.find((b) => b.base_name === activeSelection.baseType);
       if (base?.implicit) {
-        setImplicitResult(generateImplicitValue(base));
+        const implicit = generateImplicitValue(base);
+        setImplicitResult({ text: implicit.text, value: implicit.value ?? 0 });
       } else {
-        setImplicitResult({ text: '', value: null });
+        setImplicitResult({ text: '', value: 0 });
       }
     } else {
-      setImplicitResult({ text: '', value: null });
+      setImplicitResult({ text: '', value: 0 });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeSelection?.baseType]);
+  }, [activeSelection?.baseType, bases]);
 
   React.useEffect(() => {
-    if (!activeOrb) return;
+    if (!activeOrb && !activeSocketable) return;
 
     const handleMouseMove = (e: MouseEvent) => {
       setCursorPos({ x: e.clientX, y: e.clientY });
@@ -1735,10 +808,10 @@ function Crafting() {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [activeOrb]);
+  }, [activeOrb, activeSocketable]);
 
   React.useEffect(() => {
-    if (!activeOrb) return;
+    if (!activeOrb && !activeSocketable) return;
 
     let ignore = true;
     const handleGlobalClick = () => {
@@ -1747,6 +820,7 @@ function Crafting() {
         return;
       }
       setActiveOrb(null);
+      setActiveSocketable(null);
     };
 
     window.addEventListener('click', handleGlobalClick);
@@ -1754,1004 +828,137 @@ function Crafting() {
     return () => {
       window.removeEventListener('click', handleGlobalClick);
     };
-  }, [activeOrb]);
+  }, [activeOrb, activeSocketable]);
 
-  const handleTransmutationOrbUse = () => {
-    if (itemCorruption) {
-      setActiveOrb('');
-      return;
-    }
-    if (!activeSelection?.baseType) return;
-    const affixes = getMatchingAffixes(activeSelection.baseType, itemLevel);
-    setItemRarity('magic');
+  const orbHandlers = useOrbHandlers({
+    activeSelection,
+    bases,
+    affixesData,
+    itemLevel,
+    craftedAffixes,
+    setCraftedAffixes,
+    itemRarity,
+    setItemRarity,
+    setAffixLog,
+    setActiveOrb,
+    setItemQuality,
+    setItemSockets,
+    itemCorruption,
+    setItemCorruption,
+    enchantsData,
+    setEnchantResult,
+    setImplicitResult,
+    setFracturedAffixId,
+    fracturedAffixId,
+    WhittlingOmen,
+    SinistralErasureOmen,
+    DextralErasureOmen,
+    SinistralAnnulmentOmen,
+    DextralAnnulmentOmen,
+    CorruptionOmen,
+    useWeights,
+    useCustomWeights,
+    customWeights,
+  });
 
-    // If fractured affix exists, preserve it and only roll the other slot
-    let newPrefixes: Array<{ affix: Affix; values: number[]; id: string }> = [];
-    let newSuffixes: Array<{ affix: Affix; values: number[]; id: string }> = [];
-
-    const fracturedPrefix = craftedAffixes.prefixes.find(
-      (a) => a.affix.id === fracturedAffixId
-    );
-    const fracturedSuffix = craftedAffixes.suffixes.find(
-      (a) => a.affix.id === fracturedAffixId
-    );
-
-    // If fractured prefix exists, only roll a suffix; if fractured suffix exists, only roll a prefix
-    if (fracturedPrefix) {
-      newPrefixes = [fracturedPrefix];
-      // Roll a random suffix
-      const availableFamilies = affixes.suffixes;
-      if (availableFamilies.length > 0) {
-        const randomFamily =
-          availableFamilies[
-            Math.floor(Math.random() * availableFamilies.length)
-          ];
-        const randomAffix =
-          randomFamily.affixes[
-            Math.floor(Math.random() * randomFamily.affixes.length)
-          ];
-        const values = generateAffixValues(randomAffix);
-        const uniqueId = `${randomAffix.id}-${Date.now()}-${Math.random()}`;
-        newSuffixes = [{ affix: randomAffix, values, id: uniqueId }];
-      }
-    } else if (fracturedSuffix) {
-      newSuffixes = [fracturedSuffix];
-      // Roll a random prefix
-      const availableFamilies = affixes.prefixes;
-      if (availableFamilies.length > 0) {
-        const randomFamily =
-          availableFamilies[
-            Math.floor(Math.random() * availableFamilies.length)
-          ];
-        const randomAffix =
-          randomFamily.affixes[
-            Math.floor(Math.random() * randomFamily.affixes.length)
-          ];
-        const values = generateAffixValues(randomAffix);
-        const uniqueId = `${randomAffix.id}-${Date.now()}-${Math.random()}`;
-        newPrefixes = [{ affix: randomAffix, values, id: uniqueId }];
-      }
-    } else {
-      // No fractured affix, roll as normal
-      // Decide randomly: prefix or suffix
-      const isPrefix = Math.random() < 0.5;
-      const affixType = isPrefix ? 'prefixes' : 'suffixes';
-      const availableFamilies = affixes[affixType];
-
-      if (availableFamilies.length === 0) return;
-      const randomFamily =
-        availableFamilies[Math.floor(Math.random() * availableFamilies.length)];
-      const randomAffix =
-        randomFamily.affixes[
-          Math.floor(Math.random() * randomFamily.affixes.length)
-        ];
-      const values = generateAffixValues(randomAffix);
-      const uniqueId = `${randomAffix.id}-${Date.now()}-${Math.random()}`;
-
-      newPrefixes = isPrefix
-        ? [{ affix: randomAffix, values, id: uniqueId }]
-        : [];
-      newSuffixes = !isPrefix
-        ? [{ affix: randomAffix, values, id: uniqueId }]
-        : [];
-    }
-
-    setCraftedAffixes({
-      prefixes: newPrefixes,
-      suffixes: newSuffixes,
-    });
-
-    setAffixLog([
-      `Transmutation Orb - Made Item Magic`,
-      ...(newPrefixes.length && !fracturedPrefix
-        ? [`Added prefix: ${newPrefixes[0].affix.affix_name}`]
-        : []),
-      ...(newSuffixes.length && !fracturedSuffix
-        ? [`Added suffix: ${newSuffixes[0].affix.affix_name}`]
-        : []),
-    ]);
-
-    setActiveOrb('');
+  const orbHandlerMap: Record<string, () => void> = {
+    transmutation: orbHandlers.handleTransmutationOrbUse,
+    augmentation: orbHandlers.handleAugmentationOrbUse,
+    alteration: orbHandlers.handleAlterationOrbUse,
+    regal: orbHandlers.handleRegalOrbUse,
+    chaos: orbHandlers.handleChaosOrbUse,
+    alchemy: orbHandlers.handleAlchemyOrbUse,
+    exalted: orbHandlers.handleExaltedOrbUse,
+    divine: orbHandlers.handleDivineOrbUse,
+    annulment: orbHandlers.handleAnnulmentOrbUse,
+    vaal: orbHandlers.handleVaalOrbUse,
+    whetstone: orbHandlers.handleWhetstoneUse,
+    scrap: orbHandlers.handleScrapUse,
+    artificer: orbHandlers.handleArtificerUse,
+    scouring: orbHandlers.handleScouringOrbUse,
+    fracturing: orbHandlers.handleFracturingOrbUse,
+    teardrop: orbHandlers.handleTeardropUse,
+    enhancement: () => orbHandlers.handleEssenceUse('Enhancement'),
+    torment: () => orbHandlers.handleEssenceUse('Torment'),
+    ruin: () => orbHandlers.handleEssenceUse('Ruin'),
+    body: () => orbHandlers.handleEssenceUse('Body'),
+    flames: () => orbHandlers.handleEssenceUse('Flames'),
+    battle: () => orbHandlers.handleEssenceUse('Battle'),
+    mind: () => orbHandlers.handleEssenceUse('Mind'),
+    ice: () => orbHandlers.handleEssenceUse('Ice'),
+    sorcery: () => orbHandlers.handleEssenceUse('Sorcery'),
+    infinite: () => orbHandlers.handleEssenceUse('Infinite'),
+    electricity: () => orbHandlers.handleEssenceUse('Electricity'),
+    haste: () => orbHandlers.handleEssenceUse('Haste'),
+    greaterenhancement: () =>
+      orbHandlers.handleGreaterEssenceUse('Enhancement'),
+    greatertorment: () => orbHandlers.handleGreaterEssenceUse('Torment'),
+    greaterruin: () => orbHandlers.handleGreaterEssenceUse('Ruin'),
+    greaterbody: () => orbHandlers.handleGreaterEssenceUse('Body'),
+    greaterflames: () => orbHandlers.handleGreaterEssenceUse('Flames'),
+    greaterbattle: () => orbHandlers.handleGreaterEssenceUse('Battle'),
+    greatermind: () => orbHandlers.handleGreaterEssenceUse('Mind'),
+    greaterice: () => orbHandlers.handleGreaterEssenceUse('Ice'),
+    greatersorcery: () => orbHandlers.handleGreaterEssenceUse('Sorcery'),
+    greaterinfinite: () => orbHandlers.handleGreaterEssenceUse('Infinite'),
+    greaterelectricity: () =>
+      orbHandlers.handleGreaterEssenceUse('Electricity'),
+    greaterhaste: () => orbHandlers.handleGreaterEssenceUse('Haste'),
   };
 
-  const handleAugmentationOrbUse = () => {
-    if (itemCorruption) {
-      setActiveOrb('');
-      return;
-    }
-    if (!activeSelection?.baseType) return;
-    if (itemRarity !== 'magic') return; // Only works on magic items
-
-    // Determine which type to add
-    const hasPrefix = craftedAffixes.prefixes.length > 0;
-    const hasSuffix = craftedAffixes.suffixes.length > 0;
-
-    if (hasPrefix && hasSuffix) return;
-
-    const affixes = getMatchingAffixes(activeSelection.baseType, itemLevel);
-
-    let addType: 'prefixes' | 'suffixes';
-    if (!hasPrefix && !hasSuffix) {
-      // 50/50 roll if no affixes
-      addType = Math.random() < 0.5 ? 'prefixes' : 'suffixes';
-    } else {
-      addType = hasPrefix ? 'suffixes' : 'prefixes';
-    }
-
-    // Exclude families already used
-    const usedFamilies = new Set(
-      craftedAffixes[addType === 'prefixes' ? 'prefixes' : 'suffixes'].map(
-        (a) => a.affix.family
-      )
-    );
-    const availableFamilies = affixes[addType].filter(
-      (fam) => !usedFamilies.has(fam.family)
-    );
-    if (availableFamilies.length === 0) return;
-
-    // Pick a random family and affix
-    const randomFamily =
-      availableFamilies[Math.floor(Math.random() * availableFamilies.length)];
-    const randomAffix =
-      randomFamily.affixes[
-        Math.floor(Math.random() * randomFamily.affixes.length)
-      ];
-    const values = generateAffixValues(randomAffix);
-    const uniqueId = `${randomAffix.id}-${Date.now()}-${Math.random()}`;
-
-    setCraftedAffixes((prev) => ({
-      prefixes:
-        addType === 'prefixes'
-          ? [...prev.prefixes, { affix: randomAffix, values, id: uniqueId }]
-          : prev.prefixes,
-      suffixes:
-        addType === 'suffixes'
-          ? [...prev.suffixes, { affix: randomAffix, values, id: uniqueId }]
-          : prev.suffixes,
-    }));
-
-    setAffixLog((prevLog) => [
-      `Augmentation Orb - Item had ${!hasPrefix && !hasSuffix ? 'no affix' : hasPrefix ? 'prefix' : 'suffix'}`,
-      `Added ${addType.slice(0, -2)}: ${randomAffix.affix_name}`,
-      ...prevLog,
-    ]);
-    if (!hasPrefix && !hasSuffix) {
-    } else {
-      setActiveOrb('');
-    }
+  const orbImageMap: Record<string, string> = {
+    transmutation: 'Transmutation Orb.png',
+    augmentation: 'Augmentation Orb.png',
+    alteration: 'Alteration Orb.png',
+    regal: 'Regal Orb.png',
+    chaos: 'Chaos Orb.png',
+    alchemy: 'Alchemy Orb.png',
+    exalted: 'Exalted Orb.png',
+    divine: 'Divine Orb.png',
+    annulment: 'Annulment Orb.png',
+    vaal: 'Vaal Orb.png',
+    whetstone: 'Whetstone.png',
+    scrap: 'Scrap.png',
+    artificer: 'Artificer.png',
+    scouring: 'Scouring Orb.png',
+    fracturing: 'Fracturing Orb.png',
+    teardrop: 'Teardrop.png',
+    enhancement: 'Enhancement Essence.png',
+    torment: 'Torment Essence.png',
+    ruin: 'Ruin Essence.png',
+    body: 'Body Essence.png',
+    flames: 'Flames Essence.png',
+    battle: 'Battle Essence.png',
+    mind: 'Mind Essence.png',
+    ice: 'Ice Essence.png',
+    sorcery: 'Sorcery Essence.png',
+    infinite: 'Infinite Essence.png',
+    electricity: 'Electricity Essence.png',
+    haste: 'Haste Essence.png',
+    greaterenhancement: 'Greater Enhancement Essence.png',
+    greatertorment: 'Greater Torment Essence.png',
+    greaterruin: 'Greater Ruin Essence.png',
+    greaterbody: 'Greater Body Essence.png',
+    greaterflames: 'Greater Flames Essence.png',
+    greaterbattle: 'Greater Battle Essence.png',
+    greatermind: 'Greater Mind Essence.png',
+    greaterice: 'Greater Ice Essence.png',
+    greatersorcery: 'Greater Sorcery Essence.png',
+    greaterinfinite: 'Greater Infinite Essence.png',
+    greaterelectricity: 'Greater Electricity Essence.png',
+    greaterhaste: 'Greater Haste Essence.png',
   };
 
-  const handleAlterationOrbUse = () => {
-    if (itemCorruption) {
-      setActiveOrb('');
-      return;
-    }
-    if (!activeSelection?.baseType) return;
-    if (itemRarity !== 'magic') return; // Only works on magic items
-
-    const affixes = getMatchingAffixes(activeSelection.baseType, itemLevel);
-
-    // Decide randomly: 1 or 2 affixes
-    const affixCount = Math.random() < 0.5 ? 1 : 2;
-
-    let newPrefixes: Array<{ affix: Affix; values: number[]; id: string }> = [];
-    let newSuffixes: Array<{ affix: Affix; values: number[]; id: string }> = [];
-
-    // If fractured affix exists, keep it and only reroll the other slot(s)
-    const fracturedPrefix = craftedAffixes.prefixes.find(
-      (a) => a.affix.id === fracturedAffixId
-    );
-    const fracturedSuffix = craftedAffixes.suffixes.find(
-      (a) => a.affix.id === fracturedAffixId
-    );
-
-    if (affixCount === 1) {
-      // 50/50 prefix or suffix
-      const isPrefix = Math.random() < 0.5;
-      if (isPrefix) {
-        if (fracturedPrefix) {
-          newPrefixes = [fracturedPrefix];
-        } else {
-          const families = affixes.prefixes;
-          if (families.length > 0) {
-            const randomFamily =
-              families[Math.floor(Math.random() * families.length)];
-            const randomAffix =
-              randomFamily.affixes[
-                Math.floor(Math.random() * randomFamily.affixes.length)
-              ];
-            const values = generateAffixValues(randomAffix);
-            const uniqueId = `${randomAffix.id}-${Date.now()}-${Math.random()}`;
-            newPrefixes = [{ affix: randomAffix, values, id: uniqueId }];
-          }
-        }
-        if (fracturedSuffix) newSuffixes = [fracturedSuffix];
-      } else {
-        if (fracturedSuffix) {
-          newSuffixes = [fracturedSuffix];
-        } else {
-          const families = affixes.suffixes;
-          if (families.length > 0) {
-            const randomFamily =
-              families[Math.floor(Math.random() * families.length)];
-            const randomAffix =
-              randomFamily.affixes[
-                Math.floor(Math.random() * randomFamily.affixes.length)
-              ];
-            const values = generateAffixValues(randomAffix);
-            const uniqueId = `${randomAffix.id}-${Date.now()}-${Math.random()}`;
-            newSuffixes = [{ affix: randomAffix, values, id: uniqueId }];
-          }
-        }
-        if (fracturedPrefix) newPrefixes = [fracturedPrefix];
-      }
-    } else {
-      // 1 prefix and 1 suffix
-      if (fracturedPrefix) {
-        newPrefixes = [fracturedPrefix];
-      } else if (affixes.prefixes.length > 0) {
-        const randomPrefixFamily =
-          affixes.prefixes[Math.floor(Math.random() * affixes.prefixes.length)];
-        const randomPrefix =
-          randomPrefixFamily.affixes[
-            Math.floor(Math.random() * randomPrefixFamily.affixes.length)
-          ];
-        const prefixValues = generateAffixValues(randomPrefix);
-        const prefixId = `${randomPrefix.id}-${Date.now()}-${Math.random()}`;
-        newPrefixes = [
-          { affix: randomPrefix, values: prefixValues, id: prefixId },
-        ];
-      }
-      if (fracturedSuffix) {
-        newSuffixes = [fracturedSuffix];
-      } else if (affixes.suffixes.length > 0) {
-        const randomSuffixFamily =
-          affixes.suffixes[Math.floor(Math.random() * affixes.suffixes.length)];
-        const randomSuffix =
-          randomSuffixFamily.affixes[
-            Math.floor(Math.random() * randomSuffixFamily.affixes.length)
-          ];
-        const suffixValues = generateAffixValues(randomSuffix);
-        const suffixId = `${randomSuffix.id}-${Date.now()}-${Math.random()}`;
-        newSuffixes = [
-          { affix: randomSuffix, values: suffixValues, id: suffixId },
-        ];
-      }
-    }
-
-    setCraftedAffixes({
-      prefixes: newPrefixes,
-      suffixes: newSuffixes,
-    });
-
-    // Build log
-    let logEntries: string[] = [];
-    if (affixCount === 1) {
-      const isPrefix = newPrefixes.length === 1;
-      logEntries.push(
-        `Alteration Orb - Rolled 1 ${isPrefix ? 'prefix' : 'suffix'}`,
-        `Added ${isPrefix ? 'prefix' : 'suffix'}: ${
-          isPrefix
-            ? newPrefixes[0].affix.affix_name
-            : newSuffixes[0].affix.affix_name
-        }`
-      );
-    } else {
-      logEntries.push(
-        `Alteration Orb - Rolled 1 prefix and 1 suffix`,
-        ...(newPrefixes.length
-          ? [`Added prefix: ${newPrefixes[0].affix.affix_name}`]
-          : []),
-        ...(newSuffixes.length
-          ? [`Added suffix: ${newSuffixes[0].affix.affix_name}`]
-          : [])
-      );
-    }
-
-    setAffixLog((prevLog) => [...logEntries, ...prevLog]);
-  };
-
-  const handleRegalOrbUse = () => {
-    if (itemCorruption) {
-      setActiveOrb('');
-      return;
-    }
-    if (!activeSelection?.baseType) return;
-    if (itemRarity !== 'magic') return; // Only works on magic items
-
-    const affixes = getMatchingAffixes(activeSelection.baseType, itemLevel);
-
-    // Decide randomly to add a prefix or suffix
-    const addType: 'prefixes' | 'suffixes' =
-      Math.random() < 0.5 ? 'prefixes' : 'suffixes';
-
-    // Exclude families already used
-    const usedFamilies = new Set(
-      craftedAffixes[addType].map((a) => a.affix.family)
-    );
-    const availableFamilies = affixes[addType].filter(
-      (fam) => !usedFamilies.has(fam.family)
-    );
-    if (availableFamilies.length === 0) return;
-
-    // Pick a random family and affix
-    const randomFamily =
-      availableFamilies[Math.floor(Math.random() * availableFamilies.length)];
-    const randomAffix =
-      randomFamily.affixes[
-        Math.floor(Math.random() * randomFamily.affixes.length)
-      ];
-    const values = generateAffixValues(randomAffix);
-    const uniqueId = `${randomAffix.id}-${Date.now()}-${Math.random()}`;
-
-    setCraftedAffixes((prev) => ({
-      prefixes:
-        addType === 'prefixes'
-          ? [...prev.prefixes, { affix: randomAffix, values, id: uniqueId }]
-          : prev.prefixes,
-      suffixes:
-        addType === 'suffixes'
-          ? [...prev.suffixes, { affix: randomAffix, values, id: uniqueId }]
-          : prev.suffixes,
-    }));
-
-    setItemRarity('rare');
-
-    setAffixLog((prevLog) => [
-      `Regal Orb - Made Item Rare`,
-      `Added ${addType.slice(0, -2)}: ${randomAffix.affix_name}`,
-      ...prevLog,
-    ]);
-
-    setActiveOrb('');
-  };
-
-  const handleChaosOrbUse = () => {
-    if (itemCorruption) {
-      setActiveOrb('');
-      return;
-    }
-    if (!activeSelection?.baseType) return;
-    const affixes = getMatchingAffixes(activeSelection.baseType, itemLevel);
-
-    let removeType: 'prefixes' | 'suffixes' =
-      Math.random() < 0.5 ? 'prefixes' : 'suffixes';
-    // Only consider non-fractured affixes for removal
-    let candidates = craftedAffixes[removeType].filter(
-      (a) => a.affix.id !== fracturedAffixId
-    );
-    if (candidates.length === 0) {
-      removeType = removeType === 'prefixes' ? 'suffixes' : 'prefixes';
-      candidates = craftedAffixes[removeType].filter(
-        (a) => a.affix.id !== fracturedAffixId
-      );
-      if (candidates.length === 0) return;
-    }
-
-    setCraftedAffixes((prev) => {
-      let current = { ...prev };
-      if (current[removeType].length === 0) return prev;
-
-      // Only remove non-fractured affixes (by affix definition id)
-      const removable = current[removeType].filter(
-        (a) => a.affix.id !== fracturedAffixId
-      );
-      if (removable.length === 0) return prev;
-
-      // Pick a random removable affix (by unique id)
-      const toRemove = removable[Math.floor(Math.random() * removable.length)];
-      const removeIdx = current[removeType].findIndex(
-        (a) => a.id === toRemove.id
-      );
-      const removedAffix = current[removeType][removeIdx];
-      current[removeType] = current[removeType].filter(
-        (_, i) => i !== removeIdx
-      );
-
-      let addType: 'prefixes' | 'suffixes';
-      if (current.prefixes.length === 3) {
-        addType = 'suffixes';
-      } else if (current.suffixes.length === 3) {
-        addType = 'prefixes';
-      } else {
-        addType = Math.random() < 0.5 ? 'prefixes' : 'suffixes';
-      }
-
-      let addedAffix: Affix | null = null;
-      if (current[addType].length < 3) {
-        const availableFamilies = affixes[addType].filter(
-          (fam) => !current[addType].some((a) => a.affix.family === fam.family)
-        );
-        if (availableFamilies.length > 0) {
-          const randomFamily =
-            availableFamilies[
-              Math.floor(Math.random() * availableFamilies.length)
-            ];
-          const randomAffix =
-            randomFamily.affixes[
-              Math.floor(Math.random() * randomFamily.affixes.length)
-            ];
-          const values = generateAffixValues(randomAffix);
-          const uniqueId = `${randomAffix.id}-${Date.now()}-${Math.random()}`;
-          current[addType] = [
-            ...current[addType],
-            { affix: randomAffix, values, id: uniqueId },
-          ];
-          addedAffix = randomAffix;
-        }
-        setAffixLog((prevLog) => [
-          `Chaos Orb - Removed 1 ${removeType.slice(0, -2)} and Added 1 ${addType.slice(0, -2)}`,
-          ...(addedAffix
-            ? [`Added ${addType.slice(0, -2)}: ${addedAffix.affix_name}`]
-            : []),
-          `Removed ${removeType.slice(0, -2)}: ${removedAffix.affix.affix_name}`,
-          ...prevLog,
-        ]);
-      }
-      return current;
-    });
-  };
-
-  const handleAlchemyOrbUse = () => {
-    if (itemCorruption) {
-      setActiveOrb('');
-      return;
-    }
-    if (!activeSelection?.baseType) return;
-    const affixes = getMatchingAffixes(activeSelection.baseType, itemLevel);
-    setItemRarity('rare');
-
-    // Decide random split: 3/1, 2/2, or 1/3
-    const splits: Array<[number, number]> = [
-      [3, 1],
-      [2, 2],
-      [1, 3],
-    ];
-    const [prefixCount, suffixCount] =
-      splits[Math.floor(Math.random() * splits.length)];
-
-    // Pick random families and affixes
-    function pickRandomAffixes(families: AffixFamilyGroup[], count: number) {
-      const picked: Array<{ affix: Affix; values: number[]; id: string }> = [];
-      const usedFamilies = new Set<string>();
-      const availableFamilies = [...families];
-      while (picked.length < count && availableFamilies.length > 0) {
-        const idx = Math.floor(Math.random() * availableFamilies.length);
-        const fam = availableFamilies.splice(idx, 1)[0];
-        if (!usedFamilies.has(fam.family)) {
-          const affix =
-            fam.affixes[Math.floor(Math.random() * fam.affixes.length)];
-          picked.push({
-            affix,
-            values: generateAffixValues(affix),
-            id: `${affix.id}-${Date.now()}-${Math.random()}`,
-          });
-          usedFamilies.add(fam.family);
-        }
-      }
-      return picked;
-    }
-
-    const newPrefixes = pickRandomAffixes(affixes.prefixes, prefixCount);
-    const newSuffixes = pickRandomAffixes(affixes.suffixes, suffixCount);
-
-    setCraftedAffixes({
-      prefixes: newPrefixes,
-      suffixes: newSuffixes,
-    });
-
-    setAffixLog(
-      [
-        `Alchemy Orb - Rolled ${prefixCount} prefix${prefixCount !== 1 ? 'es' : ''} and ${suffixCount} suffix${suffixCount !== 1 ? 'es' : ''}`,
-        newPrefixes.length > 0
-          ? `Added prefix${newPrefixes.length > 1 ? 'es' : ''}: ${newPrefixes
-              .map((p) => p.affix.affix_name)
-              .join(', ')}`
-          : '',
-        newSuffixes.length > 0
-          ? `Added suffix${newSuffixes.length > 1 ? 'es' : ''}: ${newSuffixes
-              .map((s) => s.affix.affix_name)
-              .join(', ')}`
-          : '',
-      ].filter(Boolean)
-    );
-
-    setActiveOrb('');
-  };
-
-  const handleExaltedOrbUse = () => {
-    if (itemCorruption) {
-      setActiveOrb('');
-      return;
-    }
-    if (!activeSelection?.baseType) return;
-    if (itemRarity !== 'rare') return; // Only works on rare items
-
-    if (craftedAffixes.prefixes.length + craftedAffixes.suffixes.length === 6) {
-      setActiveOrb('');
-    }
-
-    const affixes = getMatchingAffixes(activeSelection.baseType, itemLevel);
-
-    // Determine which type(s) can be added (max 3 of each)
-    const canAddPrefix = craftedAffixes.prefixes.length < 3;
-    const canAddSuffix = craftedAffixes.suffixes.length < 3;
-
-    if (!canAddPrefix && !canAddSuffix) return; // No room for more affixes
-
-    // Randomly choose to add a prefix or suffix, but only if there's room
-    let addType: 'prefixes' | 'suffixes';
-    if (canAddPrefix && canAddSuffix) {
-      addType = Math.random() < 0.5 ? 'prefixes' : 'suffixes';
-    } else if (canAddPrefix) {
-      addType = 'prefixes';
-    } else {
-      addType = 'suffixes';
-    }
-
-    // Exclude families already used
-    const usedFamilies = new Set(
-      craftedAffixes[addType].map((a) => a.affix.family)
-    );
-    const availableFamilies = affixes[addType].filter(
-      (fam) => !usedFamilies.has(fam.family)
-    );
-    if (availableFamilies.length === 0) return;
-
-    // Pick a random family and affix
-    const randomFamily =
-      availableFamilies[Math.floor(Math.random() * availableFamilies.length)];
-    const randomAffix =
-      randomFamily.affixes[
-        Math.floor(Math.random() * randomFamily.affixes.length)
-      ];
-    const values = generateAffixValues(randomAffix);
-    const uniqueId = `${randomAffix.id}-${Date.now()}-${Math.random()}`;
-
-    setCraftedAffixes((prev) => ({
-      prefixes:
-        addType === 'prefixes'
-          ? [...prev.prefixes, { affix: randomAffix, values, id: uniqueId }]
-          : prev.prefixes,
-      suffixes:
-        addType === 'suffixes'
-          ? [...prev.suffixes, { affix: randomAffix, values, id: uniqueId }]
-          : prev.suffixes,
-    }));
-
-    setAffixLog((prevLog) => [
-      `Exalted Orb - Added 1 ${addType.slice(0, -2)}`,
-      `Added ${addType.slice(0, -2)}: ${randomAffix.affix_name}`,
-      ...prevLog,
-    ]);
-  };
-
-  const handleDivineOrbUse = () => {
-    if (itemCorruption) {
-      setActiveOrb('');
-      return;
-    }
-    if (!activeSelection?.baseType) return;
-
-    // Reroll implicit value
-    const base = bases.find((b) => b.base_name === activeSelection.baseType);
-    if (base?.implicit) {
-      setImplicitResult(generateImplicitValue(base));
-    }
-
-    // Reroll all affix values
-    setCraftedAffixes((prev) => ({
-      prefixes: prev.prefixes.map((p) =>
-        p.affix.id === fracturedAffixId
-          ? p
-          : { ...p, values: generateAffixValues(p.affix) }
-      ),
-      suffixes: prev.suffixes.map((s) =>
-        s.affix.id === fracturedAffixId
-          ? s
-          : { ...s, values: generateAffixValues(s.affix) }
-      ),
-    }));
-
-    setAffixLog((prevLog) => ['Divine Orb - Rerolled all values', ...prevLog]);
-  };
-
-  const handleAnnulmentOrbUse = () => {
-    if (itemCorruption) {
-      setActiveOrb('');
-      return;
-    }
-    if (!activeSelection?.baseType) return;
-    if (itemRarity !== 'magic' && itemRarity !== 'rare') return;
-
-    if (craftedAffixes.prefixes.length + craftedAffixes.suffixes.length === 0) {
-      setActiveOrb('');
-    }
-
-    // Gather all affixes
-    const allAffixes = [
-      ...craftedAffixes.prefixes
-        .filter((a) => a.affix.id !== fracturedAffixId)
-        .map((a) => ({ ...a, type: 'prefix' })),
-      ...craftedAffixes.suffixes
-        .filter((a) => a.affix.id !== fracturedAffixId)
-        .map((a) => ({ ...a, type: 'suffix' })),
-    ];
-
-    if (allAffixes.length === 0) return;
-
-    // Pick a random affix to remove
-    const removeIdx = Math.floor(Math.random() * allAffixes.length);
-    const toRemove = allAffixes[removeIdx];
-
-    setCraftedAffixes((prev) => {
-      if (toRemove.type === 'prefix') {
-        return {
-          ...prev,
-          prefixes: prev.prefixes.filter((a) => a.id !== toRemove.id),
-        };
-      } else {
-        return {
-          ...prev,
-          suffixes: prev.suffixes.filter((a) => a.id !== toRemove.id),
-        };
-      }
-    });
-
-    setAffixLog((prevLog) => [
-      `Annulment Orb - Removed 1 ${toRemove.type}`,
-      `Removed ${toRemove.type}: ${toRemove.affix.affix_name}`,
-      ...prevLog,
-    ]);
-  };
-
-  const handleVaalOrbUse = () => {
-    const roll = CorruptionOmen
-      ? Math.floor(Math.random() * 3)
-      : Math.floor(Math.random() * 4);
-
-    if (roll === 0) {
-      // Use chaos orb twice
-      handleChaosOrbUse();
-      handleChaosOrbUse();
-      setItemCorruption(1);
-      setTimeout(() => {
-        setAffixLog((prevLog) => [
-          'Vaal Orb - Corrupted Item',
-          'Vaal Orb - Double Chaos',
-          ...prevLog,
-        ]);
-        setActiveOrb('');
-      }, 10);
-      return;
-    }
-
-    if (roll === 1) {
-      // Add an additional socket past the max, but not for certain bases
-      setItemCorruption(1);
-      const base = bases.find((b) => b.base_name === activeSelection?.baseType);
-      const notAllowedClasses = [
-        'Amulet',
-        'Ring',
-        'Belt',
-        'Jewel',
-        'Quiver',
-        'Focus',
-      ];
-      if (base && !notAllowedClasses.includes(base.item_class)) {
-        setItemSockets((prev) => prev + 1);
-        setAffixLog((prevLog) => [
-          'Vaal Orb - Corrupted Item',
-          'Vaal Orb - Additional Socket Added',
-          ...prevLog,
-        ]);
-      } else {
-        setAffixLog((prevLog) => [
-          'Vaal Orb - Corrupted Item',
-          'Vaal Orb - Additional Socket Failed (This Base Cannot Have Sockets)',
-          ...prevLog,
-        ]);
-      }
-      setActiveOrb('');
-      return;
-    }
-
-    if (roll === 2) {
-      // Add an enchantment
-      setItemCorruption(1);
-      setAffixLog((prevLog) => [
-        'Vaal Orb - Corrupted Item',
-        'Vaal Orb - Enchantment Added',
-        ...prevLog,
-      ]);
-      setActiveOrb('');
-      return;
-    }
-
-    if (roll === 3) {
-      setItemCorruption(1);
-      setAffixLog((prevLog) => [
-        'Vaal Orb - Corrupted Item',
-        'Vaal Orb - Nothing happened',
-        ...prevLog,
-      ]);
-      setActiveOrb('');
-      return;
-    }
-  };
-
-  const handleWhetstoneUse = () => {
-    if (itemCorruption) {
-      setActiveOrb('');
-      return;
-    }
-    if (!activeSelection?.baseType) return;
-
-    // Find the selected base
-    const base = bases.find((b) => b.base_name === activeSelection.baseType);
-    if (!base) return;
-
-    // Only allow on weapons, but not sceptre, staff, or wand
-    const weaponTypes = [
-      'Axe',
-      'Two Hand Axe',
-      'Mace',
-      'Two Hand Mace',
-      'Sword',
-      'Two Hand Sword',
-      'Claw',
-      'Dagger',
-      'Flail',
-      'Spear',
-      'Bow',
-      'Crossbow',
-      'Quarterstaff',
-    ];
-    if (!weaponTypes.includes(base.item_class)) return;
-    setItemQuality(20);
-    setActiveOrb('');
-  };
-
-  const handleScrapUse = () => {
-    if (itemCorruption) {
-      setActiveOrb('');
-      return;
-    }
-    if (!activeSelection?.baseType) return;
-
-    // Find the selected base
-    const base = bases.find((b) => b.base_name === activeSelection.baseType);
-    if (!base) return;
-
-    // Only allow on armour
-    const armourTypes = ['Helmet', 'Body Armour', 'Gloves', 'Boots', 'Shield'];
-    if (!armourTypes.includes(base.item_class)) return;
-    setItemQuality(20);
-    setActiveOrb('');
-  };
-
-  const handleArtificerUse = () => {
-    if (itemCorruption) {
-      setActiveOrb('');
-      return;
-    }
-    if (!activeSelection?.baseType) return;
-
-    // Find the selected base
-    const base = bases.find((b) => b.base_name === activeSelection.baseType);
-    if (!base) return;
-
-    // Only allow on weapons and armour
-    const weaponClasses = [
-      'One Hand Axe',
-      'Two Hand Axe',
-      'One Hand Mace',
-      'Two Hand Mace',
-      'One Hand Sword',
-      'Two Hand Sword',
-      'Claw',
-      'Dagger',
-      'Flail',
-      'Spear',
-      'Bow',
-      'Crossbow',
-      'Staff',
-      'Quarterstaff',
-      'Wand',
-      'Sceptre',
-    ];
-    const armourClasses = [
-      'Helmet',
-      'Body Armour',
-      'Gloves',
-      'Boots',
-      'Shield',
-    ];
-
-    const isWeapon = weaponClasses.includes(base.item_class);
-    const isArmour = armourClasses.includes(base.item_class);
-
-    if (!isWeapon && !isArmour) return;
-
-    // Determine max sockets
-    const twoSockets = [
-      'Two Hand Axe',
-      'Two Hand Mace',
-      'Two Hand Sword',
-      'Bow',
-      'Crossbow',
-      'Staff',
-      'Quarterstaff',
-      'Body Armour',
-    ];
-    const maxSockets = twoSockets.includes(base.item_class) ? 2 : 1;
-
-    setItemSockets(maxSockets);
-    setActiveOrb('');
-  };
-
-  const handleScouringOrbUse = () => {
-    if (itemCorruption) {
-      setActiveOrb('');
-      return;
-    }
-
-    // Find the fractured affix before clearing
-    let fracturedAffix = null;
-    if (fracturedAffixId) {
-      fracturedAffix =
-        craftedAffixes.prefixes.find((a) => a.affix.id === fracturedAffixId) ||
-        craftedAffixes.suffixes.find((a) => a.affix.id === fracturedAffixId);
-    }
-
-    // Clear affixes, but preserve fractured affix if it exists
-    setCraftedAffixes({
-      prefixes:
-        fracturedAffix &&
-        craftedAffixes.prefixes.some((a) => a.affix.id === fracturedAffixId)
-          ? [fracturedAffix]
-          : [],
-      suffixes:
-        fracturedAffix &&
-        craftedAffixes.suffixes.some((a) => a.affix.id === fracturedAffixId)
-          ? [fracturedAffix]
-          : [],
-    });
-
-    setAffixLog((prevLog) => ['Scouring Orb - Made Item Normal', ...prevLog]);
-    setItemRarity('normal');
-    setActiveOrb('');
-  };
-
-  const handleFracturingOrbUse = () => {
-    // Only works on rare items with exactly 4 affixes and no fractured affix yet
-    const totalAffixes =
-      craftedAffixes.prefixes.length + craftedAffixes.suffixes.length;
-    if (itemRarity !== 'rare' || totalAffixes !== 4 || fracturedAffixId) {
-      setActiveOrb('');
-      return;
-    }
-
-    // Combine all affixes into one array with type info
-    const allAffixes = [
-      ...craftedAffixes.prefixes.map((a) => ({
-        ...a,
-        type: 'prefix' as const,
-      })),
-      ...craftedAffixes.suffixes.map((a) => ({
-        ...a,
-        type: 'suffix' as const,
-      })),
-    ];
-
-    // Pick a random affix to fracture
-    const randomIdx = Math.floor(Math.random() * allAffixes.length);
-    const fractured = allAffixes[randomIdx];
-
-    setFracturedAffixId(fractured.affix.id);
-
-    setAffixLog((prevLog) => [
-      `Fracturing Orb - Fractured ${fractured.type}: ${fractured.affix.affix_name}`,
-      ...prevLog,
-    ]);
-    setActiveOrb('');
-  };
-
-  const handleTeardropUse = () => {
-    // Only usable on corrupted rare items
-    if (!activeSelection?.baseType) {
-      setActiveOrb('');
-      return;
-    }
-    if (itemCorruption !== 1 || itemRarity !== 'rare') {
-      setActiveOrb('');
-      return;
-    }
-
-    // Helper to get all affixes for this base and ilvl
-    const affixes = getMatchingAffixes(activeSelection.baseType, itemLevel);
-
-    // Helper to shift tier up or down for a given affix
-    function shiftAffixTier(currentAffix: Affix, allTiers: Affix[]) {
-      // Find current index in the sorted tiers (highest tier first)
-      const sorted = [...allTiers].sort((a, b) => b.ilvl - a.ilvl);
-      const idx = sorted.findIndex((a) => a.id === currentAffix.id);
-      if (idx === -1) return currentAffix;
-
-      // Randomly decide to go up or down a tier
-      const direction = Math.random() < 0.5 ? -1 : 1;
-      const newIdx = idx + direction;
-
-      // Clamp to valid range
-      if (newIdx < 0 || newIdx >= sorted.length) return currentAffix;
-      return sorted[newIdx];
-    }
-
-    // Update prefixes
-    setCraftedAffixes((prev) => {
-      const newPrefixes = prev.prefixes.map(({ affix, values, id }) => {
-        if (affix.id === fracturedAffixId) return { affix, values, id };
-        const family = affix.family;
-        const allTiers =
-          affixes.prefixes.find((fam) => fam.family === family)?.affixes || [];
-        const newAffix = shiftAffixTier(affix, allTiers);
-        // If tier changed, reroll values
-        return {
-          affix: newAffix,
-          values:
-            newAffix.id === affix.id ? values : generateAffixValues(newAffix),
-          id,
-        };
-      });
-
-      const newSuffixes = prev.suffixes.map(({ affix, values, id }) => {
-        if (affix.id === fracturedAffixId) return { affix, values, id };
-        const family = affix.family;
-        const allTiers =
-          affixes.suffixes.find((fam) => fam.family === family)?.affixes || [];
-        const newAffix = shiftAffixTier(affix, allTiers);
-        return {
-          affix: newAffix,
-          values:
-            newAffix.id === affix.id ? values : generateAffixValues(newAffix),
-          id,
-        };
-      });
-
-      return { prefixes: newPrefixes, suffixes: newSuffixes };
-    });
-
-    setAffixLog((prevLog) => [
-      'Teardrop - Raised or Lowered each Affix by 1 Tier',
-      ...prevLog,
-    ]);
-  };
-
-  const orbHandlers: Record<string, () => void> = {
-    transmutation: handleTransmutationOrbUse,
-    augmentation: handleAugmentationOrbUse,
-    alteration: handleAlterationOrbUse,
-    regal: handleRegalOrbUse,
-    chaos: handleChaosOrbUse,
-    alchemy: handleAlchemyOrbUse,
-    exalted: handleExaltedOrbUse,
-    divine: handleDivineOrbUse,
-    annulment: handleAnnulmentOrbUse,
-    vaal: handleVaalOrbUse,
-    whetstone: handleWhetstoneUse,
-    scrap: handleScrapUse,
-    artificer: handleArtificerUse,
-    scouring: handleScouringOrbUse,
-    fracturing: handleFracturingOrbUse,
-    teardrop: handleTeardropUse,
-  };
+  const socketType = activeSocketable?.socket_type.includes('Talisman')
+    ? activeSocketable?.socket_type.split('_')[0]
+    : activeSocketable?.socket_type;
 
   return (
     <>
-      {activeOrb == 'transmutation' && (
+      {activeOrb && orbImageMap[activeOrb] && (
         <img
-          src='Transmutation Orb.png'
-          alt='Transmutation Orb'
+          src={orbImageMap[activeOrb]}
+          alt={activeOrb}
           style={{
             position: 'fixed',
             left: cursorPos.x - 35,
@@ -2765,254 +972,21 @@ function Crafting() {
           draggable={false}
         />
       )}
-      {activeOrb == 'augmentation' && (
+      {activeSocketable && (
         <img
-          src='Augmentation Orb.png'
-          alt='Augmentation Orb'
+          src={
+            activeSocketable.id > 13 &&
+            (activeSocketable.id < 65 || activeSocketable.id > 75)
+              ? `${socketType}_${activeSocketable.socketable_name.match(/(\w+)$/)![0]}.webp`
+              : `${socketType}_${activeSocketable.socketable_name.match(/(\w+)/)![0]}.webp`
+          }
+          alt={activeSocketable.socketable_name}
           style={{
             position: 'fixed',
-            left: cursorPos.x - 35,
-            top: cursorPos.y - 35,
-            width: 71,
-            height: 71,
-            pointerEvents: 'none',
-            zIndex: 9999,
-            opacity: 0.85,
-          }}
-          draggable={false}
-        />
-      )}
-      {activeOrb == 'alteration' && (
-        <img
-          src='Alteration Orb.png'
-          alt='Alteration Orb'
-          style={{
-            position: 'fixed',
-            left: cursorPos.x - 35,
-            top: cursorPos.y - 35,
-            width: 71,
-            height: 71,
-            pointerEvents: 'none',
-            zIndex: 9999,
-            opacity: 0.85,
-          }}
-          draggable={false}
-        />
-      )}
-      {activeOrb == 'regal' && (
-        <img
-          src='Regal Orb.png'
-          alt='Regal Orb'
-          style={{
-            position: 'fixed',
-            left: cursorPos.x - 35,
-            top: cursorPos.y - 35,
-            width: 71,
-            height: 71,
-            pointerEvents: 'none',
-            zIndex: 9999,
-            opacity: 0.85,
-          }}
-          draggable={false}
-        />
-      )}
-      {activeOrb == 'chaos' && (
-        <img
-          src='Chaos Orb.png'
-          alt='Chaos Orb'
-          style={{
-            position: 'fixed',
-            left: cursorPos.x - 35,
-            top: cursorPos.y - 35,
-            width: 71,
-            height: 71,
-            pointerEvents: 'none',
-            zIndex: 9999,
-            opacity: 0.85,
-          }}
-          draggable={false}
-        />
-      )}
-      {activeOrb == 'alchemy' && (
-        <img
-          src='Alchemy Orb.png'
-          alt='Alchemy Orb'
-          style={{
-            position: 'fixed',
-            left: cursorPos.x - 35,
-            top: cursorPos.y - 35,
-            width: 71,
-            height: 71,
-            pointerEvents: 'none',
-            zIndex: 9999,
-            opacity: 0.85,
-          }}
-          draggable={false}
-        />
-      )}
-      {activeOrb == 'exalted' && (
-        <img
-          src='Exalted Orb.png'
-          alt='Exalted Orb'
-          style={{
-            position: 'fixed',
-            left: cursorPos.x - 35,
-            top: cursorPos.y - 35,
-            width: 71,
-            height: 71,
-            pointerEvents: 'none',
-            zIndex: 9999,
-            opacity: 0.85,
-          }}
-          draggable={false}
-        />
-      )}
-      {activeOrb == 'divine' && (
-        <img
-          src='Divine Orb.png'
-          alt='Divine Orb'
-          style={{
-            position: 'fixed',
-            left: cursorPos.x - 35,
-            top: cursorPos.y - 35,
-            width: 71,
-            height: 71,
-            pointerEvents: 'none',
-            zIndex: 9999,
-            opacity: 0.85,
-          }}
-          draggable={false}
-        />
-      )}
-      {activeOrb == 'annulment' && (
-        <img
-          src='Annulment Orb.png'
-          alt='Annulment Orb'
-          style={{
-            position: 'fixed',
-            left: cursorPos.x - 35,
-            top: cursorPos.y - 35,
-            width: 71,
-            height: 71,
-            pointerEvents: 'none',
-            zIndex: 9999,
-            opacity: 0.85,
-          }}
-          draggable={false}
-        />
-      )}
-      {activeOrb == 'vaal' && (
-        <img
-          src='Vaal Orb.png'
-          alt='Vaal Orb'
-          style={{
-            position: 'fixed',
-            left: cursorPos.x - 35,
-            top: cursorPos.y - 35,
-            width: 71,
-            height: 71,
-            pointerEvents: 'none',
-            zIndex: 9999,
-            opacity: 0.85,
-          }}
-          draggable={false}
-        />
-      )}
-      {activeOrb == 'whetstone' && (
-        <img
-          src='Whetstone.png'
-          alt='Whetstone'
-          style={{
-            position: 'fixed',
-            left: cursorPos.x - 35,
-            top: cursorPos.y - 35,
-            width: 71,
-            height: 71,
-            pointerEvents: 'none',
-            zIndex: 9999,
-            opacity: 0.85,
-          }}
-          draggable={false}
-        />
-      )}
-      {activeOrb == 'scrap' && (
-        <img
-          src='Scrap.png'
-          alt='Scrap'
-          style={{
-            position: 'fixed',
-            left: cursorPos.x - 35,
-            top: cursorPos.y - 35,
-            width: 71,
-            height: 71,
-            pointerEvents: 'none',
-            zIndex: 9999,
-            opacity: 0.85,
-          }}
-          draggable={false}
-        />
-      )}
-      {activeOrb == 'artificer' && (
-        <img
-          src='Artificer.png'
-          alt='Artificer'
-          style={{
-            position: 'fixed',
-            left: cursorPos.x - 35,
-            top: cursorPos.y - 35,
-            width: 71,
-            height: 71,
-            pointerEvents: 'none',
-            zIndex: 9999,
-            opacity: 0.85,
-          }}
-          draggable={false}
-        />
-      )}
-      {activeOrb == 'scouring' && (
-        <img
-          src='Scouring Orb.png'
-          alt='Scouring Orb'
-          style={{
-            position: 'fixed',
-            left: cursorPos.x - 35,
-            top: cursorPos.y - 35,
-            width: 71,
-            height: 71,
-            pointerEvents: 'none',
-            zIndex: 9999,
-            opacity: 0.85,
-          }}
-          draggable={false}
-        />
-      )}
-      {activeOrb == 'fracturing' && (
-        <img
-          src='Fracturing Orb.png'
-          alt='Fracturing Orb'
-          style={{
-            position: 'fixed',
-            left: cursorPos.x - 35,
-            top: cursorPos.y - 35,
-            width: 71,
-            height: 71,
-            pointerEvents: 'none',
-            zIndex: 9999,
-            opacity: 0.85,
-          }}
-          draggable={false}
-        />
-      )}
-      {activeOrb == 'teardrop' && (
-        <img
-          src='Teardrop.png'
-          alt='Teardrop'
-          style={{
-            position: 'fixed',
-            left: cursorPos.x - 35,
-            top: cursorPos.y - 35,
-            width: 71,
-            height: 71,
+            left: cursorPos.x - 30,
+            top: cursorPos.y - 30,
+            width: 60,
+            height: 60,
             pointerEvents: 'none',
             zIndex: 9999,
             opacity: 0.85,
@@ -3021,281 +995,80 @@ function Crafting() {
         />
       )}
       <div className='flex min-h-screen w-screen flex-col items-center justify-center bg-zinc-700 p-4 text-center text-neutral-300 sm:p-8'>
-        <div className='w-full max-w-md rounded-lg bg-zinc-900 bg-opacity-80 shadow-2xl sm:max-w-lg md:max-w-2xl lg:max-w-4xl xl:max-w-5xl'>
-          <div className='mx-auto mb-6 grid auto-rows-auto grid-cols-[repeat(5,max-content)] grid-rows-4 items-center justify-center gap-1'>
-            {/* ItemSlots */}
-            <ItemSlot name='Jewel' className='col-start-3 row-start-1' />
-            <ItemSlot
-              name='Weapon'
-              className='col-span-2 col-start-1 row-span-4 row-start-1 mr-[92px] mt-8'
-            />
-            <ItemSlot
-              name='Offhand'
-              className='col-start-5 row-span-4 row-start-1 -ml-16 mt-8'
-            />
-            <ItemSlot
-              name='Helmet'
-              className='col-start-3 row-span-3 row-start-1'
-            />
-            <ItemSlot
-              name='Body Armour'
-              className='col-start-3 row-span-12 row-start-2 mt-9'
-            />
-            <ItemSlot
-              name='Amulet'
-              className='col-start-4 row-span-2 row-start-2 mr-16 mt-7'
-            />
-            <ItemSlot
-              name='Ring'
-              className='col-start-2 row-span-2 row-start-3 mb-28 ml-16'
-              ringSlot='left'
-            />
-            <ItemSlot
-              name='Ring'
-              className='col-start-4 row-span-2 row-start-3 mb-28 mr-16'
-              ringSlot='right'
-            />
-            <ItemSlot name='Gloves' className='col-start-2 row-start-4' />
-            <ItemSlot
-              name='Belt'
-              className='col-start-3 row-span-12 row-start-4 mt-7'
-            />
-            <ItemSlot name='Boots' className='col-start-4 row-start-4' />
-          </div>
-        </div>
-
-        {/* Modal for subtype selection */}
-        {selectedSlot && (
-          <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4'>
-            <div className='h-[90vh] w-[90vw] max-w-6xl overflow-y-auto rounded-lg bg-zinc-800 p-8'>
-              <div className='mb-6 flex items-center justify-between'>
-                <h2 className='text-2xl font-bold'>{selectedSlot}</h2>
-                <button
-                  onClick={handleCloseMenu}
-                  className='text-2xl text-neutral-400 hover:text-white'
-                >
-                  ✕
-                </button>
-              </div>
-
-              {needsSubtypeSelection(selectedSlot) ? (
-                !selectedSubtype ? (
-                  <div>
-                    <h3 className='mb-4 text-xl'>Select Type:</h3>
-                    <div
-                      className={`grid gap-4 ${
-                        ['helmet', 'body armour', 'gloves', 'boots'].includes(
-                          selectedSlot.toLowerCase()
-                        )
-                          ? 'grid-cols-3'
-                          : 'grid-cols-2'
-                      }`}
-                    >
-                      {getSubtypeOptions(selectedSlot).map((type) => (
-                        <button
-                          key={type}
-                          onClick={() => handleSubtypeSelect(type)}
-                          className='rounded bg-zinc-700 p-4 text-base transition-colors hover:bg-zinc-600'
-                        >
-                          {type
-                            .replace(/_/g, ' ')
-                            .replace(/\b\w/g, (l) => l.toUpperCase())}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ) : selectedSubtype === 'shield' && !selectedShieldType ? (
-                  <div>
-                    <div className='mb-6'>
-                      <button
-                        onClick={() => setSelectedSubtype(null)}
-                        className='text-base text-blue-400 hover:text-blue-300'
-                      >
-                        ← Back
-                      </button>
-                    </div>
-                    <h3 className='mb-4 text-xl'>Select Shield Type:</h3>
-                    <div className='grid grid-cols-3 gap-4'>
-                      {shield_types.map((type) => (
-                        <button
-                          key={type}
-                          onClick={() => handleShieldTypeSelect(type)}
-                          className='rounded bg-zinc-700 p-4 text-base transition-colors hover:bg-zinc-600'
-                        >
-                          {type
-                            .replace(/_/g, ' ')
-                            .replace(/\b\w/g, (l) => l.toUpperCase())}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ) : !selectedBaseType ? (
-                  <div>
-                    <div className='mb-6'>
-                      <button
-                        onClick={() => {
-                          if (selectedSubtype === 'shield') {
-                            setSelectedShieldType(null);
-                          } else {
-                            setSelectedSubtype(null);
-                          }
-                        }}
-                        className='text-base text-blue-400 hover:text-blue-300'
-                      >
-                        ← Back
-                      </button>
-                    </div>
-                    <h3 className='mb-4 text-xl'>Select Base Type:</h3>
-                    <div className='space-y-4'>
-                      {(['expert', 'advanced', 'novice'] as const).map(
-                        (tier) => {
-                          const tierBases = getBaseTypes(
-                            selectedSlot,
-                            selectedSubtype,
-                            selectedShieldType || undefined
-                          )[tier];
-                          if (tierBases.length === 0) return null;
-
-                          return (
-                            <div
-                              key={tier}
-                              className='rounded border border-zinc-600'
-                            >
-                              <button
-                                onClick={() => toggleTier(tier)}
-                                className='flex w-full items-center justify-between p-4 text-left text-base font-medium capitalize transition-colors hover:bg-zinc-700'
-                              >
-                                <span
-                                  className={
-                                    tier === 'expert'
-                                      ? 'text-red-400'
-                                      : tier === 'advanced'
-                                        ? 'text-yellow-400'
-                                        : 'text-green-400'
-                                  }
-                                >
-                                  {tier} ({tierBases.length})
-                                </span>
-                                <span
-                                  className={`transform transition-transform ${expandedTiers[tier] ? 'rotate-90' : ''}`}
-                                >
-                                  ▶
-                                </span>
-                              </button>
-                              {expandedTiers[tier] && (
-                                <div className='border-t border-zinc-600 p-6'>
-                                  <div className='grid grid-cols-4 gap-6 lg:grid-cols-6'>
-                                    {tierBases.map((base) => (
-                                      <BaseItemSlot
-                                        key={base.base_name}
-                                        base={base}
-                                        slot={selectedSlot}
-                                        subtype={selectedSubtype || undefined}
-                                        onClick={() =>
-                                          handleBaseTypeSelect(base.base_name)
-                                        }
-                                      />
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        }
-                      )}
-                    </div>
-
-                    {/* Item Level Input - appears below the tier sections */}
-                    <div className='mt-6 rounded-lg bg-zinc-700 p-4'>
-                      <div className='flex items-center justify-center gap-4'>
-                        <label
-                          htmlFor='item-level'
-                          className='font-medium text-white'
-                        >
-                          Item Level:
-                        </label>
-                        <input
-                          id='item-level'
-                          type='number'
-                          min='1'
-                          max='100'
-                          value={itemLevel}
-                          onChange={(e) =>
-                            setItemLevel(parseInt(e.target.value) || 81)
-                          }
-                          className='w-20 rounded border border-zinc-500 bg-zinc-600 px-3 py-1 text-white focus:border-blue-400 focus:outline-none'
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ) : null
-              ) : (
-                // Handle slots that don't need subtype selection (ring, belt, amulet, jewel)
-                <div>
-                  <h3 className='mb-4 text-xl'>Select Base Type:</h3>
-                  <div className='p-6'>
-                    <div className='grid grid-cols-4 gap-6 lg:grid-cols-6'>
-                      {getBaseTypes(selectedSlot)
-                        .expert.concat(getBaseTypes(selectedSlot).advanced)
-                        .concat(getBaseTypes(selectedSlot).novice)
-                        .map((base) => (
-                          <BaseItemSlot
-                            key={base.base_name}
-                            base={base}
-                            slot={selectedSlot}
-                            onClick={() => {
-                              setSelectedBaseType(base.base_name);
-                              completeSelection(
-                                selectedSlot,
-                                selectedSlot.toLowerCase(),
-                                undefined,
-                                base.base_name
-                              );
-                            }}
-                          />
-                        ))}
-                    </div>
-                  </div>
-
-                  {/* Item Level Input - also appears for jewelry */}
-                  <div className='mx-6 mb-4 rounded-lg bg-zinc-700 p-4'>
-                    <div className='flex items-center justify-center gap-4'>
-                      <label
-                        htmlFor='item-level-jewelry'
-                        className='font-medium text-white'
-                      >
-                        Item Level:
-                      </label>
-                      <input
-                        id='item-level-jewelry'
-                        type='number'
-                        min='1'
-                        max='100'
-                        value={itemLevel}
-                        onChange={(e) =>
-                          setItemLevel(parseInt(e.target.value) || 81)
-                        }
-                        className='w-20 rounded border border-zinc-500 bg-zinc-600 px-3 py-1 text-white focus:border-blue-400 focus:outline-none'
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+        {/* Equipment */}
+        <ItemSlots
+          activeSelection={activeSelection}
+          bases={bases}
+          onSelectionComplete={(selection) => {
+            completeSelection(
+              selection.slot,
+              selection.subtype,
+              selection.shieldType,
+              selection.baseType,
+              selection.ringSlot
+            );
+          }}
+          itemLevel={itemLevel}
+          onItemLevelChange={setItemLevel}
+        />
 
         {/* ItemDisplay and Affixes section */}
         <div className='mt-8 flex w-full max-w-7xl flex-col items-center gap-8'>
           {/* ItemDisplay section */}
-          <div className='rounded-lg bg-zinc-800 p-4'>
+          <div className='min-w-[1421px] rounded-lg bg-zinc-800 p-4'>
             <div className='relative mb-4 flex h-10 items-center justify-center'>
               <h3 className='absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-lg font-bold text-white'>
                 Crafting
               </h3>
-              {(craftedAffixes.prefixes.length > 0 ||
-                craftedAffixes.suffixes.length > 0 ||
-                itemCorruption) && (
+              {/* UI Buttons */}
+              <button
+                onClick={() => {
+                  setBluebg((prev) => !prev);
+                }}
+                className='absolute left-0 flex min-w-16 items-center justify-center gap-2 rounded border border-zinc-500 px-1 py-1 text-2xl text-white transition-colors hover:bg-zinc-200 hover:text-zinc-900'
+                title='Blue'
+              >
+                <span className='text-sm'>{bluebg ? 'Empty' : 'Blue BG'}</span>
+              </button>
+              <button
+                onClick={() => {
+                  setTooltips((prev) => !prev);
+                }}
+                className='absolute left-16 flex min-w-20 items-center justify-center gap-2 rounded border border-zinc-500 px-1 py-1 text-2xl text-white transition-colors hover:bg-zinc-200 hover:text-zinc-900'
+                title='Tooltips'
+              >
+                <span className='text-sm'>
+                  {tooltips ? 'Hide TTs' : 'Tooltips'}
+                </span>
+              </button>
+              {itemSockets > 0 ? (
+                <button
+                  onClick={() => {
+                    setShowSocketables((prev) => !prev);
+                  }}
+                  className='absolute right-[306px] flex gap-2 rounded border border-zinc-500 px-1 py-1 text-2xl text-white transition-colors hover:bg-zinc-200 hover:text-zinc-900'
+                  title='Show Socketables'
+                >
+                  <img
+                    className='h-8'
+                    src={showSocketables ? 'Chaos Orb.png' : 'socket.png'}
+                    alt='Socket'
+                  />
+                </button>
+              ) : null}
+              {stateHistory.length > 0 && (
+                <button
+                  onClick={undoLastAction}
+                  className='absolute right-52 flex gap-2 rounded border border-zinc-500 px-1 py-1 text-2xl text-white transition-colors hover:bg-zinc-200 hover:text-zinc-900'
+                  title='Undo last action'
+                >
+                  <span className='h-8 text-2xl'>Undo ↺</span>
+                </button>
+              )}
+              {((activeSelection?.baseType !== 'Diamond' &&
+                affixLog.length > 0) ||
+                itemQuality ||
+                itemSockets > 0) && (
                 <button
                   onClick={() => {
                     setCraftedAffixes({ prefixes: [], suffixes: [] });
@@ -3303,16 +1076,25 @@ function Crafting() {
                     setItemRarity('normal');
                     setItemQuality(0);
                     setItemSockets(0);
+                    setItemSocket1effect('');
+                    setitemSocket1type('');
+                    setItemSocket2effect('');
+                    setitemSocket2type('');
+                    setItemSocket3effect('');
+                    setitemSocket3type('');
+                    setShowSocketables(false);
                     setItemCorruption(0);
+                    setEnchantResult(null);
                     setFracturedAffixId(null);
+                    setStateHistory([]);
                   }}
-                  className='absolute right-0 top-1/2 flex -translate-y-1/2 gap-2 rounded border border-zinc-500 px-1 py-1 text-sm text-white transition-colors hover:bg-zinc-200 hover:text-zinc-900'
+                  className='absolute right-0 top-1/2 flex -translate-y-1/2 gap-2 rounded border border-zinc-500 px-1 py-1 text-2xl text-white transition-colors hover:bg-zinc-200 hover:text-zinc-900'
                 >
                   Clear Crafting
                   <img
                     src='Scouring Orb.png'
                     alt='Scouring Orb'
-                    className='h-5 w-5'
+                    className='h-8 w-8'
                     draggable={false}
                   />
                 </button>
@@ -3325,17 +1107,18 @@ function Crafting() {
                 getCraftedItemData() ? (
                   <div
                     style={{
-                      cursor: activeOrb ? 'pointer' : 'default',
+                      cursor:
+                        activeOrb || activeSocketable ? 'pointer' : 'default',
                     }}
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (activeOrb && orbHandlers[activeOrb]) {
-                        orbHandlers[activeOrb]();
+                      if (activeOrb && orbHandlerMap[activeOrb]) {
+                        saveStateBeforeAction();
+                        orbHandlerMap[activeOrb]();
                       }
                     }}
                   >
                     <ItemDisplay
-                      key={`${activeSelection.baseType}-${craftedAffixes.prefixes.length}-${craftedAffixes.suffixes.length}`}
                       item={getCraftedItemData()!}
                       bases={bases.map((base) =>
                         base.base_name === activeSelection.baseType
@@ -3345,6 +1128,42 @@ function Crafting() {
                       affixes={affixesData}
                       rarity={itemRarity}
                       fracturedAffixId={fracturedAffixId}
+                      whittlingOmen={WhittlingOmen}
+                      sinistralErasureOmen={SinistralErasureOmen}
+                      dextralErasureOmen={DextralErasureOmen}
+                      activeSocketable={activeSocketable}
+                      onSocketClick={(socketIndex) => {
+                        if (activeSocketable) {
+                          const effect = getSocketableEffect(
+                            activeSocketable,
+                            activeSelection
+                          );
+
+                          if (effect) {
+                            // Apply the effect to the appropriate socket
+                            switch (socketIndex) {
+                              case 1:
+                                setItemSocket1effect(effect);
+                                setitemSocket1type(
+                                  activeSocketable.socket_type
+                                );
+                                break;
+                              case 2:
+                                setItemSocket2effect(effect);
+                                setitemSocket2type(
+                                  activeSocketable.socket_type
+                                );
+                                break;
+                              case 3:
+                                setItemSocket3effect(effect);
+                                setitemSocket3type(
+                                  activeSocketable.socket_type
+                                );
+                                break;
+                            }
+                          }
+                        }
+                      }}
                     />
                   </div>
                 ) : (
@@ -3368,476 +1187,617 @@ function Crafting() {
                   </div>
                 )}
               </div>
-              <div className='relative flex h-[177px] min-h-[100px] w-[422px] min-w-[200px] items-center justify-center bg-zinc-900 lg:h-[354px] lg:w-[845px]'>
-                <img
-                  src='Transmutation Orb.png'
-                  alt='Transmutation Orb'
-                  className='absolute left-0.5 top-0.5 z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    setActiveOrb('transmutation');
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Augmentation Orb.png'
-                  alt='Augmentation Orb'
-                  className='absolute left-0.5 top-[72px] z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    setActiveOrb('augmentation');
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Alteration Orb.png'
-                  alt='Alteration Orb'
-                  className='absolute left-0.5 top-[144px] z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    setActiveOrb('alteration');
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Regal Orb.png'
-                  alt='Regal Orb'
-                  className='absolute bottom-[69px] left-0.5 z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    setActiveOrb('regal');
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Chaos Orb.png'
-                  alt='Chaos Orb'
-                  className='absolute bottom-0 left-0.5 z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    setActiveOrb('chaos');
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Alchemy Orb.png'
-                  alt='Alchemy Orb'
-                  className='absolute left-[71px] top-0.5 z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    setActiveOrb('alchemy');
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Exalted Orb.png'
-                  alt='Exalted Orb'
-                  className='absolute left-[71px] top-[72px] z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    setActiveOrb('exalted');
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Divine Orb.png'
-                  alt='Divine Orb'
-                  className='absolute left-[71px] top-[144px] z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    setActiveOrb('divine');
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Annulment Orb.png'
-                  alt='Annulment Orb'
-                  className='absolute bottom-[69px] left-[71px] z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    setActiveOrb('annulment');
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Vaal Orb.png'
-                  alt='Vaal Orb'
-                  className='absolute bottom-0 left-[71px] z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    setActiveOrb('vaal');
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Whetstone.png'
-                  alt='Blacksmith Whetstone'
-                  className='absolute left-[142px] top-0.5 z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    setActiveOrb('whetstone');
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Scrap.png'
-                  alt='Armourer Scrap'
-                  className='absolute left-[142px] top-[72px] z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    setActiveOrb('scrap');
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Artificer.png'
-                  alt='Artificer Orb'
-                  className='absolute left-[142px] top-[142px] z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    setActiveOrb('artificer');
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Scouring Orb.png'
-                  alt='Scouring Orb'
-                  className='absolute bottom-[71px] left-[142px] z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    setActiveOrb('scouring');
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Corruption Omen.png'
-                  alt='Corruption Omen'
-                  className={`absolute bottom-0 left-[142px] z-10 h-[71px] w-[71px] ${CorruptionOmen ? ' border border-red-500' : ''}`}
-                  onClick={(e) => {
-                    setCorruptionOmen(CorruptionOmen === 1 ? 0 : 1);
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Fracturing Orb.png'
-                  alt='Fracturing Orb'
-                  className='absolute left-[213px] top-0.5 z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    setActiveOrb('fracturing');
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Teardrop.png'
-                  alt='Teardrop'
-                  className='absolute left-[213px] top-[72px] z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    setActiveOrb('teardrop');
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Whittling Omen.png'
-                  alt='Whittling Omen'
-                  className='absolute left-[213px] top-[144px] z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    //setWhittlingOmenActive(true);
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Sinistral Erasure Omen.png'
-                  alt='Sinistral Erasure Omen'
-                  className='absolute bottom-[69px] left-[213px] z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    //setSinistralErasureOmenActive(true);
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Dextral Erasure Omen.png'
-                  alt='Dextral Erasure Omen'
-                  className='absolute bottom-0 left-[213px] z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    //setDextralErasureOmenActive(true);
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Body Essence.png'
-                  alt='Body Essence'
-                  className='absolute left-[284px] top-0.5 z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    //setBodyEssenceActive(true);
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Torment Essence.png'
-                  alt='Torment Essence'
-                  className='absolute left-[284px] top-[72px] z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    //setTormentEssenceActive(true);
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Mind Essence.png'
-                  alt='Mind Essence'
-                  className='absolute left-[284px] top-[144px] z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    //setMindEssenceActive(true);
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Sinistral Annulment Omen.png'
-                  alt='Sinistral Annulment Omen'
-                  className='absolute bottom-[69px] left-[284px] z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    //setSinistralAnnulmentOmenActive(true);
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Dextral Annulment Omen.png'
-                  alt='Dextral Annulment Omen'
-                  className='absolute bottom-0 left-[284px] z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    //setDextralAnnulmentOmenActive(true);
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Electricity Essence.png'
-                  alt='Electricity Essence'
-                  className='absolute left-[355px] top-0.5 z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    //setElectricityEssenceActive(true);
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Flames Essence.png'
-                  alt='Flames Essence'
-                  className='absolute left-[355px] top-[72px] z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    //setFlamesEssenceActive(true);
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Ruin Essence.png'
-                  alt='Ruin Essence'
-                  className='absolute left-[355px] top-[144px] z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    //setRuinEssenceActive(true);
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Enhancement Essence.png'
-                  alt='Enhancement Essence'
-                  className='absolute left-[426px] top-0.5 z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    //setEnhancementEssenceActive(true);
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Ice Essence.png'
-                  alt='Ice Essence'
-                  className='absolute left-[426px] top-[72px] z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    //setIceEssenceActive(true);
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Battle Essence.png'
-                  alt='Battle Essence'
-                  className='absolute left-[426px] top-[144px] z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    //setBattleEssenceActive(true);
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Infinite Essence.png'
-                  alt='Infinite Essence'
-                  className='absolute left-[497px] top-0.5 z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    //setInfiniteEssenceActive(true);
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Haste Essence.png'
-                  alt='Haste Essence'
-                  className='absolute left-[497px] top-[72px] z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    //setHasteEssenceActive(true);
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Sorcery Essence.png'
-                  alt='Sorcery Essence'
-                  className='absolute left-[497px] top-[144px] z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    //setSorceryEssenceActive(true);
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Greater Body Essence.png'
-                  alt='Greater Body Essence'
-                  className='absolute left-[565px] top-0.5 z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    //setGreaterBodyEssenceActive(true);
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Greater Torment Essence.png'
-                  alt='Greater Torment Essence'
-                  className='absolute left-[565px] top-[72px] z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    //setGreaterTormentEssenceActive(true);
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Greater Mind Essence.png'
-                  alt='Greater Mind Essence'
-                  className='absolute left-[565px] top-[144px] z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    //setGreaterMindEssenceActive(true);
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Greater Electricity Essence.png'
-                  alt='Greater Electricity Essence'
-                  className='absolute left-[635px] top-0.5 z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    //setGreaterElectricityEssenceActive(true);
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Greater Flames Essence.png'
-                  alt='Greater Flames Essence'
-                  className='absolute left-[635px] top-[72px] z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    //setGreater FlamesEssenceActive(true);
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Greater Ruin Essence.png'
-                  alt='Greater Ruin Essence'
-                  className='absolute left-[635px] top-[144px] z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    //setGreaterRuinEssenceActive(true);
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Greater Enhancement Essence.png'
-                  alt='Greater Enhancement Essence'
-                  className='absolute left-[705px] top-0.5 z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    //setGreaterEnhancementEssenceActive(true);
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Greater Ice Essence.png'
-                  alt='Greater Ice Essence'
-                  className='absolute left-[705px] top-[72px] z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    //setGreaterIceEssenceActive(true);
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Greater Battle Essence.png'
-                  alt='Greater Battle Essence'
-                  className='absolute left-[705px] top-[144px] z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    //setGreaterBattleEssenceActive(true);
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Greater Infinite Essence.png'
-                  alt='Greater Infinite Essence'
-                  className='absolute left-[775px] top-0.5 z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    //setGreaterInfiniteEssenceActive(true);
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Greater Haste Essence.png'
-                  alt='Greater Haste Essence'
-                  className='absolute left-[775px] top-[72px] z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    //setGreaterHasteEssenceActive(true);
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Greater Sorcery Essence.png'
-                  alt='Greater Sorcery Essence'
-                  className='absolute left-[775px] top-[144px] z-10 h-[71px] w-[71px]'
-                  onClick={(e) => {
-                    //setGreaterSorceryEssenceActive(true);
-                    setCursorPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  draggable={false}
-                />
-                <img
-                  src='Inventory.png'
-                  alt='Inventory'
-                  className='max-h-full max-w-full object-contain'
-                  width={845}
-                  height={354}
-                  draggable={false}
-                />
-              </div>
+              {!showSocketables ? (
+                <div className='relative flex h-[177px] min-h-[100px] w-[422px] min-w-[200px] items-center justify-center bg-zinc-900 lg:h-[354px] lg:w-[845px]'>
+                  {(() => {
+                    const orbButtons = [
+                      // First column (left: 2px)
+                      {
+                        key: 'transmutation',
+                        img: 'Transmutation Orb.png',
+                        alt: 'Orb of Transmutation',
+                        left: '2px',
+                        top: '1.5px',
+                        description:
+                          'Upgrades a Normal item to a Magic item with 1 modifier',
+                      },
+                      {
+                        key: 'augmentation',
+                        img: 'Augmentation Orb.png',
+                        alt: 'Orb of Augmentation',
+                        left: '2px',
+                        top: '71.5px',
+                        description:
+                          'Augments a Magic item with a new random modifier',
+                      },
+                      {
+                        key: 'alteration',
+                        img: 'Alteration Orb.png',
+                        alt: 'Orb of Alteration',
+                        left: '2px',
+                        top: '142px',
+                        description:
+                          'Reforges a magic item with new random modifiers',
+                      },
+                      {
+                        key: 'regal',
+                        img: 'Regal Orb.png',
+                        alt: 'Regal Orb',
+                        left: '2px',
+                        top: '212.5px',
+                        description:
+                          'Upgrades a Magic item to a Rare item, adding 1 modifier',
+                      },
+                      {
+                        key: 'chaos',
+                        img: 'Chaos Orb.png',
+                        alt: 'Chaos Orb',
+                        left: '2px',
+                        top: '283px',
+                        description:
+                          'Removes a random modifier and augments a Rare item with a new random modifier',
+                      },
+
+                      // Second column (left: 72.25px)
+                      {
+                        key: 'alchemy',
+                        img: 'Alchemy Orb.png',
+                        alt: 'Orb of Alchemy',
+                        left: '72.25px',
+                        top: '1.5px',
+                        description:
+                          'Upgrades a Normal item to a Rare item with 4 modifiers',
+                      },
+                      {
+                        key: 'exalted',
+                        img: 'Exalted Orb.png',
+                        alt: 'Exalted Orb',
+                        left: '72.25px',
+                        top: '71.5px',
+                        description:
+                          'Augments a Rare item with a new random modifier',
+                      },
+                      {
+                        key: 'divine',
+                        img: 'Divine Orb.png',
+                        alt: 'Divine Orb',
+                        left: '72.25px',
+                        top: '142px',
+                        description:
+                          'Randomises the numeric values of modifiers on an item',
+                      },
+                      {
+                        key: 'annulment',
+                        img: 'Annulment Orb.png',
+                        alt: 'Orb of Annulment',
+                        left: '72.25px',
+                        top: '212.5px',
+                        description: 'Removes a random modifier from an item',
+                      },
+                      {
+                        key: 'vaal',
+                        img: 'Vaal Orb.png',
+                        alt: 'Vaal Orb',
+                        left: '72.25px',
+                        top: '283px',
+                        description:
+                          'Modifies an item unpredictably and Corrupts it',
+                      },
+
+                      // Third column (left: 142.5px)
+                      {
+                        key: 'whetstone',
+                        img: 'Whetstone.png',
+                        alt: "Blacksmith's Whetstone",
+                        left: '142.5px',
+                        top: '1.5px',
+                        description: 'Improves the quality of a martial weapon',
+                      },
+                      {
+                        key: 'scrap',
+                        img: 'Scrap.png',
+                        alt: "Armourer's Scrap",
+                        left: '142.5px',
+                        top: '71.5px',
+                        description: 'Improves the quality of an armour',
+                      },
+                      {
+                        key: 'artificer',
+                        img: 'Artificer.png',
+                        alt: "Artificer's Orb",
+                        left: '142.5px',
+                        top: '142px',
+                        description: 'Adds a Socket to a Weapon or Armour',
+                      },
+                      {
+                        key: 'scouring',
+                        img: 'Scouring Orb.png',
+                        alt: 'Orb of Scouring',
+                        left: '142.5px',
+                        top: '212.5px',
+                        description:
+                          'Removes all modifiers from an item and sets rarity to Normal',
+                      },
+                      {
+                        key: 'corruption-omen',
+                        img: 'Corruption Omen.png',
+                        alt: 'Omen of Corruption',
+                        left: '142.5px',
+                        top: '283px',
+                        description:
+                          'While this item is active in your inventory your next Vaal Orb will be more unpredictable',
+                        isOmen: true,
+                        onClick: () =>
+                          setCorruptionOmen(CorruptionOmen === 1 ? 0 : 1),
+                        className: CorruptionOmen
+                          ? ' border border-red-500'
+                          : '',
+                      },
+
+                      // Fourth column (left: 212.75px)
+                      {
+                        key: 'fracturing',
+                        img: 'Fracturing Orb.png',
+                        alt: 'Fracturing Orb',
+                        left: '212.75px',
+                        top: '1.5px',
+                        description:
+                          'Fracture a random modifier on a rare item with at least 4 modifiers, locking it in place.',
+                      },
+                      {
+                        key: 'teardrop',
+                        img: 'Teardrop.png',
+                        alt: 'Teardrop',
+                        left: '212.75px',
+                        top: '71.5px',
+                        description:
+                          'Unpredictably raises or lowers the tier of each modifier on a corrupted rare item',
+                      },
+                      {
+                        key: 'whittling-omen',
+                        img: 'Whittling Omen.png',
+                        alt: 'Omen of Whittling',
+                        left: '212.75px',
+                        top: '142px',
+                        description:
+                          'While this item is active in your inventory your next Chaos Orb will remove the lowest ilvl modifier',
+                        isOmen: true,
+                        onClick: () =>
+                          setWhittlingOmen(WhittlingOmen === 1 ? 0 : 1),
+                        className: WhittlingOmen
+                          ? ' border border-red-500'
+                          : '',
+                      },
+                      {
+                        key: 'sinistral-erasure-omen',
+                        img: 'Sinistral Erasure Omen.png',
+                        alt: 'Omen of Sinistral Erasure',
+                        left: '212.75px',
+                        top: '212.5px',
+                        description:
+                          'While this item is active in your inventory your next Chaos Orb will remove only prefix modifiers',
+                        isOmen: true,
+                        onClick: () => {
+                          setDextralErasureOmen(0);
+                          setSinistralErasureOmen(
+                            SinistralErasureOmen === 1 ? 0 : 1
+                          );
+                        },
+                        className: SinistralErasureOmen
+                          ? ' border border-red-500'
+                          : '',
+                      },
+                      {
+                        key: 'dextral-erasure-omen',
+                        img: 'Dextral Erasure Omen.png',
+                        alt: 'Omen of Dextral Erasure',
+                        left: '212.75px',
+                        top: '283px',
+                        description:
+                          'While this item is active in your inventory your next Chaos Orb will remove only suffix modifiers',
+                        isOmen: true,
+                        onClick: () => {
+                          setSinistralErasureOmen(0);
+                          setDextralErasureOmen(
+                            DextralErasureOmen === 1 ? 0 : 1
+                          );
+                        },
+                        className: DextralErasureOmen
+                          ? ' border border-red-500'
+                          : '',
+                      },
+
+                      // Fifth column (left: 283px)
+                      {
+                        key: 'enhancement',
+                        img: 'Enhancement Essence.png',
+                        alt: 'Essence of Enhancement',
+                        left: '283px',
+                        top: '1.5px',
+                        description:
+                          'Upgrades a normal item to Magic with one Defence modifier',
+                      },
+                      {
+                        key: 'torment',
+                        img: 'Torment Essence.png',
+                        alt: 'Essence of Torment',
+                        left: '283px',
+                        top: '71.5px',
+                        description:
+                          'Upgrades a normal item to Magic with one Physical modifier',
+                      },
+                      {
+                        key: 'ruin',
+                        img: 'Ruin Essence.png',
+                        alt: 'Essence of Ruin',
+                        left: '283px',
+                        top: '142px',
+                        description:
+                          'Upgrades a normal item to Magic with one Chaos modifier',
+                      },
+                      {
+                        key: 'sinistral-annulment-omen',
+                        img: 'Sinistral Annulment Omen.png',
+                        alt: 'Omen of Sinistral Annulment',
+                        left: '283px',
+                        top: '212.5px',
+                        description:
+                          'While this item is active in your inventory your next Orb of Annulment will remove only prefix modifiers',
+                        isOmen: true,
+                        onClick: () => {
+                          setDextralAnnulmentOmen(0);
+                          setSinistralAnnulmentOmen(
+                            SinistralAnnulmentOmen === 1 ? 0 : 1
+                          );
+                        },
+                        className: SinistralAnnulmentOmen
+                          ? ' border border-red-500'
+                          : '',
+                      },
+                      {
+                        key: 'dextral-annulment-omen',
+                        img: 'Dextral Annulment Omen.png',
+                        alt: 'Omen of Dextral Annulment',
+                        left: '283px',
+                        top: '283px',
+                        description:
+                          'While this item is active in your inventory your next Orb of Annulment will remove only suffix modifiers',
+                        isOmen: true,
+                        onClick: () => {
+                          setSinistralAnnulmentOmen(0);
+                          setDextralAnnulmentOmen(
+                            DextralAnnulmentOmen === 1 ? 0 : 1
+                          );
+                        },
+                        className: DextralAnnulmentOmen
+                          ? ' border border-red-500'
+                          : '',
+                      },
+
+                      // Sixth column (left: 353.25px)
+                      {
+                        key: 'body',
+                        img: 'Body Essence.png',
+                        alt: 'Essence of the Body',
+                        left: '353.25px',
+                        top: '1.5px',
+                        description:
+                          'Upgrades a normal item to Magic with one Life modifier',
+                      },
+                      {
+                        key: 'flames',
+                        img: 'Flames Essence.png',
+                        alt: 'Essence of Flames',
+                        left: '353.25px',
+                        top: '71.5px',
+                        description:
+                          'Upgrades a normal item to Magic with one Fire modifier',
+                      },
+                      {
+                        key: 'battle',
+                        img: 'Battle Essence.png',
+                        alt: 'Essence of Battle',
+                        left: '353.25px',
+                        top: '142px',
+                        description:
+                          'Upgrades a normal item to Magic with one Attack modifier',
+                      },
+
+                      // Seventh column (left: 423.5px)
+                      {
+                        key: 'mind',
+                        img: 'Mind Essence.png',
+                        alt: 'Essence of the Mind',
+                        left: '423.5px',
+                        top: '1.5px',
+                        description:
+                          'Upgrades a normal item to Magic with one Mana modifier',
+                      },
+                      {
+                        key: 'ice',
+                        img: 'Ice Essence.png',
+                        alt: 'Essence of Ice',
+                        left: '423.5px',
+                        top: '71.5px',
+                        description:
+                          'Upgrades a normal item to Magic with one Cold modifier',
+                      },
+                      {
+                        key: 'sorcery',
+                        img: 'Sorcery Essence.png',
+                        alt: 'Essence of Sorcery',
+                        left: '423.5px',
+                        top: '142px',
+                        description:
+                          'Upgrades a normal item to Magic with one Caster modifier',
+                      },
+
+                      // Eighth column (left: 493.75px)
+                      {
+                        key: 'infinite',
+                        img: 'Infinite Essence.png',
+                        alt: 'Essence of the Infinite',
+                        left: '493.75px',
+                        top: '1.5px',
+                        description:
+                          'Upgrades a normal item to Magic with one Attribute modifier',
+                      },
+                      {
+                        key: 'electricity',
+                        img: 'Electricity Essence.png',
+                        alt: 'Essence of Electricity',
+                        left: '493.75px',
+                        top: '71.5px',
+                        description:
+                          'Upgrades a normal item to Magic with one Lightning modifier',
+                      },
+                      {
+                        key: 'haste',
+                        img: 'Haste Essence.png',
+                        alt: 'Essence of Haste',
+                        left: '493.75px',
+                        top: '142px',
+                        description:
+                          'Upgrades a normal item to Magic with one Speed modifier',
+                      },
+
+                      // Ninth column (left: 564px) - Greater Essences
+                      {
+                        key: 'greaterenhancement',
+                        img: 'Greater Enhancement Essence.png',
+                        alt: 'Greater Essence of Enhancement',
+                        left: '564px',
+                        top: '1.5px',
+                        description:
+                          'Upgrades a Magic item to a Rare item with one Defence modifier',
+                      },
+                      {
+                        key: 'greatertorment',
+                        img: 'Greater Torment Essence.png',
+                        alt: 'Greater Essence of Torment',
+                        left: '564px',
+                        top: '71.5px',
+                        description:
+                          'Upgrades a Magic item to a Rare item with one Physical modifier',
+                      },
+                      {
+                        key: 'greaterruin',
+                        img: 'Greater Ruin Essence.png',
+                        alt: 'Greater Essence of Ruin',
+                        left: '564px',
+                        top: '142px',
+                        description:
+                          'Upgrades a Magic item to a Rare item with one Chaos modifier',
+                      },
+
+                      // Tenth column (left: 634.25px)
+                      {
+                        key: 'greaterbody',
+                        img: 'Greater Body Essence.png',
+                        alt: 'Greater Essence of the Body',
+                        left: '634.25px',
+                        top: '1.5px',
+                        description:
+                          'Upgrades a Magic item to a Rare item with one Life modifier',
+                      },
+                      {
+                        key: 'greaterflames',
+                        img: 'Greater Flames Essence.png',
+                        alt: 'Greater Essence of Flames',
+                        left: '634.25px',
+                        top: '71.5px',
+                        description:
+                          'Upgrades a Magic item to a Rare item with one Fire modifier',
+                      },
+                      {
+                        key: 'greaterbattle',
+                        img: 'Greater Battle Essence.png',
+                        alt: 'Greater Essence of Battle',
+                        left: '634.25px',
+                        top: '142px',
+                        description:
+                          'Upgrades a Magic item to a Rare item with one Attack modifier',
+                      },
+
+                      // Eleventh column (left: 704.5px)
+                      {
+                        key: 'greatermind',
+                        img: 'Greater Mind Essence.png',
+                        alt: 'Greater Essence of the Mind',
+                        left: '704.5px',
+                        top: '1.5px',
+                        description:
+                          'Upgrades a Magic item to a Rare item with one Mana modifier',
+                      },
+                      {
+                        key: 'greaterice',
+                        img: 'Greater Ice Essence.png',
+                        alt: 'Greater Essence of Ice',
+                        left: '704.5px',
+                        top: '71.5px',
+                        description:
+                          'Upgrades a Magic item to a Rare item with one Cold modifier',
+                      },
+                      {
+                        key: 'greatersorcery',
+                        img: 'Greater Sorcery Essence.png',
+                        alt: 'Greater Essence of Sorcery',
+                        left: '704.5px',
+                        top: '142px',
+                        description:
+                          'Upgrades a Magic item to a Rare item with one Caster modifier',
+                      },
+
+                      // Twelfth column (left: 774.75px)
+                      {
+                        key: 'greaterinfinite',
+                        img: 'Greater Infinite Essence.png',
+                        alt: 'Greater Essence of the Infinite',
+                        left: '774.75px',
+                        top: '1.5px',
+                        description:
+                          'Upgrades a Magic item to a Rare item with one Attribute modifier',
+                      },
+                      {
+                        key: 'greaterelectricity',
+                        img: 'Greater Electricity Essence.png',
+                        alt: 'Greater Essence of Electricity',
+                        left: '774.75px',
+                        top: '71.5px',
+                        description:
+                          'Upgrades a Magic item to a Rare item with one Lightning modifier',
+                      },
+                      {
+                        key: 'greaterhaste',
+                        img: 'Greater Haste Essence.png',
+                        alt: 'Greater Essence of Haste',
+                        left: '774.75px',
+                        top: '142px',
+                        description:
+                          'Upgrades a Magic item to a Rare item with one Speed modifier',
+                      },
+                    ];
+
+                    return (
+                      <>
+                        {orbButtons.map((button) => (
+                          <div
+                            key={button.key}
+                            className={`group absolute h-[70px] w-[70px] ${button.className ? ' ' + button.className : ''} ${bluebg ? ' bg-slate-950 bg-opacity-70 hover:bg-hoveritem' : ''}`}
+                            style={{ left: button.left, top: button.top }}
+                          >
+                            <img
+                              src={button.img}
+                              alt={button.alt}
+                              className={`z-10 h-[70px] w-[70px] ${
+                                button.key === 'augmentation'
+                                  ? 'translate-y-[1px]'
+                                  : button.key === 'alteration'
+                                    ? 'translate-y-[2.5px]'
+                                    : button.key === 'chaos'
+                                      ? 'translate-x-[1px]'
+                                      : button.key === 'alchemy'
+                                        ? 'translate-y-[2px]'
+                                        : button.key === 'exalted'
+                                          ? 'translate-y-[1.5px]'
+                                          : button.key === 'vaal'
+                                            ? 'translate-x-[1.5px]'
+                                            : button.key === 'whetstone'
+                                              ? 'translate-x-[1.5px] translate-y-[1px]'
+                                              : button.key === 'artificer'
+                                                ? 'translate-y-[1px]'
+                                                : button.key === 'scouring'
+                                                  ? '-translate-x-[1px]'
+                                                  : button.key === 'fracturing'
+                                                    ? 'translate-y-[2px]'
+                                                    : button.key === 'teardrop'
+                                                      ? 'translate-y-[1px]'
+                                                      : button.key.includes(
+                                                            'corruption'
+                                                          )
+                                                        ? 'translate-x-[1.5px]'
+                                                        : button.key.includes(
+                                                              'dextral'
+                                                            )
+                                                          ? 'translate-x-[1.5px]'
+                                                          : button.key.includes(
+                                                                'greater'
+                                                              )
+                                                            ? 'translate-x-[1px]'
+                                                            : ''
+                              }`}
+                              onClick={
+                                button.isOmen
+                                  ? button.onClick
+                                  : (e) => {
+                                      setActiveOrb(button.key);
+                                      setCursorPos({
+                                        x: e.clientX,
+                                        y: e.clientY,
+                                      });
+                                    }
+                              }
+                              draggable={false}
+                            />
+                            {tooltips && (
+                              <div className='pointer-events-none absolute bottom-full left-1/2 z-10 w-96 -translate-x-1/2 transform bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:opacity-100'>
+                                <div className='relative mb-1 flex h-10 w-full items-center justify-center'>
+                                  {chl}
+                                  {chm}
+                                  {chr}
+                                  <span className='absolute inset-0 flex items-center justify-center text-lg font-bold text-curr'>
+                                    {button.alt}
+                                  </span>
+                                </div>
+                                {/*<p className='my-2 text-center text-neutral-400'>
+                                Stack Size:
+                                <span className='text-white'>∞</span>
+                              </p>{' '}
+                              {csep}*/}
+                                <p className='mx-px my-2 text-center text-indigo-400'>
+                                  {button.description}
+                                </p>
+                                {csep}
+                                {button.isOmen ? (
+                                  <p className='my-2 text-center text-neutral-400'>
+                                    Click this item in your inventory to set it
+                                    to be active.
+                                  </p>
+                                ) : (
+                                  <p className='my-2 text-center text-neutral-400'>
+                                    Click this Item then click a Base to apply
+                                    it.
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </>
+                    );
+                  })()}
+                  <img
+                    src='Inventory.png'
+                    alt='Inventory'
+                    className='max-h-full max-w-full object-contain'
+                    width={845}
+                    height={354}
+                    draggable={false}
+                  />
+                </div>
+              ) : (
+                <div>
+                  <SocketablesInv
+                    socketables={socketablesData}
+                    activeSelection={activeSelection}
+                    tooltips={tooltips}
+                    onSocketableSelect={(socketable) => {
+                      setActiveSocketable(socketable);
+                      setCursorPos({ x: 0, y: 0 });
+                    }}
+                  />
+                </div>
+              )}
             </div>
           </div>
 
@@ -3851,7 +1811,11 @@ function Crafting() {
               <div className='grid grid-cols-1 gap-8 lg:grid-cols-2'>
                 <div className='space-y-2'>
                   <h4 className='text-center text-lg font-semibold text-blue-400'>
-                    Prefixes ({craftedAffixes.prefixes.length}/3)
+                    Prefixes ({craftedAffixes.prefixes.length}/
+                    {isDiamondBase(activeSelection?.baseType)
+                      ? ``
+                      : getMaxAffixCount(activeSelection?.baseType)}
+                    )
                   </h4>
                   <div className='space-y-3'>
                     {craftedAffixes.prefixes.map((craftedAffix, index) => {
@@ -3868,27 +1832,43 @@ function Crafting() {
                             <div className='flex-1'>
                               <div className='text-sm font-medium text-white'>
                                 {craftedAffix.affix.affix_name}
+                                <br />
+                                {![
+                                  'Diamond',
+                                  'Ruby',
+                                  'Emerald',
+                                  'Sapphire',
+                                ].includes(activeSelection?.baseType ?? '') && (
+                                  <>ilvl: {craftedAffix.affix.ilvl}</>
+                                )}
+                                {activeSelection?.baseType == 'Diamond' && (
+                                  <>
+                                    jewel type: {craftedAffix.affix.item_tags}
+                                  </>
+                                )}
                               </div>
                               <div className='text-xs text-blue-300'>
                                 {craftedAffix.affix.effect}
                               </div>
                             </div>
-                            <button
-                              onClick={() => {
-                                if (
-                                  fracturedAffixId === craftedAffix.affix.id
-                                ) {
-                                  setFracturedAffixId(null);
-                                }
-                                removeAffix('prefix', index);
-                              }}
-                            >
-                              <img
-                                src='Annulment Orb.png'
-                                alt='Remove Prefix'
-                                className='h-8 w-8'
-                              ></img>
-                            </button>
+                            {!isDiamondBase(activeSelection?.baseType) && (
+                              <button
+                                onClick={() => {
+                                  if (
+                                    fracturedAffixId === craftedAffix.affix.id
+                                  ) {
+                                    setFracturedAffixId(null);
+                                  }
+                                  removeAffix('prefix', index);
+                                }}
+                              >
+                                <img
+                                  src='Annulment Orb.png'
+                                  alt='Remove Prefix'
+                                  className='h-8 w-8'
+                                />
+                              </button>
+                            )}
                           </div>
 
                           {/* Value Sliders */}
@@ -3926,7 +1906,11 @@ function Crafting() {
                 </div>
                 <div className='space-y-2'>
                   <h4 className='text-center text-lg font-semibold text-yellow-400'>
-                    Suffixes ({craftedAffixes.suffixes.length}/3)
+                    Suffixes ({craftedAffixes.suffixes.length}/
+                    {isDiamondBase(activeSelection?.baseType)
+                      ? ``
+                      : getMaxAffixCount(activeSelection?.baseType)}
+                    )
                   </h4>
                   <div className='space-y-3'>
                     {craftedAffixes.suffixes.map((craftedAffix, index) => {
@@ -3943,27 +1927,43 @@ function Crafting() {
                             <div className='flex-1'>
                               <div className='text-sm font-medium text-white'>
                                 {craftedAffix.affix.affix_name}
+                                <br />
+                                {![
+                                  'Diamond',
+                                  'Ruby',
+                                  'Emerald',
+                                  'Sapphire',
+                                ].includes(activeSelection?.baseType ?? '') && (
+                                  <>ilvl: {craftedAffix.affix.ilvl}</>
+                                )}
+                                {activeSelection?.baseType == 'Diamond' && (
+                                  <>
+                                    jewel type: {craftedAffix.affix.item_tags}
+                                  </>
+                                )}
                               </div>
                               <div className='text-xs text-yellow-300'>
                                 {craftedAffix.affix.effect}
                               </div>
                             </div>
-                            <button
-                              onClick={() => {
-                                if (
-                                  fracturedAffixId === craftedAffix.affix.id
-                                ) {
-                                  setFracturedAffixId(null);
-                                }
-                                removeAffix('suffix', index);
-                              }}
-                            >
-                              <img
-                                src='Annulment Orb.png'
-                                alt='Remove Suffix'
-                                className='h-8 w-8'
-                              ></img>
-                            </button>
+                            {!isDiamondBase(activeSelection?.baseType) && (
+                              <button
+                                onClick={() => {
+                                  if (
+                                    fracturedAffixId === craftedAffix.affix.id
+                                  ) {
+                                    setFracturedAffixId(null);
+                                  }
+                                  removeAffix('suffix', index);
+                                }}
+                              >
+                                <img
+                                  src='Annulment Orb.png'
+                                  alt='Remove Suffix'
+                                  className='h-8 w-8'
+                                />
+                              </button>
+                            )}
                           </div>
 
                           {/* Value Sliders */}
@@ -4010,136 +2010,125 @@ function Crafting() {
               </h4>
               <ul className='max-h-40 space-y-2 overflow-y-auto text-xs'>
                 {affixLog.slice(0, 10).map((entry, idx, arr) => {
-                  let orbImg = 'Chaos Orb.png';
+                  const logOrbImageMap: Record<string, string> = {
+                    'Transmutation Orb': 'Transmutation Orb.png',
+                    'Augmentation Orb': 'Augmentation Orb.png',
+                    'Alteration Orb': 'Alteration Orb.png',
+                    'Regal Orb': 'Regal Orb.png',
+                    'Chaos Orb': 'Chaos Orb.png',
+                    'Alchemy Orb': 'Alchemy Orb.png',
+                    'Exalted Orb': 'Exalted Orb.png',
+                    'Divine Orb': 'Divine Orb.png',
+                    'Annulment Orb': 'Annulment Orb.png',
+                    'Vaal Orb': 'Vaal Orb.png',
+                    'Scouring Orb': 'Scouring Orb.png',
+                    'Fracturing Orb': 'Fracturing Orb.png',
+                    Teardrop: 'Teardrop.png',
+                    'Enhancement Essence': 'Enhancement Essence.png',
+                    'Torment Essence': 'Torment Essence.png',
+                    'Ruin Essence': 'Ruin Essence.png',
+                    'Body Essence': 'Body Essence.png',
+                    'Flames Essence': 'Flames Essence.png',
+                    'Battle Essence': 'Battle Essence.png',
+                    'Mind Essence': 'Mind Essence.png',
+                    'Ice Essence': 'Ice Essence.png',
+                    'Sorcery Essence': 'Sorcery Essence.png',
+                    'Infinite Essence': 'Infinite Essence.png',
+                    'Electricity Essence': 'Electricity Essence.png',
+                    'Haste Essence': 'Haste Essence.png',
+                    'Greater Enhancement Essence':
+                      'Greater Enhancement Essence.png',
+                    'Greater Torment Essence': 'Greater Torment Essence.png',
+                    'Greater Ruin Essence': 'Greater Ruin Essence.png',
+                    'Greater Body Essence': 'Greater Body Essence.png',
+                    'Greater Flames Essence': 'Greater Flames Essence.png',
+                    'Greater Battle Essence': 'Greater Battle Essence.png',
+                    'Greater Mind Essence': 'Greater Mind Essence.png',
+                    'Greater Ice Essence': 'Greater Ice Essence.png',
+                    'Greater Sorcery Essence': 'Greater Sorcery Essence.png',
+                    'Greater Infinite Essence': 'Greater Infinite Essence.png',
+                    'Greater Electricity Essence':
+                      'Greater Electricity Essence.png',
+                    'Greater Haste Essence': 'Greater Haste Essence.png',
+                    Diamond: 'diamond.webp',
+                  };
 
-                  // If this entry is a roll summary, set orbImg accordingly
-                  switch (true) {
-                    case entry.startsWith('Transmutation Orb'):
-                      orbImg = 'Transmutation Orb.png';
-                      break;
-                    case entry.startsWith('Augmentation Orb'):
-                      orbImg = 'Augmentation Orb.png';
-                      break;
-                    case entry.startsWith('Alteration Orb'):
-                      orbImg = 'Alteration Orb.png';
-                      break;
-                    case entry.startsWith('Regal Orb'):
-                      orbImg = 'Regal Orb.png';
-                      break;
-                    case entry.startsWith('Chaos Orb'):
-                      orbImg = 'Chaos Orb.png';
-                      break;
-                    case entry.startsWith('Alchemy Orb'):
-                      orbImg = 'Alchemy Orb.png';
-                      break;
-                    case entry.startsWith('Exalted Orb'):
-                      orbImg = 'Exalted Orb.png';
-                      break;
-                    case entry.startsWith('Divine Orb'):
-                      orbImg = 'Divine Orb.png';
-                      break;
-                    case entry.startsWith('Annulment Orb'):
-                      orbImg = 'Annulment Orb.png';
-                      break;
-                    case entry.startsWith('Vaal Orb'):
-                      orbImg = 'Vaal Orb.png';
-                      break;
-                    case entry.startsWith('Scouring Orb'):
-                      orbImg = 'Scouring Orb.png';
-                      break;
-                    case entry.startsWith('Fracturing Orb'):
-                      orbImg = 'Fracturing Orb.png';
-                      break;
-                    case entry.startsWith('Teardrop'):
-                      orbImg = 'Teardrop.png';
-                      break;
-                    case entry.startsWith('Added prefix') ||
+                  const logTextColorMap: Record<string, string> = {
+                    'Chaos Orb': 'text-gold',
+                    'Alchemy Orb': 'text-gold',
+                    'Regal Orb': 'text-gold',
+                    'Exalted Orb': 'text-gold',
+                    'Divine Orb': 'text-gold',
+                    'Annulment Orb': 'text-zinc-200',
+                    'Scouring Orb': 'text-zinc-200',
+                    'Vaal Orb': 'text-red-600',
+                    'Vaal Chaos': 'text-red-600',
+                    Teardrop: 'text-red-600',
+                    'Fracturing Orb': 'text-frac',
+                    Diamond: 'text-sky-100',
+                  };
+
+                  const getOrbImageFromEntry = (
+                    entry: string,
+                    idx: number,
+                    arr: string[]
+                  ): string => {
+                    for (const [orbName, imageName] of Object.entries(
+                      logOrbImageMap
+                    )) {
+                      if (entry.startsWith(orbName)) {
+                        return imageName;
+                      }
+                    }
+
+                    // For "Added/Removed" entries, look backward for the orb that caused it
+                    if (
+                      entry.startsWith('Added prefix') ||
                       entry.startsWith('Added prefixes') ||
                       entry.startsWith('Added suffix') ||
                       entry.startsWith('Added suffixes') ||
                       entry.startsWith('Removed prefix') ||
-                      entry.startsWith('Removed suffix'):
-                      {
-                        let found = false;
-                        for (let i = idx - 1; i >= 0 && !found; i--) {
-                          switch (true) {
-                            case arr[i].startsWith('Transmutation Orb'):
-                              orbImg = 'Transmutation Orb.png';
-                              found = true;
-                              break;
-                            case arr[i].startsWith('Augmentation Orb'):
-                              orbImg = 'Augmentation Orb.png';
-                              found = true;
-                              break;
-                            case arr[i].startsWith('Alteration Orb'):
-                              orbImg = 'Alteration Orb.png';
-                              found = true;
-                              break;
-                            case arr[i].startsWith('Regal Orb'):
-                              orbImg = 'Regal Orb.png';
-                              found = true;
-                              break;
-                            case arr[i].startsWith('Chaos Orb'):
-                              orbImg = 'Chaos Orb.png';
-                              found = true;
-                              break;
-                            case arr[i].startsWith('Alchemy Orb'):
-                              orbImg = 'Alchemy Orb.png';
-                              found = true;
-                              break;
-                            case arr[i].startsWith('Exalted Orb'):
-                              orbImg = 'Exalted Orb.png';
-                              found = true;
-                              break;
-                            case arr[i].startsWith('Divine Orb'):
-                              orbImg = 'Divine Orb.png';
-                              found = true;
-                              break;
-                            case arr[i].startsWith('Annulment Orb'):
-                              orbImg = 'Annulment Orb.png';
-                              found = true;
-                              break;
-                            case arr[i].startsWith('Vaal Orb'):
-                              orbImg = 'Vaal Orb.png';
-                              found = true;
-                              break;
-                            // Add more orb checks as needed
+                      entry.startsWith('Removed suffix')
+                    ) {
+                      for (let i = idx - 1; i >= 0; i--) {
+                        for (const [orbName, imageName] of Object.entries(
+                          logOrbImageMap
+                        )) {
+                          if (arr[i].startsWith(orbName)) {
+                            return imageName;
                           }
                         }
                       }
-                      break;
-                  }
+                    }
 
-                  // Color for added/removed/rolled
-                  let textColor = 'text-blue-500';
-                  switch (true) {
-                    case entry.startsWith('Chaos Orb'):
-                    case entry.startsWith('Alchemy Orb'):
-                    case entry.startsWith('Regal Orb'):
-                    case entry.startsWith('Exalted Orb'):
-                    case entry.startsWith('Divine Orb'):
-                      textColor = 'text-gold';
-                      break;
-                    case entry.startsWith('Annulment Orb'):
-                    case entry.startsWith('Scouring Orb'):
-                      textColor = 'text-zinc-200';
-                      break;
-                    case entry.startsWith('Vaal Orb'):
-                    case entry.startsWith('Teardrop'):
-                      textColor = 'text-red-600';
-                      break;
-                    case entry.startsWith('Fracturing Orb'):
-                      textColor = 'text-frac';
-                      break;
-                    case entry.startsWith('Added'):
-                      textColor = 'text-green-400';
-                      break;
-                    case entry.startsWith('Removed'):
-                      textColor = 'text-red-400';
-                      break;
-                    default:
-                      textColor = 'text-blue-500';
-                  }
+                    return 'Chaos Orb.png';
+                  };
+
+                  const getTextColorFromEntry = (entry: string): string => {
+                    for (const [orbName, color] of Object.entries(
+                      logTextColorMap
+                    )) {
+                      if (entry.startsWith(orbName)) {
+                        return color;
+                      }
+                    }
+
+                    if (entry.includes('Essence')) {
+                      return 'text-sky-300';
+                    }
+
+                    if (entry.startsWith('Added')) {
+                      return 'text-green-400';
+                    }
+                    if (entry.startsWith('Removed')) {
+                      return 'text-red-400';
+                    }
+
+                    return 'text-blue-500';
+                  };
+
+                  const orbImg = getOrbImageFromEntry(entry, idx, arr);
+                  const textColor = getTextColorFromEntry(entry);
 
                   return (
                     <li
@@ -4153,7 +2142,30 @@ function Crafting() {
                         draggable={false}
                       />
                       <span className={`font-semibold ${textColor}`}>
-                        {entry}
+                        {(() => {
+                          const essenceErrorMatch = entry.match(
+                            /^(Greater )?(\w+ )?Essence - No Available .+$/
+                          );
+                          if (essenceErrorMatch) {
+                            const [essencePart, ...rest] = entry.split(' - ');
+                            return (
+                              <span className='font-semibold'>
+                                <span className='text-sky-300'>
+                                  {essencePart + ' - '}
+                                </span>
+                                <span className='text-red-500'>
+                                  {rest.join(' - ')}
+                                </span>
+                              </span>
+                            );
+                          }
+                          // Default coloring
+                          return (
+                            <span className={`font-semibold ${textColor}`}>
+                              {entry}
+                            </span>
+                          );
+                        })()}
                       </span>
                     </li>
                   );
@@ -4162,7 +2174,7 @@ function Crafting() {
             </div>
           )}
 
-          {/* Affixes section - only show when base is selected */}
+          {/* Affixes section */}
           {activeSelection && activeSelection.baseType && (
             <div className='w-full rounded-lg bg-zinc-800 p-6'>
               <h3 className='mb-6 text-center text-xl font-bold text-white'>
@@ -4172,322 +2184,1097 @@ function Crafting() {
                 {/* Prefixes Column */}
                 <div className='space-y-4'>
                   <h4 className='text-center text-lg font-semibold text-blue-400'>
-                    Prefixes (
-                    {
-                      getMatchingAffixes(activeSelection.baseType, itemLevel)
-                        .prefixes.length
-                    }
-                    )
+                    Prefixes ({matchingAffixes.prefixes.length})
                   </h4>
                   <div className='space-y-1 overflow-y-auto rounded bg-zinc-900 p-3'>
-                    {getMatchingAffixes(
-                      activeSelection.baseType,
-                      itemLevel
-                    ).prefixes.map((familyGroup) => {
-                      // Calculate the sum of all weights in this family
-                      const totalWeight = familyGroup.affixes.reduce(
-                        (sum, affix) => sum + affix.weighting,
-                        0
-                      );
+                    {(() => {
+                      // Check if this is a jewel base
+                      const isJewelBase =
+                        activeSelection?.baseType &&
+                        ['ruby', 'emerald', 'sapphire', 'diamond'].some(
+                          (jewel) =>
+                            activeSelection
+                              .baseType!.toLowerCase()
+                              .includes(jewel.toLowerCase())
+                        );
 
-                      const { usedPrefixFamilies } = getUsedFamilies();
-                      const isFamilyUsed = usedPrefixFamilies.has(
-                        familyGroup.family
-                      );
+                      if (isJewelBase) {
+                        // For jewels, show individual affixes directly
+                        return matchingAffixes.prefixes.flatMap((familyGroup) =>
+                          familyGroup.affixes.map((affix) => {
+                            const { usedPrefixFamilies } = getUsedFamilies();
+                            const isFamilyUsed = usedPrefixFamilies.has(
+                              affix.family
+                            );
 
-                      return (
-                        <div key={familyGroup.family} className='space-y-1'>
-                          {/* Family header */}
-                          <div
-                            className={`cursor-pointer rounded p-2 transition-colors ${
-                              isFamilyUsed
-                                ? 'bg-zinc-600 opacity-60'
-                                : 'bg-zinc-700 hover:bg-zinc-600'
-                            }`}
-                            onClick={() =>
-                              toggleAffixFamily(familyGroup.family)
-                            }
-                          >
-                            <div className='flex items-center justify-between'>
-                              <div className='flex items-center gap-2'>
-                                <span
-                                  className={`transform transition-transform ${
-                                    expandedAffixFamilies[familyGroup.family]
-                                      ? 'rotate-90'
-                                      : ''
-                                  }`}
-                                >
-                                  ▶
-                                </span>
-                                <span className='text-sm font-medium text-white'>
-                                  {familyGroup.family}
-                                  {isFamilyUsed && (
-                                    <span className='ml-2 text-xs text-green-400'>
-                                      (Selected)
+                            return (
+                              <div
+                                key={affix.id}
+                                className='flex items-center justify-between rounded bg-zinc-800 p-2 transition-colors hover:bg-zinc-600'
+                              >
+                                <div className='flex-1'>
+                                  <div className='flex items-center justify-between'>
+                                    <span className='flex gap-1 text-sm font-medium text-white'>
+                                      {affix.affix_name}
+                                      {isFamilyUsed && (
+                                        <img
+                                          src='Ultimatum.webp'
+                                          alt=''
+                                          className='h-5 w-5'
+                                        />
+                                      )}
                                     </span>
-                                  )}
-                                </span>
-                                <span className='text-xs text-zinc-400'>
-                                  ({familyGroup.affixes.length} tiers)
-                                </span>
-                              </div>
-                              <div className='flex items-center gap-3'>
-                                <span className='text-xs text-zinc-400'>
-                                  Total Weight: {totalWeight}
-                                </span>
-                              </div>
-                            </div>
-                            <div className='mt-1 text-sm text-blue-300'>
-                              {familyGroup.representative.effect}
-                            </div>
-                          </div>
-
-                          {/* Expanded tiers */}
-                          {expandedAffixFamilies[familyGroup.family] && (
-                            <div className='ml-6 space-y-1'>
-                              {familyGroup.affixes.map((affix, index) => {
-                                const isPrefix =
-                                  affix.affix_type.toLowerCase() === 'prefix';
-                                const canAdd = isPrefix
-                                  ? craftedAffixes.prefixes.length < 3 &&
-                                    !isFamilyUsed
-                                  : craftedAffixes.suffixes.length < 3;
-
-                                return (
-                                  <div
-                                    key={affix.id}
-                                    className='flex items-center justify-between rounded bg-zinc-800 p-2 transition-colors hover:bg-zinc-600'
-                                  >
-                                    <div className='flex-1'>
-                                      <div className='flex items-center justify-between'>
-                                        <span className='text-sm font-medium text-white'>
-                                          {affix.affix_name}
-                                          {index === 0 && (
-                                            <span className='ml-2 text-xs text-zinc-400'>
-                                              (T1)
-                                            </span>
-                                          )}
+                                    <div className='flex items-center gap-3'>
+                                      {activeSelection?.baseType ==
+                                        'Diamond' && (
+                                        <span className='text-xs text-zinc-500'>
+                                          Jewel Type: {affix.item_tags}
                                         </span>
-                                        <div className='flex items-center gap-3'>
-                                          <span className='text-xs text-zinc-400'>
-                                            Req Lvl: {affix.clvl}
+                                      )}
+                                      {useWeights && (
+                                        <span className='text-xs text-zinc-500'>
+                                          Weight:{' '}
+                                          {useCustomWeights &&
+                                          customWeights[affix.id] !== undefined
+                                            ? customWeights[affix.id]
+                                            : affix.weighting}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className='mt-1 text-xs text-blue-300'>
+                                    {affix.effect}
+                                  </div>
+                                </div>
+                                {(() => {
+                                  const isPrefix =
+                                    affix.affix_type.toLowerCase() === 'prefix';
+
+                                  let canAdd = false;
+                                  const maxAffixesPerType = getMaxAffixCount(
+                                    activeSelection?.baseType
+                                  );
+                                  canAdd = isPrefix
+                                    ? craftedAffixes.prefixes.length <
+                                        maxAffixesPerType && !isFamilyUsed
+                                    : craftedAffixes.suffixes.length <
+                                        maxAffixesPerType && !isFamilyUsed;
+
+                                  // Check if this family has an active affix
+                                  const activeAffix = isPrefix
+                                    ? craftedAffixes.prefixes.find(
+                                        (ca) => ca.affix.family === affix.family
+                                      )?.affix
+                                    : craftedAffixes.suffixes.find(
+                                        (ca) => ca.affix.family === affix.family
+                                      )?.affix;
+
+                                  const isSwitching =
+                                    activeAffix && activeAffix.id !== affix.id;
+                                  const isCurrentTier =
+                                    activeAffix && activeAffix.id === affix.id;
+
+                                  return (
+                                    activeSelection?.baseType !== 'Diamond' && (
+                                      <button
+                                        onClick={() => {
+                                          if (isSwitching && activeAffix) {
+                                            switchAffixTier(activeAffix, affix);
+                                          } else {
+                                            addAffix(affix);
+                                            if (
+                                              craftedAffixes.prefixes.length > 0
+                                            ) {
+                                              setItemRarity('rare');
+                                            } else if (
+                                              itemRarity === 'normal'
+                                            ) {
+                                              setItemRarity('magic');
+                                            }
+                                          }
+                                        }}
+                                        disabled={!canAdd && !isSwitching}
+                                        className={`ml-2 transition-colors ${
+                                          canAdd || isSwitching
+                                            ? 'hover:opacity-80'
+                                            : 'cursor-not-allowed opacity-50'
+                                        }`}
+                                        title={
+                                          isSwitching
+                                            ? 'Switch to this tier'
+                                            : isFamilyUsed
+                                              ? 'Affix Active'
+                                              : canAdd
+                                                ? 'Add this affix'
+                                                : `Maximum prefixes reached`
+                                        }
+                                      >
+                                        <img
+                                          src={
+                                            isCurrentTier
+                                              ? 'Ultimatum.webp'
+                                              : isSwitching
+                                                ? 'Chaos Orb.png'
+                                                : 'Exalted Orb.png'
+                                          }
+                                          alt={
+                                            isSwitching
+                                              ? 'Switch Tier'
+                                              : 'Add Affix'
+                                          }
+                                          className='h-8 w-8'
+                                          draggable={false}
+                                        />
+                                      </button>
+                                    )
+                                  );
+                                })()}
+                              </div>
+                            );
+                          })
+                        );
+                      }
+                      return matchingAffixes.prefixes.map((familyGroup) => {
+                        // Calculate the sum of all weights in this family
+                        const totalWeight = familyGroup.affixes.reduce(
+                          (sum, affix) =>
+                            sum +
+                            (useCustomWeights &&
+                            customWeights[affix.id] !== undefined
+                              ? customWeights[affix.id]
+                              : affix.weighting),
+                          0
+                        );
+
+                        const { usedPrefixFamilies } = getUsedFamilies();
+                        const isFamilyUsed = usedPrefixFamilies.has(
+                          familyGroup.family
+                        );
+
+                        return (
+                          <div key={familyGroup.family} className='space-y-1'>
+                            {/* Family header */}
+                            <div
+                              className={`cursor-pointer rounded p-2 transition-colors ${
+                                isFamilyUsed
+                                  ? 'bg-zinc-600 opacity-60'
+                                  : 'bg-zinc-700 hover:bg-zinc-600'
+                              }`}
+                              onClick={() =>
+                                toggleAffixFamily(familyGroup.family)
+                              }
+                            >
+                              <div className='flex items-center justify-between'>
+                                <div className='flex items-center gap-2'>
+                                  <span
+                                    className={`transform transition-transform ${
+                                      expandedAffixFamilies[familyGroup.family]
+                                        ? 'rotate-90'
+                                        : ''
+                                    }`}
+                                  >
+                                    ▶
+                                  </span>
+                                  <span className='flex gap-1 text-sm font-medium text-white'>
+                                    {familyGroup.family}
+                                    {isFamilyUsed && (
+                                      <img
+                                        src='Ultimatum.webp'
+                                        alt=''
+                                        className='h-5 w-5'
+                                      />
+                                    )}
+                                  </span>
+                                  <span className='text-xs text-zinc-400'>
+                                    ({familyGroup.affixes.length} tiers)
+                                  </span>
+                                </div>
+                                {useWeights && (
+                                  <div className='flex items-center gap-3'>
+                                    <span className='text-xs text-zinc-400'>
+                                      Weighting: {totalWeight}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                              <div className='mt-1 text-sm text-blue-300'>
+                                {familyGroup.representative.effect}
+                              </div>
+                            </div>
+
+                            {/* Expanded tiers */}
+                            {expandedAffixFamilies[familyGroup.family] && (
+                              <div className='ml-6 space-y-1'>
+                                {familyGroup.affixes.map((affix) => {
+                                  return (
+                                    <div
+                                      key={affix.id}
+                                      className='flex items-center justify-between rounded bg-zinc-800 p-2 transition-colors hover:bg-zinc-600'
+                                    >
+                                      <div className='flex-1'>
+                                        <div className='flex items-center justify-between'>
+                                          <span className='text-sm font-medium text-white'>
+                                            {affix.affix_name}
+                                            <span className='ml-2 text-xs text-zinc-400'>
+                                              {getDisplayTier(
+                                                affix,
+                                                familyGroup.affixes
+                                              )}
+                                            </span>
                                           </span>
-                                          <span className='text-xs text-zinc-500'>
-                                            Weight: {affix.weighting}
-                                          </span>
-                                          <span className='text-xs text-zinc-500'>
-                                            iLvl: {affix.ilvl}
-                                          </span>
+                                          <div className='flex items-center gap-3'>
+                                            <span className='text-xs text-zinc-400'>
+                                              iLvl: {affix.ilvl}
+                                            </span>
+                                            <span className='text-xs text-zinc-500'>
+                                              Req Lvl: {affix.clvl}
+                                            </span>
+                                            {useWeights && (
+                                              <span className='text-xs text-zinc-500'>
+                                                Weight:{' '}
+                                                {useCustomWeights &&
+                                                customWeights[affix.id] !==
+                                                  undefined
+                                                  ? customWeights[affix.id]
+                                                  : affix.weighting}
+                                              </span>
+                                            )}
+                                          </div>
+                                        </div>
+                                        <div className='mt-1 text-xs text-blue-300'>
+                                          {affix.effect}
                                         </div>
                                       </div>
-                                      <div className='mt-1 text-xs text-blue-300'>
-                                        {affix.effect}
-                                      </div>
+                                      {(() => {
+                                        const isPrefix =
+                                          affix.affix_type.toLowerCase() ===
+                                          'prefix';
+
+                                        let canAdd = false;
+                                        const maxAffixesPerType =
+                                          getMaxAffixCount(
+                                            activeSelection?.baseType
+                                          );
+                                        canAdd = isPrefix
+                                          ? craftedAffixes.prefixes.length <
+                                              maxAffixesPerType && !isFamilyUsed
+                                          : craftedAffixes.suffixes.length <
+                                              maxAffixesPerType &&
+                                            !isFamilyUsed;
+
+                                        const activeAffix = isPrefix
+                                          ? craftedAffixes.prefixes.find(
+                                              (ca) =>
+                                                ca.affix.family === affix.family
+                                            )?.affix
+                                          : craftedAffixes.suffixes.find(
+                                              (ca) =>
+                                                ca.affix.family === affix.family
+                                            )?.affix;
+
+                                        const isSwitching =
+                                          activeAffix &&
+                                          activeAffix.id !== affix.id;
+                                        const isCurrentTier =
+                                          activeAffix &&
+                                          activeAffix.id === affix.id;
+
+                                        return (
+                                          activeSelection?.baseType !==
+                                            'Diamond' && (
+                                            <button
+                                              onClick={() => {
+                                                if (
+                                                  isSwitching &&
+                                                  activeAffix
+                                                ) {
+                                                  switchAffixTier(
+                                                    activeAffix,
+                                                    affix
+                                                  );
+                                                } else {
+                                                  addAffix(affix);
+                                                  if (
+                                                    craftedAffixes.prefixes
+                                                      .length > 0
+                                                  ) {
+                                                    setItemRarity('rare');
+                                                  } else if (
+                                                    itemRarity === 'normal'
+                                                  ) {
+                                                    setItemRarity('magic');
+                                                  }
+                                                }
+                                              }}
+                                              disabled={!canAdd && !isSwitching}
+                                              className={`ml-2 transition-colors ${
+                                                canAdd || isSwitching
+                                                  ? 'hover:opacity-80'
+                                                  : 'cursor-not-allowed opacity-50'
+                                              }`}
+                                              title={
+                                                isSwitching
+                                                  ? 'Switch to this tier'
+                                                  : isFamilyUsed
+                                                    ? 'Affix Active'
+                                                    : canAdd
+                                                      ? 'Add this affix'
+                                                      : `Maximum ${isPrefix ? 'prefixes' : 'suffixes'} reached`
+                                              }
+                                            >
+                                              <img
+                                                src={
+                                                  isCurrentTier
+                                                    ? 'Ultimatum.webp'
+                                                    : isSwitching
+                                                      ? 'Chaos Orb.png'
+                                                      : 'Exalted Orb.png'
+                                                }
+                                                alt={
+                                                  isSwitching
+                                                    ? 'Switch Tier'
+                                                    : 'Add Affix'
+                                                }
+                                                className='h-8 w-8'
+                                                draggable={false}
+                                              />
+                                            </button>
+                                          )
+                                        );
+                                      })()}
                                     </div>
-                                    <button
-                                      onClick={() => {
-                                        addAffix(affix);
-                                        if (
-                                          craftedAffixes.prefixes.length > 0
-                                        ) {
-                                          setItemRarity('rare');
-                                        } else if (itemRarity === 'normal') {
-                                          setItemRarity('magic');
-                                        }
-                                      }}
-                                      disabled={!canAdd}
-                                      className={`ml-2 rounded px-2 py-1 text-xs text-white transition-colors ${
-                                        canAdd
-                                          ? 'bg-green-600 hover:bg-green-700'
-                                          : 'cursor-not-allowed bg-gray-500'
-                                      }`}
-                                      title={
-                                        isFamilyUsed
-                                          ? 'Family already used'
-                                          : canAdd
-                                            ? 'Add this affix'
-                                            : `Maximum ${isPrefix ? 'prefixes' : 'suffixes'} reached`
-                                      }
-                                    >
-                                      +
-                                    </button>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                    {getMatchingAffixes(activeSelection.baseType, itemLevel)
-                      .prefixes.length === 0 && (
-                      <div className='text-center text-zinc-500'>
-                        No prefixes available for this item type at level{' '}
-                        {itemLevel}
-                      </div>
-                    )}
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      });
+                    })()}
                   </div>
                 </div>
 
                 {/* Suffixes Column */}
                 <div className='space-y-4'>
                   <h4 className='text-center text-lg font-semibold text-yellow-400'>
-                    Suffixes (
-                    {
-                      getMatchingAffixes(activeSelection.baseType, itemLevel)
-                        .suffixes.length
-                    }
-                    )
+                    Suffixes ({matchingAffixes.suffixes.length})
                   </h4>
                   <div className='space-y-1 overflow-y-auto rounded bg-zinc-900 p-3'>
-                    {getMatchingAffixes(
-                      activeSelection.baseType,
-                      itemLevel
-                    ).suffixes.map((familyGroup) => {
-                      // Calculate the sum of all weights in this family
-                      const totalWeight = familyGroup.affixes.reduce(
-                        (sum, affix) => sum + affix.weighting,
-                        0
-                      );
+                    {(() => {
+                      // Check if this is a jewel base
+                      const isJewelBase =
+                        activeSelection?.baseType &&
+                        ['ruby', 'emerald', 'sapphire', 'diamond'].some(
+                          (jewel) =>
+                            activeSelection
+                              .baseType!.toLowerCase()
+                              .includes(jewel.toLowerCase())
+                        );
 
-                      const { usedSuffixFamilies } = getUsedFamilies();
-                      const isFamilyUsed = usedSuffixFamilies.has(
-                        familyGroup.family
-                      );
+                      if (isJewelBase) {
+                        // For jewels, show individual affixes directly
+                        return matchingAffixes.suffixes.flatMap((familyGroup) =>
+                          familyGroup.affixes.map((affix) => {
+                            const { usedSuffixFamilies } = getUsedFamilies();
+                            const isFamilyUsed = usedSuffixFamilies.has(
+                              affix.family
+                            );
 
-                      return (
-                        <div key={familyGroup.family} className='space-y-1'>
-                          {/* Family header */}
-                          <div
-                            className={`cursor-pointer rounded p-2 transition-colors ${
-                              isFamilyUsed
-                                ? 'bg-zinc-600 opacity-60'
-                                : 'bg-zinc-700 hover:bg-zinc-600'
-                            }`}
-                            onClick={() =>
-                              toggleAffixFamily(familyGroup.family)
-                            }
-                          >
-                            <div className='flex items-center justify-between'>
-                              <div className='flex items-center gap-2'>
-                                <span
-                                  className={`transform transition-transform ${
-                                    expandedAffixFamilies[familyGroup.family]
-                                      ? 'rotate-90'
-                                      : ''
-                                  }`}
-                                >
-                                  ▶
-                                </span>
-                                <span className='text-sm font-medium text-white'>
-                                  {familyGroup.family}
-                                  {isFamilyUsed && (
-                                    <span className='ml-2 text-xs text-green-400'>
-                                      (Selected)
+                            return (
+                              <div
+                                key={affix.id}
+                                className='flex items-center justify-between rounded bg-zinc-800 p-2 transition-colors hover:bg-zinc-600'
+                              >
+                                <div className='flex-1'>
+                                  <div className='flex items-center justify-between'>
+                                    <span className='flex gap-1 text-sm font-medium text-white'>
+                                      {affix.affix_name}
+                                      {isFamilyUsed && (
+                                        <img
+                                          src='Ultimatum.webp'
+                                          alt=''
+                                          className='h-5 w-5'
+                                        />
+                                      )}
                                     </span>
-                                  )}
-                                </span>
-                                <span className='text-xs text-zinc-400'>
-                                  ({familyGroup.affixes.length} tiers)
-                                </span>
-                              </div>
-                              <div className='flex items-center gap-3'>
-                                <span className='text-xs text-zinc-400'>
-                                  Total Weight: {totalWeight}
-                                </span>
-                              </div>
-                            </div>
-                            <div className='mt-1 text-sm text-yellow-300'>
-                              {familyGroup.representative.effect}
-                            </div>
-                          </div>
-
-                          {/* Expanded tiers */}
-                          {expandedAffixFamilies[familyGroup.family] && (
-                            <div className='ml-6 space-y-1'>
-                              {familyGroup.affixes.map((affix, index) => {
-                                const isPrefix =
-                                  affix.affix_type.toLowerCase() === 'prefix';
-                                const canAdd = isPrefix
-                                  ? craftedAffixes.prefixes.length < 3
-                                  : craftedAffixes.suffixes.length < 3 &&
-                                    !isFamilyUsed;
-
-                                return (
-                                  <div
-                                    key={affix.id}
-                                    className='flex items-center justify-between rounded bg-zinc-800 p-2 transition-colors hover:bg-zinc-600'
-                                  >
-                                    <div className='flex-1'>
-                                      <div className='flex items-center justify-between'>
-                                        <span className='text-sm font-medium text-white'>
-                                          {affix.affix_name}
-                                          {index === 0 && (
-                                            <span className='ml-2 text-xs text-zinc-400'>
-                                              (T1)
-                                            </span>
-                                          )}
+                                    <div className='flex items-center gap-3'>
+                                      {activeSelection?.baseType ==
+                                        'Diamond' && (
+                                        <span className='text-xs text-zinc-500'>
+                                          Jewel Type: {affix.item_tags}
                                         </span>
-                                        <div className='flex items-center gap-3'>
-                                          <span className='text-xs text-zinc-400'>
-                                            Req Lvl: {affix.clvl}
+                                      )}
+                                      {useWeights && (
+                                        <span className='text-xs text-zinc-500'>
+                                          Weight:{' '}
+                                          {useCustomWeights &&
+                                          customWeights[affix.id] !== undefined
+                                            ? customWeights[affix.id]
+                                            : affix.weighting}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className='mt-1 text-xs text-yellow-300'>
+                                    {affix.effect}
+                                  </div>
+                                </div>
+                                {(() => {
+                                  const isSuffix =
+                                    affix.affix_type.toLowerCase() === 'suffix';
+
+                                  let canAdd = false;
+                                  const maxAffixesPerType = getMaxAffixCount(
+                                    activeSelection?.baseType
+                                  );
+                                  canAdd = isSuffix
+                                    ? craftedAffixes.suffixes.length <
+                                        maxAffixesPerType && !isFamilyUsed
+                                    : craftedAffixes.prefixes.length <
+                                        maxAffixesPerType && !isFamilyUsed;
+
+                                  const activeAffix =
+                                    craftedAffixes.suffixes.find(
+                                      (ca) => ca.affix.family === affix.family
+                                    )?.affix;
+
+                                  const isSwitching =
+                                    activeAffix && activeAffix.id !== affix.id;
+                                  const isCurrentTier =
+                                    activeAffix && activeAffix.id === affix.id;
+
+                                  return (
+                                    activeSelection?.baseType !== 'Diamond' && (
+                                      <button
+                                        onClick={() => {
+                                          if (isSwitching && activeAffix) {
+                                            switchAffixTier(activeAffix, affix);
+                                          } else {
+                                            addAffix(affix);
+                                            if (
+                                              craftedAffixes.suffixes.length > 0
+                                            ) {
+                                              setItemRarity('rare');
+                                            } else if (
+                                              itemRarity === 'normal'
+                                            ) {
+                                              setItemRarity('magic');
+                                            }
+                                          }
+                                        }}
+                                        disabled={!canAdd && !isSwitching}
+                                        className={`ml-2 transition-colors ${
+                                          canAdd || isSwitching
+                                            ? 'hover:opacity-80'
+                                            : 'cursor-not-allowed opacity-50'
+                                        }`}
+                                        title={
+                                          isSwitching
+                                            ? 'Switch to this tier'
+                                            : isFamilyUsed
+                                              ? 'Affix Active'
+                                              : canAdd
+                                                ? 'Add this affix'
+                                                : `Maximum suffixes reached`
+                                        }
+                                      >
+                                        <img
+                                          src={
+                                            isCurrentTier
+                                              ? 'Ultimatum.webp'
+                                              : isSwitching
+                                                ? 'Chaos Orb.png'
+                                                : 'Exalted Orb.png'
+                                          }
+                                          alt={
+                                            isSwitching
+                                              ? 'Switch Tier'
+                                              : 'Add Affix'
+                                          }
+                                          className='h-8 w-8'
+                                          draggable={false}
+                                        />
+                                      </button>
+                                    )
+                                  );
+                                })()}
+                              </div>
+                            );
+                          })
+                        );
+                      }
+                      return matchingAffixes.suffixes.map((familyGroup) => {
+                        const totalWeight = familyGroup.affixes.reduce(
+                          (sum, affix) =>
+                            sum +
+                            (useCustomWeights &&
+                            customWeights[affix.id] !== undefined
+                              ? customWeights[affix.id]
+                              : affix.weighting),
+                          0
+                        );
+
+                        const { usedSuffixFamilies } = getUsedFamilies();
+                        const isFamilyUsed = usedSuffixFamilies.has(
+                          familyGroup.family
+                        );
+
+                        return (
+                          <div key={familyGroup.family} className='space-y-1'>
+                            {/* Family header */}
+                            <div
+                              className={`cursor-pointer rounded p-2 transition-colors ${
+                                isFamilyUsed
+                                  ? 'bg-zinc-600 opacity-60'
+                                  : 'bg-zinc-700 hover:bg-zinc-600'
+                              }`}
+                              onClick={() =>
+                                toggleAffixFamily(familyGroup.family)
+                              }
+                            >
+                              <div className='flex items-center justify-between'>
+                                <div className='flex items-center gap-2'>
+                                  <span
+                                    className={`transform transition-transform ${
+                                      expandedAffixFamilies[familyGroup.family]
+                                        ? 'rotate-90'
+                                        : ''
+                                    }`}
+                                  >
+                                    ▶
+                                  </span>
+                                  <span className='flex gap-1 text-sm font-medium text-white'>
+                                    {familyGroup.family}
+                                    {isFamilyUsed && (
+                                      <img
+                                        src='Ultimatum.webp'
+                                        alt=''
+                                        className='h-5 w-5'
+                                      />
+                                    )}
+                                  </span>
+                                  <span className='text-xs text-zinc-400'>
+                                    ({familyGroup.affixes.length} tiers)
+                                  </span>
+                                </div>
+                                {useWeights && (
+                                  <div className='flex items-center gap-3'>
+                                    <span className='text-xs text-zinc-400'>
+                                      Weighting: {totalWeight}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                              <div className='mt-1 text-sm text-yellow-300'>
+                                {familyGroup.representative.effect}
+                              </div>
+                            </div>
+
+                            {/* Expanded tiers */}
+                            {expandedAffixFamilies[familyGroup.family] && (
+                              <div className='ml-6 space-y-1'>
+                                {familyGroup.affixes.map((affix) => {
+                                  return (
+                                    <div
+                                      key={affix.id}
+                                      className='flex items-center justify-between rounded bg-zinc-800 p-2 transition-colors hover:bg-zinc-600'
+                                    >
+                                      <div className='flex-1'>
+                                        <div className='flex items-center justify-between'>
+                                          <span className='text-sm font-medium text-white'>
+                                            {affix.affix_name}
+                                            <span className='ml-2 text-xs text-zinc-400'>
+                                              {getDisplayTier(
+                                                affix,
+                                                familyGroup.affixes
+                                              )}
+                                            </span>
                                           </span>
-                                          <span className='text-xs text-zinc-500'>
-                                            Weight: {affix.weighting}
-                                          </span>
-                                          <span className='text-xs text-zinc-500'>
-                                            iLvl: {affix.ilvl}
-                                          </span>
+                                          <div className='flex items-center gap-3'>
+                                            <span className='text-xs text-zinc-400'>
+                                              iLvl: {affix.ilvl}
+                                            </span>
+                                            <span className='text-xs text-zinc-500'>
+                                              Req Lvl: {affix.clvl}
+                                            </span>
+                                            {useWeights && (
+                                              <span className='text-xs text-zinc-500'>
+                                                Weight:{' '}
+                                                {useCustomWeights &&
+                                                customWeights[affix.id] !==
+                                                  undefined
+                                                  ? customWeights[affix.id]
+                                                  : affix.weighting}
+                                              </span>
+                                            )}
+                                          </div>
+                                        </div>
+                                        <div className='mt-1 text-xs text-yellow-300'>
+                                          {affix.effect}
                                         </div>
                                       </div>
-                                      <div className='mt-1 text-xs text-yellow-300'>
-                                        {affix.effect}
-                                      </div>
+                                      {(() => {
+                                        const isSuffix =
+                                          affix.affix_type.toLowerCase() ===
+                                          'suffix';
+
+                                        let canAdd = false;
+                                        const maxAffixesPerType =
+                                          getMaxAffixCount(
+                                            activeSelection?.baseType
+                                          );
+                                        canAdd = isSuffix
+                                          ? craftedAffixes.suffixes.length <
+                                              maxAffixesPerType && !isFamilyUsed
+                                          : craftedAffixes.prefixes.length <
+                                              maxAffixesPerType &&
+                                            !isFamilyUsed;
+
+                                        const activeAffix =
+                                          craftedAffixes.suffixes.find(
+                                            (ca) =>
+                                              ca.affix.family === affix.family
+                                          )?.affix;
+
+                                        const isSwitching =
+                                          activeAffix &&
+                                          activeAffix.id !== affix.id;
+                                        const isCurrentTier =
+                                          activeAffix &&
+                                          activeAffix.id === affix.id;
+
+                                        return (
+                                          activeSelection?.baseType !==
+                                            'Diamond' && (
+                                            <button
+                                              onClick={() => {
+                                                if (
+                                                  isSwitching &&
+                                                  activeAffix
+                                                ) {
+                                                  switchAffixTier(
+                                                    activeAffix,
+                                                    affix
+                                                  );
+                                                } else {
+                                                  addAffix(affix);
+                                                  if (
+                                                    craftedAffixes.suffixes
+                                                      .length > 0
+                                                  ) {
+                                                    setItemRarity('rare');
+                                                  } else if (
+                                                    itemRarity === 'normal'
+                                                  ) {
+                                                    setItemRarity('magic');
+                                                  }
+                                                }
+                                              }}
+                                              disabled={!canAdd && !isSwitching}
+                                              className={`ml-2 transition-colors ${
+                                                canAdd || isSwitching
+                                                  ? 'hover:opacity-80'
+                                                  : 'cursor-not-allowed opacity-50'
+                                              }`}
+                                              title={
+                                                isSwitching
+                                                  ? 'Switch to this tier'
+                                                  : isFamilyUsed
+                                                    ? 'Affix Active'
+                                                    : canAdd
+                                                      ? 'Add this affix'
+                                                      : `Maximum suffixes reached`
+                                              }
+                                            >
+                                              <img
+                                                src={
+                                                  isCurrentTier
+                                                    ? 'Ultimatum.webp'
+                                                    : isSwitching
+                                                      ? 'Chaos Orb.png'
+                                                      : 'Exalted Orb.png'
+                                                }
+                                                alt={
+                                                  isSwitching
+                                                    ? 'Switch Tier'
+                                                    : 'Add Affix'
+                                                }
+                                                className='h-8 w-8'
+                                                draggable={false}
+                                              />
+                                            </button>
+                                          )
+                                        );
+                                      })()}
                                     </div>
-                                    <button
-                                      onClick={() => {
-                                        addAffix(affix);
-                                        if (
-                                          craftedAffixes.suffixes.length > 0
-                                        ) {
-                                          setItemRarity('rare');
-                                        } else if (itemRarity === 'normal') {
-                                          setItemRarity('magic');
-                                        }
-                                      }}
-                                      disabled={!canAdd}
-                                      className={`ml-2 rounded px-2 py-1 text-xs text-white transition-colors ${
-                                        canAdd
-                                          ? 'bg-green-600 hover:bg-green-700'
-                                          : 'cursor-not-allowed bg-gray-500'
-                                      }`}
-                                      title={
-                                        isFamilyUsed
-                                          ? 'Family already used'
-                                          : canAdd
-                                            ? 'Add this affix'
-                                            : `Maximum ${isPrefix ? 'prefixes' : 'suffixes'} reached`
-                                      }
-                                    >
-                                      +
-                                    </button>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                    {getMatchingAffixes(activeSelection.baseType, itemLevel)
-                      .suffixes.length === 0 && (
-                      <div className='text-center text-zinc-500'>
-                        No suffixes available for this item type at level{' '}
-                        {itemLevel}
-                      </div>
-                    )}
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      });
+                    })()}
                   </div>
                 </div>
+                {useWeights && (
+                  <span>
+                    Total Prefixes Weighting:{' '}
+                    {matchingAffixes.prefixes
+                      .flatMap((family) => family.affixes)
+                      .reduce(
+                        (sum, affix) =>
+                          sum +
+                          (useCustomWeights &&
+                          customWeights[affix.id] !== undefined
+                            ? customWeights[affix.id]
+                            : affix.weighting),
+                        0
+                      )}
+                  </span>
+                )}
+                {useWeights && (
+                  <span>
+                    Total Suffixes Weighting:{' '}
+                    {matchingAffixes.suffixes
+                      .flatMap((family) => family.affixes)
+                      .reduce(
+                        (sum, affix) =>
+                          sum +
+                          (useCustomWeights &&
+                          customWeights[affix.id] !== undefined
+                            ? customWeights[affix.id]
+                            : affix.weighting),
+                        0
+                      )}
+                  </span>
+                )}
+              </div>
+              {/* Weight Controls */}
+              <div className='mt-6 space-y-4 border-t border-zinc-600 pt-4'>
+                <div className='flex justify-center gap-8'>
+                  <label className='flex items-center gap-2 text-white'>
+                    <input
+                      type='checkbox'
+                      checked={useWeights}
+                      onChange={(e) => {
+                        setUseWeights(e.target.checked);
+                        if (!e.target.checked) {
+                          setUseCustomWeights(false);
+                        }
+                      }}
+                      className='h-4 w-4 rounded border-zinc-400 bg-zinc-700 text-blue-600 focus:ring-blue-500'
+                    />
+                    Use Weights
+                  </label>
+                  <label className='flex items-center gap-2 text-white'>
+                    <input
+                      type='checkbox'
+                      checked={useCustomWeights}
+                      onChange={(e) => {
+                        setUseCustomWeights(e.target.checked);
+                        if (e.target.checked) {
+                          setUseWeights(true);
+                        }
+                      }}
+                      disabled={!useWeights}
+                      className='h-4 w-4 rounded border-zinc-400 bg-zinc-700 text-blue-600 focus:ring-blue-500 disabled:opacity-50'
+                    />
+                    Use Custom Weights
+                  </label>
+                </div>
+                {useCustomWeights && (
+                  <div className='mt-4 w-full rounded-lg bg-zinc-800 p-6'>
+                    <h3 className='mb-4 text-center text-xl font-bold text-white'>
+                      Custom Weights
+                    </h3>
+                    <div className='grid grid-cols-1 gap-8 lg:grid-cols-2'>
+                      {/* Custom Prefix Weights */}
+                      <div className='space-y-4'>
+                        <h4 className='text-center text-lg font-semibold text-blue-400'>
+                          Prefix Weights
+                        </h4>
+                        <div className='max-h-60 space-y-2 overflow-y-auto rounded bg-zinc-900 p-3'>
+                          {(() => {
+                            // Check if this is a jewel base
+                            const isJewelBase =
+                              activeSelection?.baseType &&
+                              ['ruby', 'emerald', 'sapphire', 'diamond'].some(
+                                (jewel) =>
+                                  activeSelection
+                                    .baseType!.toLowerCase()
+                                    .includes(jewel.toLowerCase())
+                              );
+
+                            if (isJewelBase) {
+                              // For jewels, show individual affixes
+                              return matchingAffixes.prefixes.flatMap(
+                                (familyGroup) =>
+                                  familyGroup.affixes.map((affix) => (
+                                    <div
+                                      key={affix.id}
+                                      className='flex items-center justify-between rounded bg-zinc-800 p-2'
+                                    >
+                                      <div className='flex-1'>
+                                        <span className='text-sm font-medium text-white'>
+                                          {affix.affix_name}
+                                        </span>
+                                        <div className='text-xs text-yellow-300'>
+                                          {affix.effect}
+                                        </div>
+                                      </div>
+                                      <input
+                                        type='number'
+                                        min='0'
+                                        max='2000'
+                                        value={
+                                          customWeights[affix.id] ??
+                                          affix.weighting
+                                        }
+                                        onChange={(e) => {
+                                          const value =
+                                            parseInt(e.target.value) || 0;
+                                          setCustomWeights((prev) => ({
+                                            ...prev,
+                                            [affix.id]: value,
+                                          }));
+                                        }}
+                                        className='ml-2 w-20 rounded border border-zinc-600 bg-zinc-700 px-2 py-1 text-center text-white focus:border-yellow-500'
+                                      />
+                                    </div>
+                                  ))
+                              );
+                            }
+                            return matchingAffixes.prefixes.map(
+                              (familyGroup) => (
+                                <div
+                                  key={familyGroup.family}
+                                  className='space-y-1'
+                                >
+                                  {/* Family header - collapsible */}
+                                  <div
+                                    className='flex cursor-pointer items-center gap-2 rounded bg-zinc-700 p-2'
+                                    onClick={() =>
+                                      toggleCustomWeightFamily(
+                                        familyGroup.family
+                                      )
+                                    }
+                                  >
+                                    <span
+                                      className={`transform transition-transform ${
+                                        expandedCustomWeightFamilies[
+                                          familyGroup.family
+                                        ]
+                                          ? 'rotate-90'
+                                          : ''
+                                      }`}
+                                    >
+                                      ▶
+                                    </span>
+                                    <span className='text-sm font-medium text-white'>
+                                      {familyGroup.family}
+                                    </span>
+                                    <span className='text-xs text-zinc-400'>
+                                      ({familyGroup.affixes.length} tiers)
+                                    </span>
+                                  </div>
+                                  {/* Expanded tiers */}
+                                  {expandedCustomWeightFamilies[
+                                    familyGroup.family
+                                  ] && (
+                                    <div className='ml-4 space-y-1'>
+                                      {familyGroup.affixes.map((affix) => (
+                                        <div
+                                          key={affix.id}
+                                          className='flex items-center justify-between rounded bg-zinc-800 p-2'
+                                        >
+                                          <div className='flex-1'>
+                                            <span className='text-sm font-medium text-white'>
+                                              {affix.affix_name}
+                                              <span className='ml-2 text-xs text-zinc-400'>
+                                                {getDisplayTier(
+                                                  affix,
+                                                  familyGroup.affixes
+                                                )}
+                                              </span>
+                                            </span>
+                                            <div className='text-xs text-yellow-300'>
+                                              {affix.effect}
+                                            </div>
+                                          </div>
+                                          <input
+                                            type='number'
+                                            min='0'
+                                            max='2000'
+                                            value={
+                                              customWeights[affix.id] ??
+                                              affix.weighting
+                                            }
+                                            onChange={(e) => {
+                                              const value =
+                                                parseInt(e.target.value) || 0;
+                                              setCustomWeights((prev) => ({
+                                                ...prev,
+                                                [affix.id]: value,
+                                              }));
+                                            }}
+                                            className='ml-2 w-20 rounded border border-zinc-600 bg-zinc-700 px-2 py-1 text-center text-white focus:border-yellow-500'
+                                          />
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            );
+                          })()}
+                        </div>
+                      </div>
+
+                      {/* Custom Suffix Weights */}
+                      <div className='space-y-4'>
+                        <h4 className='text-center text-lg font-semibold text-yellow-400'>
+                          Suffix Weights
+                        </h4>
+                        <div className='max-h-60 space-y-2 overflow-y-auto rounded bg-zinc-900 p-3'>
+                          {(() => {
+                            // Check if this is a jewel base
+                            const isJewelBase =
+                              activeSelection?.baseType &&
+                              ['ruby', 'emerald', 'sapphire', 'diamond'].some(
+                                (jewel) =>
+                                  activeSelection
+                                    .baseType!.toLowerCase()
+                                    .includes(jewel.toLowerCase())
+                              );
+
+                            if (isJewelBase) {
+                              // For jewels, show individual affixes
+                              return matchingAffixes.suffixes.flatMap(
+                                (familyGroup) =>
+                                  familyGroup.affixes.map((affix) => (
+                                    <div
+                                      key={affix.id}
+                                      className='flex items-center justify-between rounded bg-zinc-800 p-2'
+                                    >
+                                      <div className='flex-1'>
+                                        <span className='text-sm font-medium text-white'>
+                                          {affix.affix_name}
+                                        </span>
+                                        <div className='text-xs text-yellow-300'>
+                                          {affix.effect}
+                                        </div>
+                                      </div>
+                                      <input
+                                        type='number'
+                                        min='0'
+                                        max='2000'
+                                        value={
+                                          customWeights[affix.id] ??
+                                          affix.weighting
+                                        }
+                                        onChange={(e) => {
+                                          const value =
+                                            parseInt(e.target.value) || 0;
+                                          setCustomWeights((prev) => ({
+                                            ...prev,
+                                            [affix.id]: value,
+                                          }));
+                                        }}
+                                        className='ml-2 w-20 rounded border border-zinc-600 bg-zinc-700 px-2 py-1 text-center text-white focus:border-yellow-500'
+                                      />
+                                    </div>
+                                  ))
+                              );
+                            }
+                            return matchingAffixes.suffixes.map(
+                              (familyGroup) => (
+                                <div
+                                  key={familyGroup.family}
+                                  className='space-y-1'
+                                >
+                                  {/* Family header - collapsible */}
+                                  <div
+                                    className='flex cursor-pointer items-center gap-2 rounded bg-zinc-700 p-2'
+                                    onClick={() =>
+                                      toggleCustomWeightFamily(
+                                        familyGroup.family
+                                      )
+                                    }
+                                  >
+                                    <span
+                                      className={`transform transition-transform ${
+                                        expandedCustomWeightFamilies[
+                                          familyGroup.family
+                                        ]
+                                          ? 'rotate-90'
+                                          : ''
+                                      }`}
+                                    >
+                                      ▶
+                                    </span>
+                                    <span className='text-sm font-medium text-white'>
+                                      {familyGroup.family}
+                                    </span>
+                                    <span className='text-xs text-zinc-400'>
+                                      ({familyGroup.affixes.length} tiers)
+                                    </span>
+                                  </div>
+                                  {/* Expanded tiers */}
+                                  {expandedCustomWeightFamilies[
+                                    familyGroup.family
+                                  ] && (
+                                    <div className='ml-4 space-y-1'>
+                                      {familyGroup.affixes.map((affix) => (
+                                        <div
+                                          key={affix.id}
+                                          className='flex items-center justify-between rounded bg-zinc-800 p-2'
+                                        >
+                                          <div className='flex-1'>
+                                            <span className='text-sm font-medium text-white'>
+                                              {affix.affix_name}
+                                              <span className='ml-2 text-xs text-zinc-400'>
+                                                {getDisplayTier(
+                                                  affix,
+                                                  familyGroup.affixes
+                                                )}
+                                              </span>
+                                            </span>
+                                            <div className='text-xs text-yellow-300'>
+                                              {affix.effect}
+                                            </div>
+                                          </div>
+                                          <input
+                                            type='number'
+                                            min='0'
+                                            max='2000'
+                                            value={
+                                              customWeights[affix.id] ??
+                                              affix.weighting
+                                            }
+                                            onChange={(e) => {
+                                              const value =
+                                                parseInt(e.target.value) || 0;
+                                              setCustomWeights((prev) => ({
+                                                ...prev,
+                                                [affix.id]: value,
+                                              }));
+                                            }}
+                                            className='ml-2 w-20 rounded border border-zinc-600 bg-zinc-700 px-2 py-1 text-center text-white focus:border-yellow-500'
+                                          />
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            );
+                          })()}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}

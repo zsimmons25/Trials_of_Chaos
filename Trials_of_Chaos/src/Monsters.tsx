@@ -55,7 +55,7 @@ function Monsters() {
   };
 
   return (
-    <div className='flex min-h-screen w-screen flex-col items-center gap-8 bg-neutral-900 p-8 text-gold'>
+    <div className='flex h-full w-screen flex-col items-center gap-8 bg-zinc-800 p-8 text-gold'>
       {/* Monsters */}
       <div className='grid w-full max-w-2xl grid-cols-3 gap-8'>
         {monsterList.map((monster) => (

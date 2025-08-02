@@ -56,20 +56,25 @@ function CorruptedRares() {
     <>
       <div className='flex flex-col items-center gap-8 p-4'>
         <div className='flex min-h-80 items-center justify-center'>
-          <ItemDisplay item={currentItem} bases={bases} affixes={affixes} />
+          <ItemDisplay
+            item={currentItem}
+            bases={bases}
+            affixes={affixes}
+            rarity='rare'
+          />
         </div>
         <div className='flex gap-4'>
-          <button
-            onClick={getRandomItem}
-            className='rounded-md bg-yellow-600 px-6 py-3 font-medium text-black hover:bg-yellow-400/80'
-          >
-            Get Random Item
-          </button>
           <button
             onClick={() => setShowAllItems(true)}
             className='rounded-md bg-red-700 px-6 py-3 font-medium text-black hover:bg-red-500/80'
           >
             View All ({items.length})
+          </button>
+          <button
+            onClick={getRandomItem}
+            className='rounded-md bg-yellow-600 px-6 py-3 font-medium text-black hover:bg-yellow-400/80'
+          >
+            Get Random Item
           </button>
         </div>
       </div>

@@ -580,8 +580,15 @@ export const useOrbHandlers = (props: UseOrbHandlersProps) => {
       }
     }
 
+    type RemovableAffix = {
+      affix: Affix;
+      values: number[];
+      id: string;
+      type: 'prefixes' | 'suffixes';
+    };
+
     // Get all removable affixes (non-fractured) from allowed types
-    const removableAffixes = [
+    const removableAffixes: RemovableAffix[] = [
       ...craftedAffixes.prefixes
         .filter((a) => a.affix.id !== fracturedAffixId)
         .map((a) => ({ ...a, type: 'prefixes' as const })),
@@ -595,7 +602,7 @@ export const useOrbHandlers = (props: UseOrbHandlersProps) => {
       return;
     }
 
-    let affixToRemove;
+    let affixToRemove: RemovableAffix;
 
     // Apply Whittling Omen logic
     if (!ignoreOmens && WhittlingOmen) {

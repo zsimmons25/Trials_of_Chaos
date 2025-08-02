@@ -2,11 +2,12 @@ import { createLazyFileRoute } from '@tanstack/react-router';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { modifierqfn } from './../handlers/modifiersquery';
 import type { Modifier } from './../types/modifier';
-import modifiers_header_left from '/modifier_header_left.png';
-import modifiers_header from '/modifier_header.png';
-import modifiers_header_right from '/modifier_header_right.png';
-import Xyclucian from '/Xyclucian.png';
-import Chimeral from '/Chimeral.png';
+
+const Xyclucian = '/images/Xyclucian.png';
+const Chimeral = '/images/Chimeral.png';
+const modifiers_header_left = '/images/modifier_header_left.png';
+const modifiers_header = '/images/modifier_header.png';
+const modifiers_header_right = '/images/modifier_header_right.png';
 
 export const Route = createLazyFileRoute('/')({
   component: () => {

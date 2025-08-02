@@ -5,7 +5,7 @@ function Sanity() {
         The Chronicle of Tetzawa
       </div>
       <div>
-        <img src='video_frame.webp' alt='video frame' />
+        <img src='/images/video_frame.webp' alt='video frame' />
       </div>
     </div>
   );

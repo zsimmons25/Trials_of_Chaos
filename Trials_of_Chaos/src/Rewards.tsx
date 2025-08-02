@@ -3,7 +3,7 @@ import CorruptedRares from './CorruptedRares';
 function Rewards() {
   const uhl = (
     <img
-      src='header_double_unique_left.png'
+      src='/images/header_double_unique_left.png'
       alt='header left unique'
       className='h-full'
     />
@@ -19,7 +19,7 @@ function Rewards() {
   );
   const uhr = (
     <img
-      src='header_double_unique_right.png'
+      src='/images/header_double_unique_right.png'
       alt='header right unique'
       className='h-full'
     />
@@ -27,12 +27,12 @@ function Rewards() {
   const usep = (
     <img
       className='mx-auto my-1'
-      src='separator_unique.png'
+      src='/images/separator_unique.png'
       alt='unqiue seperator'
     />
   );
   const nhl = (
-    <img src='header_normal_left.png' alt='header left' className='h-full' />
+    <img src='/images/header_normal_left.png' alt='header left' className='h-full' />
   );
   const nhm = (
     <div
@@ -44,17 +44,17 @@ function Rewards() {
     />
   );
   const nhr = (
-    <img src='header_normal_right.png' alt='header right' className='h-full' />
+    <img src='/images/header_normal_right.png' alt='header right' className='h-full' />
   );
   const nsep = (
     <img
       className='mx-auto my-1'
-      src='separator_normal.png'
+      src='/images/separator_normal.png'
       alt='normal separator'
     />
   );
   const mhl = (
-    <img src='header_magic_left.png' alt='header left' className='h-full' />
+    <img src='/images/header_magic_left.png' alt='header left' className='h-full' />
   );
   const mhm = (
     <div
@@ -66,12 +66,12 @@ function Rewards() {
     />
   );
   const mhr = (
-    <img src='header_magic_right.png' alt='header right' className='h-full' />
+    <img src='/images/header_magic_right.png' alt='header right' className='h-full' />
   );
   const msep = (
     <img
       className='mx-auto my-1'
-      src='separator_magic.png'
+      src='/images/separator_magic.png'
       alt='normal separator'
     />
   );
@@ -179,7 +179,7 @@ function Rewards() {
   ];
   const chl = (
     <img
-      src='header_currency_left.png'
+      src='/images/header_currency_left.png'
       alt='header left currency'
       className='h-full'
     />
@@ -195,7 +195,7 @@ function Rewards() {
   );
   const chr = (
     <img
-      src='header_currency_right.png'
+      src='/images/header_currency_right.png'
       alt='header right currency'
       className='h-full'
     />
@@ -203,7 +203,7 @@ function Rewards() {
   const csep = (
     <img
       className='mx-auto my-1'
-      src='separator_currency.png'
+      src='/images/separator_currency.png'
       alt='currency seperator'
     />
   );
@@ -247,7 +247,7 @@ function Rewards() {
             <div className='group relative inline-block h-20 w-20'>
               <img
                 className='h-20 w-20'
-                src='https://www.poe2wiki.net/images/thumb/5/5b/The_Adorned_inventory_icon.png/78px-The_Adorned_inventory_icon.png'
+                src='/images/https://www.poe2wiki.net/images/thumb/5/5b/The_Adorned_inventory_icon.png/78px-The_Adorned_inventory_icon.png'
                 alt='The Adorned'
               />
               <div className='pointer-events-none absolute left-1/2 top-full z-10 w-96 -translate-x-1/2 transform border border-amber-700 bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
@@ -289,7 +289,7 @@ function Rewards() {
             <div className='group relative inline-block h-32 w-24'>
               <img
                 className='h-32 w-24'
-                src='https://www.poe2wiki.net/images/thumb/4/47/Mahuxotl%27s_Machination_inventory_icon.png/156px-Mahuxotl%27s_Machination_inventory_icon.png'
+                src='/images/https://www.poe2wiki.net/images/thumb/4/47/Mahuxotl%27s_Machination_inventory_icon.png/156px-Mahuxotl%27s_Machination_inventory_icon.png'
                 alt='Mahuxotls Machination'
               />
               <div className='pointer-events-none absolute left-1/2 top-full z-10 w-96 -translate-x-1/2 transform border border-amber-700 bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
@@ -324,7 +324,7 @@ function Rewards() {
                   Grants Skill:{' '}
                   <img
                     className='h-4 w-4'
-                    src='Ultimatum.webp'
+                    src='/images/Ultimatum.webp'
                     alt='Raise Shield'
                   />{' '}
                   Raise Shield
@@ -347,7 +347,7 @@ function Rewards() {
             <div className='group relative inline-block h-24 w-24'>
               <img
                 className='h-24 w-24'
-                src='https://www.poe2wiki.net/images/thumb/0/0a/Glimpse_of_Chaos_inventory_icon.png/156px-Glimpse_of_Chaos_inventory_icon.png'
+                src='/images/https://www.poe2wiki.net/images/thumb/0/0a/Glimpse_of_Chaos_inventory_icon.png/156px-Glimpse_of_Chaos_inventory_icon.png'
                 alt='Glimpse of Chaos'
               />
               <div className='pointer-events-none absolute left-1/2 top-full z-10 w-96 -translate-x-1/2 transform border border-amber-700 bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
@@ -400,7 +400,7 @@ function Rewards() {
             <div className='group relative inline-block h-24 w-24'>
               <img
                 className='h-24 w-24'
-                src='https://www.poe2wiki.net/images/thumb/e/e0/Hateforge_inventory_icon.png/156px-Hateforge_inventory_icon.png'
+                src='/images/https://www.poe2wiki.net/images/thumb/e/e0/Hateforge_inventory_icon.png/156px-Hateforge_inventory_icon.png'
                 alt='Hateforge'
               />
               <div className='pointer-events-none absolute left-1/2 top-full z-10 w-96 -translate-x-1/2 transform border border-amber-700 bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
@@ -444,7 +444,7 @@ function Rewards() {
             <div className='group relative inline-block h-12 w-24'>
               <img
                 className='h-12 w-24'
-                src='https://www.poe2wiki.net/images/thumb/1/14/Zerphi%27s_Genesis_inventory_icon.png/154px-Zerphi%27s_Genesis_inventory_icon.png'
+                src='/images/https://www.poe2wiki.net/images/thumb/1/14/Zerphi%27s_Genesis_inventory_icon.png/154px-Zerphi%27s_Genesis_inventory_icon.png'
                 alt='Zerphis Genesis'
               />
               <div className='pointer-events-none absolute left-1/2 top-full z-10 w-96 -translate-x-1/2 transform border border-amber-700 bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
@@ -498,7 +498,7 @@ function Rewards() {
           </p>
           <div className='flex flex-row justify-center gap-4'>
             <div className='group relative inline-block'>
-              <img src='deadly_fate.png' alt='Deadly Fate' />
+              <img src='/images/deadly_fate.png' alt='Deadly Fate' />
               <div className='pointer-events-none absolute bottom-full left-1/2 z-10 h-32 w-72 -translate-x-1/2 transform border border-neutral-400 bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
                 <div className='relative flex h-10 w-full items-center justify-center'>
                   {nhl}
@@ -520,7 +520,7 @@ function Rewards() {
               </div>
             </div>
             <div className='group relative inline-block'>
-              <img src='cowardly_fate.png' alt='Cowardly Fate' />
+              <img src='/images/cowardly_fate.png' alt='Cowardly Fate' />
               <div className='pointer-events-none absolute bottom-full left-1/2 z-10 h-32 w-72 -translate-x-1/2 transform border border-neutral-400 bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
                 <div className='relative flex h-10 w-full items-center justify-center'>
                   {nhl}
@@ -541,7 +541,7 @@ function Rewards() {
               </div>
             </div>
             <div className='group relative inline-block'>
-              <img src='victorious_fate.png' alt='Victorious Fate' />
+              <img src='/images/victorious_fate.png' alt='Victorious Fate' />
               <div className='pointer-events-none absolute bottom-full left-1/2 z-10 h-32 w-72 -translate-x-1/2 transform border border-neutral-400 bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
                 <div className='relative flex h-10 w-full items-center justify-center'>
                   {nhl}
@@ -698,7 +698,7 @@ function Rewards() {
             <div className='group relative inline-block'>
               <img
                 className='h-16 w-16'
-                src='inscribed_ultimatum.png'
+                src='/images/inscribed_ultimatum.png'
                 alt='Inscribed Ultimatum'
               />
               <div className='pointer-events-none absolute left-1/2 top-full z-10 w-96 -translate-x-1/2 transform bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
@@ -740,7 +740,7 @@ function Rewards() {
             <div className='group relative inline-block'>
               <img
                 className='h-16 w-16'
-                src='inscribed_ultimatum.png'
+                src='/images/inscribed_ultimatum.png'
                 alt='Inscribed Ultimatum'
               />
               <div className='pointer-events-none absolute left-1/2 top-full z-10 w-96 -translate-x-1/2 transform bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
@@ -782,7 +782,7 @@ function Rewards() {
             <div className='group relative inline-block'>
               <img
                 className='h-16 w-16'
-                src='inscribed_ultimatum.png'
+                src='/images/inscribed_ultimatum.png'
                 alt='Inscribed Ultimatum'
               />
               <div className='pointer-events-none absolute left-1/2 top-full z-10 w-96 -translate-x-1/2 transform bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
@@ -828,7 +828,7 @@ function Rewards() {
             <div className='group relative inline-block'>
               <img
                 className='h-16 w-16'
-                src='inscribed_ultimatum.png'
+                src='/images/inscribed_ultimatum.png'
                 alt='Inscribed Ultimatum'
               />
               <div className='pointer-events-none absolute left-1/2 top-full z-10 w-96 -translate-x-1/2 transform bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
@@ -879,7 +879,7 @@ function Rewards() {
             <div className='group relative inline-block h-20 w-20'>
               <img
                 className='h-20 w-20'
-                src='https://www.poe2wiki.net/images/2/24/Dream_Fragments_inventory_icon.png'
+                src='/images/https://www.poe2wiki.net/images/2/24/Dream_Fragments_inventory_icon.png'
                 alt='Dream Fragments'
               />
               <div className='pointer-events-none absolute bottom-full left-1/2 z-10 w-96 -translate-x-1/2 transform border border-amber-700 bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
@@ -925,7 +925,7 @@ function Rewards() {
             <div className='group relative inline-block h-32 w-24'>
               <img
                 className='h-32 w-24'
-                src='https://www.poe2wiki.net/images/e/e9/Cloak_of_Flame_inventory_icon.png'
+                src='/images/https://www.poe2wiki.net/images/e/e9/Cloak_of_Flame_inventory_icon.png'
                 alt='Cloak of Flame'
               />
               <div className='pointer-events-none absolute bottom-full left-1/2 z-10 w-96 -translate-x-1/2 transform border border-amber-700 bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>
@@ -974,7 +974,7 @@ function Rewards() {
             <div className='group relative inline-block h-32 w-24'>
               <img
                 className='h-32 w-24'
-                src='https://www.poe2wiki.net/images/8/8f/Sculpted_Suffering_inventory_icon.png'
+                src='/images/https://www.poe2wiki.net/images/8/8f/Sculpted_Suffering_inventory_icon.png'
                 alt='Sculpted Suffering'
               />
               <div className='pointer-events-none absolute bottom-full left-1/2 z-10 w-96 -translate-x-1/2 transform border border-amber-700 bg-black font-Insmallcaps text-sm text-white opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100'>

@@ -12,7 +12,7 @@ function RootComponent() {
           Intro
           <img
             className='h-10 w-10'
-            src='chimeral_ultimatum.webp'
+            src='/images/chimeral_ultimatum.webp'
             alt='Chimeral Ultimatum'
             draggable={false}
           />
@@ -25,7 +25,7 @@ function RootComponent() {
           Modifers
           <img
             className='h-10 w-10'
-            src='lethal_rare.png'
+            src='/images/lethal_rare.png'
             alt='Lethal Rare'
             draggable={false}
           />
@@ -38,7 +38,7 @@ function RootComponent() {
           Monsters
           <img
             className='h-10 w-10'
-            src='heart.webp'
+            src='/images/heart.webp'
             alt='Heart'
             draggable={false}
           />
@@ -51,7 +51,7 @@ function RootComponent() {
           Rooms
           <img
             className='h-10 w-10'
-            src='soul_core_mini.webp'
+            src='/images/soul_core_mini.webp'
             alt='Soul Core'
             draggable={false}
           />
@@ -64,7 +64,7 @@ function RootComponent() {
           Rewards
           <img
             className='h-10 w-11'
-            src='rewards.png'
+            src='/images/rewards.png'
             alt='Rewards'
             draggable={false}
           />
@@ -77,7 +77,7 @@ function RootComponent() {
           Corruption
           <img
             className='h-10 w-10'
-            src='Vaal Orb.png'
+            src='/images/Vaal Orb.png'
             alt='Vaal Orb'
             draggable={false}
           />
@@ -90,7 +90,7 @@ function RootComponent() {
           Crafting
           <img
             className='h-10 w-10'
-            src='Chaos Orb.png'
+            src='/images/Chaos Orb.png'
             alt='Chaos Orb'
             draggable={false}
           />
@@ -103,7 +103,7 @@ function RootComponent() {
           Chronicle
           <img
             className='h-10 w-10'
-            src='time_paradox.png'
+            src='/images/time_paradox.png'
             alt='Time Paradox'
             draggable={false}
           />
@@ -116,7 +116,7 @@ function RootComponent() {
           Sanity
           <img
             className='h-10 w-10'
-            src='culmination.webp'
+            src='/images/culmination.webp'
             alt='Culmination Support'
             draggable={false}
           />

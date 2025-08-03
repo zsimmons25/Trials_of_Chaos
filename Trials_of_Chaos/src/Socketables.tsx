@@ -21,7 +21,7 @@ export const SocketablesInv = ({
 }: SocketablesInvProps) => {
   const chl = (
     <img
-      src='/images/header_currency_left.png'
+      src='header_currency_left.png'
       alt='header left currency'
       className='h-full'
     />
@@ -37,7 +37,7 @@ export const SocketablesInv = ({
   );
   const chr = (
     <img
-      src='/images/header_currency_right.png'
+      src='header_currency_right.png'
       alt='header right currency'
       className='h-full'
     />
@@ -45,7 +45,7 @@ export const SocketablesInv = ({
   const csep = (
     <img
       className='mx-auto my-1'
-      src='/images/separator_currency.png'
+      src='separator_currency.png'
       alt='currency seperator'
     />
   );
@@ -364,7 +364,7 @@ export const SocketablesInv = ({
         </div>
       ))}
       <img
-        src='/images/Socketables.png'
+        src='Socketables.png'
         alt='Socketables'
         className='max-h-full max-w-full object-contain'
         width={845}

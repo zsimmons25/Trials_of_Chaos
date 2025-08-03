@@ -3,12 +3,6 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { modifierqfn } from './../handlers/modifiersquery';
 import type { Modifier } from './../types/modifier';
 
-const Xyclucian = '/images/Xyclucian.png';
-const Chimeral = '/images/Chimeral.png';
-const modifiers_header_left = '/images/modifier_header_left.png';
-const modifiers_header = '/images/modifier_header.png';
-const modifiers_header_right = '/images/modifier_header_right.png';
-
 export const Route = createLazyFileRoute('/')({
   component: () => {
     const { data: modifiers = [] } = useSuspenseQuery<Modifier[]>({
@@ -45,8 +39,8 @@ export const Route = createLazyFileRoute('/')({
             <strong>Chimeral Inscribed Ultimatum</strong>.
           </p>
           <div className='mb-4 flex items-center justify-center gap-8'>
-            <img className='h-60 w-60' src={Xyclucian} alt='' />
-            <img className='h-60 w-80' src={Chimeral} alt='' />
+            <img className='h-60 w-60' src='Xyclucian.png' alt='' />
+            <img className='h-60 w-80' src='Chimeral.png' alt='' />
           </div>
           <p className='mb-3'>
             Bring this <strong>Chimeral Inscribed Ultimatum</strong> to the{' '}
@@ -95,14 +89,18 @@ export const Route = createLazyFileRoute('/')({
                   <img src={modifier.imgurl} />
                 </div>
                 <div className='flex h-16 w-60 items-center justify-center border-x border-black bg-blood'>
-                  <img className='ml-1' src={modifiers_header_left} alt='mhl' />
-                  <img src={modifiers_header} alt='mh' />
+                  <img
+                    className='ml-1'
+                    src='modifier_header_left.png'
+                    alt='mhl'
+                  />
+                  <img src='modifier_header.png' alt='mh' />
                   <h1 className='absolute text-center text-gold'>
                     {modifier.name}
                   </h1>
                   <img
                     className='mr-1'
-                    src={modifiers_header_right}
+                    src='modifier_header_right.png'
                     alt='mhr'
                   />
                 </div>

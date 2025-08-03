@@ -5,7 +5,7 @@ function Sanity() {
         Increased Sanity Support Gem
       </div>
       <div>
-        <img src='/images/video_frame.webp' alt='video frame' />
+        <img src='video_frame.webp' alt='video frame' />
       </div>
     </div>
   );

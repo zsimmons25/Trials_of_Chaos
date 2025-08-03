@@ -751,7 +751,7 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
     : null;
 
   const nhl = (
-    <img src='/images/header_normal_left.png' alt='header left' className='h-full' />
+    <img src='header_normal_left.png' alt='header left' className='h-full' />
   );
   const nhm = (
     <div
@@ -763,17 +763,17 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
     />
   );
   const nhr = (
-    <img src='/images/header_normal_right.png' alt='header right' className='h-full' />
+    <img src='header_normal_right.png' alt='header right' className='h-full' />
   );
   const nsep = (
     <img
       className='mx-auto my-1'
-      src='/images/separator_normal.png'
+      src='separator_normal.png'
       alt='normal separator'
     />
   );
   const mhl = (
-    <img src='/images/header_magic_left.png' alt='header left' className='h-full' />
+    <img src='header_magic_left.png' alt='header left' className='h-full' />
   );
   const mhm = (
     <div
@@ -785,18 +785,18 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
     />
   );
   const mhr = (
-    <img src='/images/header_magic_right.png' alt='header right' className='h-full' />
+    <img src='header_magic_right.png' alt='header right' className='h-full' />
   );
   const msep = (
     <img
       className='mx-auto my-1'
-      src='/images/separator_magic.png'
+      src='separator_magic.png'
       alt='normal separator'
     />
   );
   const rhl = (
     <img
-      src='/images/header_double_rare_left.png'
+      src='header_double_rare_left.png'
       alt='header left rare'
       className='h-full'
     />
@@ -812,7 +812,7 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
   );
   const rhr = (
     <img
-      src='/images/header_double_rare_right.png'
+      src='header_double_rare_right.png'
       alt='header right rare'
       className='h-full'
     />
@@ -820,7 +820,7 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
   const rsep = (
     <img
       className='mx-auto my-1'
-      src='/images/separator_rare.png'
+      src='separator_rare.png'
       alt='rare separator'
     />
   );
@@ -1277,7 +1277,7 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
               className={`h-10 w-10 ${
                 activeSocketable ? 'cursor-pointer hover:opacity-80' : ''
               }`}
-              src='/images/socket.png'
+              src='socket.png'
               alt='socket 1'
               draggable={false}
               onClick={
@@ -1308,7 +1308,7 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
                   className={`h-10 w-10 ${
                     activeSocketable ? 'cursor-pointer hover:opacity-80' : ''
                   }`}
-                  src='/images/socket.png'
+                  src='socket.png'
                   alt='socket 1'
                   draggable={false}
                   onClick={
@@ -1334,7 +1334,7 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
                   className={`h-10 w-10 ${
                     activeSocketable ? 'cursor-pointer hover:opacity-80' : ''
                   }`}
-                  src='/images/socket.png'
+                  src='socket.png'
                   alt='socket 2'
                   draggable={false}
                   onClick={
@@ -1363,7 +1363,7 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
                   className={`h-10 w-10 ${
                     activeSocketable ? 'cursor-pointer hover:opacity-80' : ''
                   }`}
-                  src='/images/socket.png'
+                  src='socket.png'
                   alt='socket 1'
                   draggable={false}
                   onClick={
@@ -1389,7 +1389,7 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
                   className={`h-10 w-10 ${
                     activeSocketable ? 'cursor-pointer hover:opacity-80' : ''
                   }`}
-                  src='/images/socket.png'
+                  src='socket.png'
                   alt='socket 2'
                   draggable={false}
                   onClick={
@@ -1421,7 +1421,7 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
                   className={`h-10 w-10 ${
                     activeSocketable ? 'cursor-pointer hover:opacity-80' : ''
                   }`}
-                  src='/images/socket.png'
+                  src='socket.png'
                   alt='socket 1'
                   draggable={false}
                   onClick={
@@ -1447,7 +1447,7 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
                   className={`h-10 w-10 ${
                     activeSocketable ? 'cursor-pointer hover:opacity-80' : ''
                   }`}
-                  src='/images/socket.png'
+                  src='socket.png'
                   alt='socket 2'
                   draggable={false}
                   onClick={
@@ -1473,7 +1473,7 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
                   className={`h-10 w-10 ${
                     activeSocketable ? 'cursor-pointer hover:opacity-80' : ''
                   }`}
-                  src='/images/socket.png'
+                  src='socket.png'
                   alt='socket 3'
                   draggable={false}
                   onClick={
@@ -1502,7 +1502,7 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
                   className={`h-10 w-10 ${
                     activeSocketable ? 'cursor-pointer hover:opacity-80' : ''
                   }`}
-                  src='/images/socket.png'
+                  src='socket.png'
                   alt='socket 1'
                   draggable={false}
                   onClick={
@@ -1528,7 +1528,7 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
                   className={`h-10 w-10 ${
                     activeSocketable ? 'cursor-pointer hover:opacity-80' : ''
                   }`}
-                  src='/images/socket.png'
+                  src='socket.png'
                   alt='socket 2'
                   draggable={false}
                   onClick={
@@ -1554,7 +1554,7 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
                   className={`h-10 w-10 ${
                     activeSocketable ? 'cursor-pointer hover:opacity-80' : ''
                   }`}
-                  src='/images/socket.png'
+                  src='socket.png'
                   alt='socket 3'
                   draggable={false}
                   onClick={

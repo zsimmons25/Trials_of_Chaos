@@ -137,7 +137,7 @@ function Crafting() {
   };
 
   const nhl = (
-    <img src='/images/header_normal_left.png' alt='header left' className='h-full' />
+    <img src='header_normal_left.png' alt='header left' className='h-full' />
   );
   const nhm = (
     <div
@@ -149,12 +149,12 @@ function Crafting() {
     />
   );
   const nhr = (
-    <img src='/images/header_normal_right.png' alt='header right' className='h-full' />
+    <img src='header_normal_right.png' alt='header right' className='h-full' />
   );
 
   const chl = (
     <img
-      src='/images/header_currency_left.png'
+      src='header_currency_left.png'
       alt='header left currency'
       className='h-full'
     />
@@ -170,7 +170,7 @@ function Crafting() {
   );
   const chr = (
     <img
-      src='/images/header_currency_right.png'
+      src='header_currency_right.png'
       alt='header right currency'
       className='h-full'
     />
@@ -178,7 +178,7 @@ function Crafting() {
   const csep = (
     <img
       className='mx-auto my-1'
-      src='/images/separator_currency.png'
+      src='separator_currency.png'
       alt='currency seperator'
     />
   );
@@ -1092,7 +1092,7 @@ function Crafting() {
                 >
                   Clear Crafting
                   <img
-                    src='/images/Scouring Orb.png'
+                    src='Scouring Orb.png'
                     alt='Scouring Orb'
                     className='h-8 w-8'
                     draggable={false}
@@ -1178,7 +1178,7 @@ function Crafting() {
                     </div>
                     <div className='flex h-52 w-80 items-center justify-center'>
                       <img
-                        src='/images/Ultimatum.webp'
+                        src='Ultimatum.webp'
                         alt='Ultimatum'
                         className='h-full w-full object-contain'
                         draggable={false}
@@ -1777,7 +1777,7 @@ function Crafting() {
                     );
                   })()}
                   <img
-                    src='/images/Inventory.png'
+                    src='Inventory.png'
                     alt='Inventory'
                     className='max-h-full max-w-full object-contain'
                     width={845}
@@ -1863,7 +1863,7 @@ function Crafting() {
                                 }}
                               >
                                 <img
-                                  src='/images/Annulment Orb.png'
+                                  src='Annulment Orb.png'
                                   alt='Remove Prefix'
                                   className='h-8 w-8'
                                 />
@@ -1958,7 +1958,7 @@ function Crafting() {
                                 }}
                               >
                                 <img
-                                  src='/images/Annulment Orb.png'
+                                  src='Annulment Orb.png'
                                   alt='Remove Suffix'
                                   className='h-8 w-8'
                                 />
@@ -2218,7 +2218,7 @@ function Crafting() {
                                       {affix.affix_name}
                                       {isFamilyUsed && (
                                         <img
-                                          src='/images/Ultimatum.webp'
+                                          src='Ultimatum.webp'
                                           alt=''
                                           className='h-5 w-5'
                                         />
@@ -2379,7 +2379,7 @@ function Crafting() {
                                     {familyGroup.family}
                                     {isFamilyUsed && (
                                       <img
-                                        src='/images/Ultimatum.webp'
+                                        src='Ultimatum.webp'
                                         alt=''
                                         className='h-5 w-5'
                                       />
@@ -2591,7 +2591,7 @@ function Crafting() {
                                       {affix.affix_name}
                                       {isFamilyUsed && (
                                         <img
-                                          src='/images/Ultimatum.webp'
+                                          src='Ultimatum.webp'
                                           alt=''
                                           className='h-5 w-5'
                                         />
@@ -2747,7 +2747,7 @@ function Crafting() {
                                     {familyGroup.family}
                                     {isFamilyUsed && (
                                       <img
-                                        src='/images/Ultimatum.webp'
+                                        src='Ultimatum.webp'
                                         alt=''
                                         className='h-5 w-5'
                                       />

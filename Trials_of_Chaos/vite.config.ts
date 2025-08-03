@@ -31,18 +31,4 @@ export default defineConfig(({ mode }) => ({
       '@sinclair/typebox/value',
     ],
   },
-  build: {
-    rollupOptions: {
-      external: [
-        // Externalize all image references that will be served by nginx
-        /^\/images\/.*/,
-        // Also externalize other assets served directly
-        /^\/modifier_header_left\.png$/,
-        /^\/modifier_header\.png$/,
-        /^\/modifier_header_right\.png$/,
-        /^\/background\.webp$/,
-        /^\/fonts\/.*/,
-      ],
-    },
-  },
 }));

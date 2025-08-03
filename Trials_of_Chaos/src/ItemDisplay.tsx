@@ -1239,7 +1239,7 @@ export const ItemDisplay: React.FC<ItemDisplayProps> = ({
                 >
                   {linePart}
                 </span>
-                <div className='group absolute right-0 top-1/2 z-50 mr-1 inline-block -translate-y-1/2 transform'>
+                <div className='group absolute right-0 top-1/2 -z-50 mr-1 inline-block -translate-y-1/2 transform'>
                   <span className='-inset-0 text-xs text-gray-600'>
                     {getDisplayTier(definition)}
                   </span>

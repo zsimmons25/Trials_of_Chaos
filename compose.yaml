@@ -33,6 +33,7 @@ services:
       - MYSQL_USER=root
       - MYSQL_HOST=mysql
       - MYSQL_PORT=3306
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-defaultpassword} 
       - port_=3500
       - CORS_ORIGIN=https://trialsofchaos.com
 
